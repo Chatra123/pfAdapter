@@ -1,0 +1,1 @@
+D:\file\WrPFpack\RC\Write\Write_PF\_WrPFpack src\pfAdapter\pfAdapter\bin\Release\pfAdapter.exe.config
