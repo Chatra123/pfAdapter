@@ -6,66 +6,65 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 
-
 namespace pfAdapter
 {
 
-	//================================
-	//例外の情報をファイルに保存
-	//================================
-	static class ExceptionInfo
-	{
-		public static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs args)
-		{
+  //================================
+  //例外の情報をファイルに保存
+  //================================
+  static class ExceptionInfo
+  {
+    public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+    {
+      try
+      {
+        //発生した例外
+        var excp = (Exception)args.ExceptionObject;
 
-			var GetExceptionInfo =
-				new Func<Exception, string>((exc) =>
-				{
-					var sb = new StringBuilder();
-					sb.AppendLine("--------------------------------------------------");
-					sb.AppendLine(DateTime.Now.ToString("G"));
-					sb.AppendFormat("Message    = {0}", exc.Message);
-					sb.AppendLine();
-					sb.AppendFormat("Source     = {0}", exc.Source);
-					sb.AppendLine();
-					sb.AppendFormat("HelpLink   = {0}", exc.HelpLink);
-					sb.AppendLine();
-					sb.AppendFormat("TargetSite = {0}", exc.TargetSite.ToString());
-					sb.AppendLine();
-					sb.AppendFormat("StackTrace = {0}", exc.StackTrace);
-					sb.AppendLine();
-					return sb.ToString();
-				});
+        //例外情報
+        string excpInfo =
+          new Func<Exception, string>((argExcp) =>
+          {
+            var info = new StringBuilder();
+            info.AppendLine("--------------------------------------------------");
+            info.AppendLine(DateTime.Now.ToString("G"));
+            info.AppendFormat("Exception  = {0}", argExcp.ToString());
+            info.AppendLine();
+            return info.ToString();
+          })(excp);
 
-			try
-			{
-				//エラー処理
-				var info = (Exception)args.ExceptionObject;
-				var text = new StringBuilder();
-				text.AppendLine(GetExceptionInfo(info));
+        //出力テキスト
+        var text = new StringBuilder();
+        text.AppendLine(excpInfo);
 
 
-				//ファイル名
-				string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-				string AppDir = Path.GetDirectoryName(AppPath);
-				string AppName = Path.GetFileNameWithoutExtension(AppPath);
-				int PID = Process.GetCurrentProcess().Id;
-				string timecode = DateTime.Now.ToString("MMdd-HHmmss.fffff");
-				string logName = AppName + "_" + timecode + "_" + PID + ".errlog";
-				string logPath = Path.Combine(AppDir, logName);
+        //出力ファイル名
+        string logPath =
+          new Func<string>(() =>
+          {
+            string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string AppDir = Path.GetDirectoryName(AppPath);
+            string AppName = Path.GetFileNameWithoutExtension(AppPath);
 
-				//ファイルに書き加える
-				File.AppendAllText(logPath, text.ToString(), new UTF8Encoding(true));
+            int PID = Process.GetCurrentProcess().Id;
+            string timecode = DateTime.Now.ToString("MMdd_HHmmss.fffff");
+            string logName = AppName + "__" + timecode + "-" + PID + ".errlog";
 
-			}
-			finally
-			{
-				var exception = (Exception)args.ExceptionObject;
-				throw exception;													//windowsのエラーダイアログをだす
-				//Environment.Exit(1);										//アプリケーション終了
-			}
-		}
-	}
+            return Path.Combine(AppDir, logName);
+          })();
+
+        //ファイルに書き加える
+        File.AppendAllText(logPath, text.ToString(), new UTF8Encoding(true));
+
+      }
+      finally
+      {
+        var exception = (Exception)args.ExceptionObject;
+        throw exception;               //windowsのエラーダイアログをだす
+        //Environment.Exit(1);         //アプリケーション終了
+      }
+    }
+  }
 
 
 }
