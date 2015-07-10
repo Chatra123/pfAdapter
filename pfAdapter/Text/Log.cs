@@ -23,40 +23,55 @@ namespace pfAdapter
     //static
     static readonly object sync = new object();
     static StreamWriter SharedWriter;
+    static StringBuilder SharedLogText;
     public static Log System, InputRead, PipeBuff;
 
-    //
+
     public bool Enable = false, OutConsole = false, OutFile = false;
-    StreamWriter writer;
-    StringBuilder LogText = new StringBuilder();
+    StreamWriter Writer;
+    StringBuilder LogText;
     string FileName;
     bool ExclusiveFile = false;
+
+
 
     //======================================
     //コンストラクター
     //======================================
     #region Log
-    //static コンストラクター
     static Log()
     {
       System = new Log(false);
       InputRead = new Log(false);
       PipeBuff = new Log(true, "pfPipeBuff");
     }
-    //
-    //コンストラクター
+
+
     public Log(bool exclusive, string filename = "")
     {
-      ExclusiveFile = exclusive;
-      if (exclusive) FileName = filename;
+      ExclusiveFile = exclusive;       //SharedWriterでなく専用Writerを割り当て
+      if (exclusive)
+      {
+        //専用ライターを割り当てる
+        FileName = filename;
+        LogText = new StringBuilder();
+      }
+      else
+      {
+        //Shared
+        if (SharedLogText == null) SharedLogText = new StringBuilder();
+        LogText = SharedLogText;
+      }
     }
 
-    //デストラクター
+
+    /// <summary>
+    /// 古いログファイル削除
+    /// </summary>
     ~Log()
     {
       lock (sync)
       {
-        //古いログファイル削除
         for (int i = 1; i <= 16; i++)
         {
           var appdir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
@@ -80,26 +95,37 @@ namespace pfAdapter
     #endregion
 
 
+
     //======================================
     //ライター作成
     //======================================
     #region CreateWriter
-    //
-    //ライター割当
+
+    /// <summary>
+    /// ライターを割り当てる
+    /// </summary>
     void SetWriter()
     {
-      //SharedWriterを割り当てる
+      //Shared writer
       if (ExclusiveFile == false)
       {
         if (SharedWriter == null) SharedWriter = CreateWriter(AppNameWithoutExt);
-        writer = SharedWriter;
+        Writer = SharedWriter;
       }
-      else//専用ライターを割り当てる
-        writer = CreateWriter(FileName);
+      else
+      {
+        //専用ライター
+        Writer = CreateWriter(FileName);
+      }
     }
-    //
-    //ライター作成
-    //　pfAdapter.1.log ～ pfAdapter.16.logを割り当てる。
+
+
+    /// <summary>
+    /// ファイル書込み用ライターを作成
+    /// </summary>
+    /// <param name="filename">作成するファイル名</param>
+    /// <returns></returns>
+    /// <remarks>ファイル名は*.1.log ～ *.16.logになる。</remarks>
     static StreamWriter CreateWriter(string filename)
     {
       StreamWriter writer = null;
@@ -134,10 +160,13 @@ namespace pfAdapter
     #endregion
 
 
-    //======================================
-    //　書込み
-    //======================================
+
+
     #region Write_core
+    /// <summary>
+    /// ログに書き込む
+    /// </summary>
+    /// <param name="text">書き込むテキスト</param>
     public void Write_core(string text = "")
     {
       if (Enable == false) return;
@@ -150,17 +179,17 @@ namespace pfAdapter
         if (OutFile)                                       //ファイル
         {
           //ライター作成
-          if (writer == null)
+          if (Writer == null)
           {
             SetWriter();
-            if (writer == null) OutFile = false;           //ライター作成失敗
+            if (Writer == null) OutFile = false;
           }
 
-          //ファイルに書込み
-          if (writer != null)
+          if (Writer != null)
           {
-            writer.Write(text);
-            writer.Flush();
+            //ファイル書込み
+            Writer.Write(text);
+            Writer.Flush();
           }
         }
       }
@@ -168,55 +197,82 @@ namespace pfAdapter
 
 
 
-    //
-    //タイムコードを付加して一行ずつ書込み
-    //
+
+    /// <summary>
+    /// 各行の先頭にタイムコードを付加する。
+    /// </summary>
+    /// <param name="text">タイムコードを付加するテキスト</param>
     public void Write_withTimecode(string text = "")
     {
       lock (sync)
       {
         var lineList = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
 
-        bool IsMultiLine = (2 <= lineList.Count);          //textの中に改行コードがあったか
+        bool IsMultiLine = (2 <= lineList.Count);
         if (IsMultiLine && string.IsNullOrEmpty(lineList[lineList.Count - 1]))
-          lineList.RemoveAt(lineList.Count - 1);          //Split時に末尾に追加される空文字列を削除
+          lineList.RemoveAt(lineList.Count - 1);           //Split時に末尾に追加される空文字列を削除
 
         foreach (var line in lineList)
         {
           string timcodeLine = line;
 
-          if (LogText.Length == 0)     //先頭ならタイムコード付加
+          if (LogText.Length == 0)
+          {
+            //ログの先頭ならタイムコード付加
             timcodeLine = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
+          }
           else
           {
-            //直前に改行コードがあるか
-            bool isTopOfLine1 = LogText[LogText.Length - 2] == '\r' && LogText[LogText.Length - 1] == '\n';
-            bool isTopOfLine2 = LogText[LogText.Length - 1] == '\n';
+            //改行コードの直後ならタイムコード付加
+            bool isTopOfLine1 = 1 < LogText.Length
+                                  && LogText[LogText.Length - 2] == '\r'
+                                  && LogText[LogText.Length - 1] == '\n';
+
+            bool isTopOfLine2 = 0 < LogText.Length
+                                  && LogText[LogText.Length - 1] == '\n';
+
             if (isTopOfLine1 || isTopOfLine2)
-            {//改行コードの直後ならタイムコード付加
+            {
+
               timcodeLine = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
             }
           }
 
           if (IsMultiLine) timcodeLine += Environment.NewLine;
-          Write_core(timcodeLine);     //ファイルに一行書込む
+
+          Write_core(timcodeLine);
         }
       }
     }
     #endregion
 
 
+
+
     #region Write
     //======================================
-    //  文字列
+    //文字列
     //======================================
-    //  Write
+    /// <summary>
+    /// ログに文字を追加
+    /// </summary>
+    /// <param name="text">追加したい文字列</param>
     public void Write(string text = "") { Write_withTimecode(text); }
 
-    //  WriteLine
+
+    /// <summary>
+    /// ログに１行追加
+    /// </summary>
+    /// <param name="text">追加したい文字列</param>
     public void WriteLine(string line = "") { Write(line + Environment.NewLine); }
 
-    //  Format
+
+    /// <summary>
+    /// format指定で１行追加
+    /// </summary>
+    /// <param name="format">複合書式指定文字列</param>
+    /// <param name="args">0 個以上の書式設定対象オブジェクトを含んだオブジェクト配列。</param>
+    /// <remarks> string Format(string format, params Object[] args)と同じ</remarks>
     public void WriteLine(string format, params object[] args)
     {
       string line = format;
@@ -235,14 +291,26 @@ namespace pfAdapter
 
 
     //======================================
-    //  バイト配列
+    //バイト配列
     //======================================
+    /// <summary>
+    /// ログに１６進数表示のバイト列をを追加
+    /// </summary>
+    /// <param name="comment">先頭に表示するコメント</param>
+    /// <param name="byteSet">ログに表示したいバイト列</param>
+    /// <remarks>バイト列の大きさが２０以上なら前後６ずつに省略されます。</remarks>
     public void WriteByte(string comment, List<byte> byteSet)
     {
       WriteByte(comment, byteSet.ToArray());
     }
 
 
+    /// <summary>
+    /// ログに１６進数表示のバイト列をを追加
+    /// </summary>
+    /// <param name="comment">先頭に表示するコメント</param>
+    /// <param name="byteSet">ログに表示したいバイト列</param>
+    /// <remarks>バイト列の大きさが２０以上なら前後６ずつに省略されます。</remarks>
     public void WriteByte(string comment, byte[] byteSet)
     {
       if (Enable == false) return;
@@ -250,7 +318,7 @@ namespace pfAdapter
       string byteline = comment;
       byteline += "[" + byteSet.Length + "]:  ";
       if (byteline.Length < 26)
-        byteline += new String(' ', 26 - byteline.Length); //コメントの空きを半角スペースで埋める
+        byteline += new String(' ', 26 - byteline.Length); //コメントの空きをスペースで埋める
 
 
       if (byteSet.Length <= 20)
@@ -259,7 +327,8 @@ namespace pfAdapter
           byteline += string.Format("{0:X2} ", b);
       }
       else
-      {//20文字以上なら前後6個ずつ
+      {
+        //20文字以上なら前後6個ずつ
         var front = byteSet.Skip(0).Take(6).ToArray();
         var back = byteSet.Skip(byteSet.Length - 6).Take(6).ToArray();
         foreach (var b in front)
@@ -280,42 +349,43 @@ namespace pfAdapter
 
 
 
-  //======================================
-  //  状態記録用ログ
-  //======================================
+
   #region LogStatus
+  /// <summary>
+  /// 状態記録用ログ
+  /// </summary>
   static class LogStatus
   {
-    public static int Write_Buffer__le__10KB = 0,          //バッファ書込量
-              Write_Buffer__le__50KB = 0,
-              Write_Buffer__le_100KB = 0,
-              Write_Buffer__le_200KB = 0,
-              Write_Buffer__le_400KB = 0,
-              Write_Buffer__gt_400KB = 0,
-              Read__Buffer__le__10KB = 0,                  //バッファ読込量
-              Read__Buffer__le__50KB = 0,
-              Read__Buffer__le_100KB = 0,
-              Read__Buffer__le_200KB = 0,
-              Read__Buffer__le_400KB = 0,
-              Read__Buffer__gt_400KB = 0,
-              Read__File____le__10KB = 0,                  //ファイル読込量
-              Read__File____le_100KB = 0,
-              Read__File____le_200KB = 0,
-              Read__File____le_400KB = 0,
-              Read__File____gt_400KB = 0;
-    // データ総読込量
-    public static long TotalRead { get { return TotalPipeRead + TotalFileRead; } }
+    private static int Write_Buffer__le__10KB = 0,         //１回のバッファ書込量
+                      Write_Buffer__le__50KB = 0,
+                      Write_Buffer__le_100KB = 0,
+                      Write_Buffer__le_200KB = 0,
+                      Write_Buffer__le_400KB = 0,
+                      Write_Buffer__gt_400KB = 0,
+                      Read__Buffer__le__10KB = 0,          //１回のバッファ読込量
+                      Read__Buffer__le__50KB = 0,
+                      Read__Buffer__le_100KB = 0,
+                      Read__Buffer__le_200KB = 0,
+                      Read__Buffer__le_400KB = 0,
+                      Read__Buffer__gt_400KB = 0,
+                      Read__File____le__10KB = 0,          //１回のファイル読込量
+                      Read__File____le_100KB = 0,
+                      Read__File____le_200KB = 0,
+                      Read__File____le_400KB = 0,
+                      Read__File____gt_400KB = 0;
+
+    public static long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //データ総読込量
+    public static long TotalPipeRead = 0;                                                          //パイプ総読込量
     public static long TotalFileRead { get { return FileReadWithPipe + FileReadWithoutPipe; } }    //ファイル総読込量
-    public static long TotalPipeRead = 0,                  //パイプ総読込量
-                        FileReadWithPipe,                  //パイプ接続中のファイル総読込量
-                        FileReadWithoutPipe;               //パイプ切断中のファイル総読込量
-    //
+    public static long FileReadWithPipe,                                                           //パイプ接続中のファイル総読込量
+                        FileReadWithoutPipe;                                                       //パイプ切断中のファイル総読込量
+
     public static double Memory_Max = 0,                   //最大メモリ使用量  MiB
                           Memory_Avg = 0,                  //平均メモリ使用量  MiB
                           Memory_Sum = 0,                  //平均メモリ計算用  MiB
                           Memory_SumCount = 0;             //平均メモリ計算用
 
-    public static long Buff_MaxCount = 0,                  //バッファの最大Count    List<byte>.Count
+    public static long Buff_MaxCount = 0,                  //バッファの最大Count     List<byte>.Count
                         Buff_MaxCapacity = 0,              //バッファの最大Capacity  List<byte>.Capacity
                         ClearBuff = 0,                     //バッファクリア回数
                         FailToLockBuff__Read = 0,          //バッファロック失敗回数　読込み
@@ -326,35 +396,50 @@ namespace pfAdapter
                         Indicator_demandAtBuff_m1 = 0;     //buffIndicator == -1 の回数
 
 
+
     //======================================
-    //  出力
+    //  テキストを出力
     //======================================
-    public static new string ToString()
+    /// <summary>
+    /// １度のデータ読み書き量をテキストで出力します。
+    /// </summary>
+    /// <returns></returns>
+    public static string OutText_ReadWriteChunk()
     {
       var text = new StringBuilder();
-      ////バッファ書込量
-      //text.AppendLine("  Write_Buffer__le__10KB   = " + Write_Buffer__le__10KB);
-      //text.AppendLine("  Write_Buffer__le__50KB   = " + Write_Buffer__le__50KB);
-      //text.AppendLine("  Write_Buffer__le_100KB   = " + Write_Buffer__le_100KB);
-      //text.AppendLine("  Write_Buffer__le_200KB   = " + Write_Buffer__le_200KB);
-      //text.AppendLine("  Write_Buffer__le_400KB   = " + Write_Buffer__le_400KB);
-      //text.AppendLine("  Write_Buffer__gt_400KB   = " + Write_Buffer__gt_400KB);
-      ////バッファ読込量
-      //text.AppendLine("  Read__Buffer__le__10KB   = " + Read__Buffer__le__10KB);
-      //text.AppendLine("  Read__Buffer__le__50KB   = " + Read__Buffer__le__50KB);
-      //text.AppendLine("  Read__Buffer__le_100KB   = " + Read__Buffer__le_100KB);
-      //text.AppendLine("  Read__Buffer__le_200KB   = " + Read__Buffer__le_200KB);
-      //text.AppendLine("  Read__Buffer__le_400KB   = " + Read__Buffer__le_400KB);
-      //text.AppendLine("  Read__Buffer__gt_400KB   = " + Read__Buffer__gt_400KB);
-      ////ファイル読込量
-      //text.AppendLine("  Read__File____le__10KB   = " + Read__File____le__10KB);
-      //text.AppendLine("  Read__File____le_100KB   = " + Read__File____le_100KB);
-      //text.AppendLine("  Read__File____le_200KB   = " + Read__File____le_200KB);
-      //text.AppendLine("  Read__File____le_400KB   = " + Read__File____le_400KB);
-      //text.AppendLine("  Read__File____gt_400KB   = " + Read__File____gt_400KB);
-      //text.AppendLine();
+      //バッファ書込
+      text.AppendLine("  Write_Buffer__le__10KB   = " + Write_Buffer__le__10KB);
+      text.AppendLine("  Write_Buffer__le__50KB   = " + Write_Buffer__le__50KB);
+      text.AppendLine("  Write_Buffer__le_100KB   = " + Write_Buffer__le_100KB);
+      text.AppendLine("  Write_Buffer__le_200KB   = " + Write_Buffer__le_200KB);
+      text.AppendLine("  Write_Buffer__le_400KB   = " + Write_Buffer__le_400KB);
+      text.AppendLine("  Write_Buffer__gt_400KB   = " + Write_Buffer__gt_400KB);
+      //バッファ読込
+      text.AppendLine("  Read__Buffer__le__10KB   = " + Read__Buffer__le__10KB);
+      text.AppendLine("  Read__Buffer__le__50KB   = " + Read__Buffer__le__50KB);
+      text.AppendLine("  Read__Buffer__le_100KB   = " + Read__Buffer__le_100KB);
+      text.AppendLine("  Read__Buffer__le_200KB   = " + Read__Buffer__le_200KB);
+      text.AppendLine("  Read__Buffer__le_400KB   = " + Read__Buffer__le_400KB);
+      text.AppendLine("  Read__Buffer__gt_400KB   = " + Read__Buffer__gt_400KB);
+      //ファイル読込
+      text.AppendLine("  Read__File____le__10KB   = " + Read__File____le__10KB);
+      text.AppendLine("  Read__File____le_100KB   = " + Read__File____le_100KB);
+      text.AppendLine("  Read__File____le_200KB   = " + Read__File____le_200KB);
+      text.AppendLine("  Read__File____le_400KB   = " + Read__File____le_400KB);
+      text.AppendLine("  Read__File____gt_400KB   = " + Read__File____gt_400KB);
+      text.AppendLine();
+      return text.ToString();
+    }
 
-      //データ総読込量
+
+
+    /// <summary>
+    /// データ総読込量をテキストで出力します。
+    /// </summary>
+    /// <returns></returns>
+    public static string OutText_TotalRead()
+    {
+      var text = new StringBuilder();
       text.AppendLine(
         string.Format("  TotalRead               = {0,14:N0}", TotalRead));
       text.AppendLine(
@@ -365,32 +450,46 @@ namespace pfAdapter
         string.Format("      FileReadWithPipe    = {0,14:N0}", FileReadWithPipe));
       text.AppendLine(
         string.Format("      FileReadWithoutPipe = {0,14:N0}", FileReadWithoutPipe));
-      //text.AppendLine();
-
-      //text.AppendLine(
-      //  string.Format("  Memory_Avg                   = {0,2:f0} MiB", Memory_Avg));
-      //text.AppendLine(
-      //  string.Format("  Memory_Max                   = {0,2:f0} MiB", Memory_Max));
-      //text.AppendLine("  Buff_MaxCount                = " + Buff_MaxCount);
-      //text.AppendLine("  Buff_MaxCapacity             = " + Buff_MaxCapacity);
-      //text.AppendLine("  ClearBuff                    = " + ClearBuff);
-      //text.AppendLine("  FailToLockBuff__Read         = " + FailToLockBuff__Read);
-      //text.AppendLine("  FailToLockBuff_Write         = " + FailToLockBuff_Write);
-      //text.AppendLine("  WriteBuff_SmallOne           = " + WriteBuff_SmallOne);
-      //text.AppendLine("  FilePos_whenPipeClosed       = " + FilePos_whenPipeClosed);
-      //text.AppendLine("  AccessTimes_UnwriteArea      = " + AccessTimes_UnwriteArea);
-      //text.AppendLine("  Indicator_demandAtBuff_m1    = " + Indicator_demandAtBuff_m1);
-
       return text.ToString();
     }
 
 
 
+    /// <summary>
+    /// 各項目をテキストで出力します。
+    /// </summary>
+    /// <returns></returns>
+    public static string OutText_misc()
+    {
+      var text = new StringBuilder();
+      text.AppendLine(
+        string.Format("  Memory_Avg                   = {0,2:f0} MiB", Memory_Avg));
+      text.AppendLine(
+        string.Format("  Memory_Max                   = {0,2:f0} MiB", Memory_Max));
+      text.AppendLine("  Buff_MaxCount                = " + Buff_MaxCount);
+      text.AppendLine("  Buff_MaxCapacity             = " + Buff_MaxCapacity);
+      text.AppendLine("  ClearBuff                    = " + ClearBuff);
+      text.AppendLine("  FailToLockBuff__Read         = " + FailToLockBuff__Read);
+      text.AppendLine("  FailToLockBuff_Write         = " + FailToLockBuff_Write);
+      text.AppendLine("  WriteBuff_SmallOne           = " + WriteBuff_SmallOne);
+      text.AppendLine("  FilePos_whenPipeClosed       = " + FilePos_whenPipeClosed);
+      text.AppendLine("  AccessTimes_UnwriteArea      = " + AccessTimes_UnwriteArea);
+      text.AppendLine("  Indicator_demandAtBuff_m1    = " + Indicator_demandAtBuff_m1);
+      return text.ToString();
+    }
+
+
+
+
+
     //======================================
-    //  書込量、読込量を記録
+    //  １回の書込量、読込量を記録
     //======================================
-    //バッファ書込量
-    public static void Log_WriteBuffSize(int writesize)
+    /// <summary>
+    /// １回のバッファ書込量を記録します。
+    /// </summary>
+    /// <param name="writesize">書込んだバイト数  Byte</param>
+    public static void Log_WriteBuffChunk(int writesize)
     {
       if (writesize <= 10 * 1024) LogStatus.Write_Buffer__le__10KB++;
       else if (writesize <= 50 * 1024) LogStatus.Write_Buffer__le__50KB++;
@@ -400,8 +499,13 @@ namespace pfAdapter
       else LogStatus.Write_Buffer__gt_400KB++;
     }
 
-    //バッファ読込量
-    public static void Log_ReadBuffSize(int readsize)
+
+
+    /// <summary>
+    /// １回のバッファ読込量を記録します。
+    /// </summary>
+    /// <param name="readsize">読込んだバイト数  Byte</param>
+    public static void Log_ReadBuffChunk(int readsize)
     {
       if (readsize <= 10 * 1024) LogStatus.Read__Buffer__le__10KB++;
       else if (readsize <= 50 * 1024) LogStatus.Read__Buffer__le__50KB++;
@@ -411,8 +515,12 @@ namespace pfAdapter
       else LogStatus.Read__Buffer__gt_400KB++;
     }
 
-    //ファイル読込量
-    public static void Log_ReadFileSize(int readsize)
+
+    /// <summary>
+    /// １回のファイル読込量を記録します。
+    /// </summary>
+    /// <param name="readsize">読込んだバイト数  Byte</param>
+    public static void Log_ReadFileChunk(int readsize)
     {
       if (readsize <= 10 * 1024) LogStatus.Read__File____le__10KB++;
       else if (readsize <= 100 * 1024) LogStatus.Read__File____le_100KB++;
@@ -421,9 +529,10 @@ namespace pfAdapter
       else LogStatus.Read__File____gt_400KB++;
     }
 
-    //======================================
-    //  メモリ使用量の記録  MiB
-    //======================================
+
+    /// <summary>
+    /// メモリ使用量を記録。MiB
+    /// </summary>
     public static void Log_UsedMemory()
     {
       double memory = (double)System.GC.GetTotalMemory(false) / 1024 / 1024;

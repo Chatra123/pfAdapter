@@ -1,11 +1,13 @@
 ﻿
 ### pfAdapter
-ファイルを読み込み、外部プロセスの標準入力へ送信します。
+
+ファイルを読み込み、外部プロセスのパイプへ送信します。
+
 
 
 ------------------------------------------------------------------
 ### 使い方
-pfAdapter.exe  -file "C:\video.ts"  -pipe namedpipe123
+pfAdapter.exe  -file "C:\video.ts"  -npipe namedpipe123
 
 
 
@@ -16,7 +18,8 @@ pfAdapter.exe  -file "C:\video.ts"  -pipe namedpipe123
     -file  "C:\video.ts"
 入力ファイルパス
 
-    -pipe  namedpipe123
+
+    -npipe  namedpipe123
 入力名前付きパイプ
 
 
@@ -25,6 +28,7 @@ pfAdapter.exe  -file "C:\video.ts"  -pipe namedpipe123
 
     -midint 5.0
 MidProcessListの実行間隔、min
+
 
     -ExtCmd  1
     -PrePrc  1
@@ -46,7 +50,6 @@ MidProcessListの実行間隔、min
 追加引数  
 入力、ＸＭＬ以外の引数が追加できます。  
 設定ファイル　→　実行ファイル引数　→　設定ファイルの追加引数　の順で設定が上書きされます。  
-設定ファイルの追加引数が最も高い優先度で適用されます。  
 
 
     dBuffSize_MiB
@@ -68,7 +71,7 @@ MidProcessListの実行間隔  min
 
 
     Client_GetExternalCommand
-返された文字列で処理が変更でき、入力以外の引数を指定できます。  
+返された文字列で処理が変更でき、入力以外のコマンドライン引数を受け取ります。  
 -Abort_pfAdapterがあればプロセスを終了し、  
 -MidPrc 0 があればMidPrcListを実行しません。  
 
@@ -78,7 +81,7 @@ Client_GetExternalCommandの後、データ送信の前に実行するプロセ�
 
 
     ClientList_WriteStdin
-データ送信先のプロセス。標準入力をリダイレクトします。
+データ送信先のプロセス。標準入力へリダイレクトします。
 
 
     MidProcessList  
@@ -90,6 +93,8 @@ Client_GetExternalCommandの後、データ送信の前に実行するプロセ�
 
     PostProcessList
 データ送信が終了し、実行中のMidProcessListが終了した後に実行されます。
+
+
 
 
 
@@ -108,8 +113,8 @@ Clientの値
 
 |  項目              |  説明                                           |
 |:-------------------|:------------------------------------------------|
-|  bEnable           |  Clientの有効、無効                             |
-|  dDelay_sec        |  Client実行前に待機する秒数                     |
+|  bEnable           |  有効、無効                             |
+|  dDelay_sec        |  実行前に待機する秒数                     |
 |  sBasePath         |  実行ファイルのパス、前後の空白は削除される。   |
 |  sBaseArgument     |  実行ファイルの引数、前後の空白は削除される。   |
 |  bNoWindow         |  コンソールウィンドウを非表示にする。           |
@@ -118,8 +123,10 @@ Clientの値
 
 
 
+
+
 ---------------------------------------
-sBasePath、sBaseArgumentで使えるマクロ
+sBasePath、sBaseArgumentで使えるマクロ  
 大文字小文字の違いは無視されます。
 
 |  マクロ            |  説明                        |  例              |
@@ -137,17 +144,19 @@ sBasePath、sBaseArgumentで使えるマクロ
 MidProcessListの実行回数に置換されます。  
 1回目の実行で１、実行されるごとに＋１されます。  
 PreProcessList内では０、  
-PostProcessList内ではMidProcessListの実行回数＋１に置換されます。  
+PostProcessList内では（MidProcessListの実行回数＋１）に置換されます。  
 
 
 
- .ts.program.txtが.tsと同じ場所にあれば次のマクロが使える  
+ .ts.program.txtが.tsと同じ場所にあれば次のマクロが使えます。  
 
 |  マクロ            |  説明                        |
 |:-------------------|:-----------------------------|
 |  $Ch$              |  チャンネル名                |
 |  $Channel$         |  チャンネル名                |
 |  $Program$         |  番組名                      |
+
+
 
 
 

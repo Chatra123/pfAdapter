@@ -9,19 +9,22 @@ using System.Diagnostics;
 namespace pfAdapter
 {
 
-  //================================
-  //例外の情報をファイルに保存
-  //================================
+
   static class ExceptionInfo
   {
+    /// <summary>
+    /// 例外発生時に内容をファイルに保存する。
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="args"></param>
     public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
     {
       try
       {
-        //発生した例外
         var excp = (Exception)args.ExceptionObject;
 
-        //例外情報
+
+        //例外の情報
         string excpInfo =
           new Func<Exception, string>((argExcp) =>
           {
@@ -33,12 +36,13 @@ namespace pfAdapter
             return info.ToString();
           })(excp);
 
+
         //出力テキスト
         var text = new StringBuilder();
         text.AppendLine(excpInfo);
 
 
-        //出力ファイル名
+        //出力ファイルパス
         string logPath =
           new Func<string>(() =>
           {
@@ -48,20 +52,21 @@ namespace pfAdapter
 
             int PID = Process.GetCurrentProcess().Id;
             string timecode = DateTime.Now.ToString("MMdd_HHmmss.fffff");
-            string logName = AppName + "__" + timecode + "-" + PID + ".errlog";
+            string logName = AppName + "__" + timecode + "_" + PID + ".errlog";
 
             return Path.Combine(AppDir, logName);
           })();
 
-        //ファイルに書き加える
+
+        //ファイル作成
         File.AppendAllText(logPath, text.ToString(), new UTF8Encoding(true));
+
 
       }
       finally
       {
         var exception = (Exception)args.ExceptionObject;
         throw exception;               //windowsのエラーダイアログをだす
-        //Environment.Exit(1);         //アプリケーション終了
       }
     }
   }

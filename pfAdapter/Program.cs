@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 #region RegionTitle
 #endregion
 
+
 namespace pfAdapter
 {
   class Program
@@ -27,6 +28,7 @@ namespace pfAdapter
 
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += ExceptionInfo.OnUnhandledException;
+
 
       //
       //ログ有効化
@@ -45,11 +47,12 @@ namespace pfAdapter
       //
       //パイプ接続、ファイル確認
       //
+      Log.System.WriteLine("[ Reader Connect ]");
       var reader = new InputReader();                      //パイプ接続を最優先で行う。
-      var connect = reader.ConnectInput(CommandLine.Pipe, CommandLine.File);
-      if (connect == false)
+      var connected = reader.ConnectInput(CommandLine.Pipe, CommandLine.File);
+      if (connected == false)
       {
-        Log.System.WriteLine("[ App Arguments ]");
+        Log.System.WriteLine("[ App CommandLine ]");
         foreach (var arg in AppArgs) Log.System.WriteLine(arg);
         Log.System.WriteLine();
         Log.System.WriteLine("入力が確認できません。");
@@ -59,11 +62,12 @@ namespace pfAdapter
       }
 
 
+
       //
-      //多重起動の負荷分散  Sleep()
+      //多重起動の負荷分散
       //
       int PID = Process.GetCurrentProcess().Id;
-      int rand_msec = new Random(PID).Next(3 * 1000, 10 * 1000);
+      int rand_msec = new Random(PID).Next(3 * 1000, 8 * 1000);
       Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
       Thread.Sleep(rand_msec);
 
@@ -78,18 +82,20 @@ namespace pfAdapter
       Directory.SetCurrentDirectory(AppDir);
 
       var setting = Setting.LoadFile(CommandLine.XmlPath);
-      if (setting != null)
-        MacroForPath.SetValue(setting);
-      else
+
+      if (setting == null)
       {
-        //指定xmlファイルが存在しない
+        //指定ファイルが存在しない
         Log.System.WriteLine("exit");
         Log.System.WriteLine();
-        return;                        //アプリ終了
+        return;                                            //アプリ終了
       }
 
-      var xmlCommandLine = setting.sCommandLine.Split().Where(s => string.IsNullOrWhiteSpace(s) == false).ToArray();
+      //sCommandLineをスペースで分ける。
+      var xmlCommandLine = setting.sCommandLine.Split()
+                             .Where(s => string.IsNullOrWhiteSpace(s) == false).ToArray();
       CommandLine.Parse(xmlCommandLine, true, true);       //xmlの追加引数で上書き　（入力、-xmlは上書きしない）
+
 
 
       //
@@ -99,10 +105,12 @@ namespace pfAdapter
       Log.System.WriteLine("[ App CommandLine ]");
       foreach (var arg in AppArgs) Log.System.WriteLine(arg);
       Log.System.WriteLine();
+
       //  xml引数
-      Log.System.WriteLine("  [ setting.sCommandLine ]");
+      Log.System.WriteLine("  [ Setting.sCommandLine ]");
       Log.System.WriteLine("    " + setting.sCommandLine);
       Log.System.WriteLine();
+
       if (CommandLine.InputLog)
       {
         //  入力記録ログ有効化
@@ -110,7 +118,6 @@ namespace pfAdapter
         Log.InputRead.OutConsole = false;
         Log.InputRead.OutFile = true;
       }
-
 
 
 
@@ -122,78 +129,27 @@ namespace pfAdapter
 
 
       //
-      //外部プロセスからコマンドライン取得、終了要求の確認
+      //外部プロセスからコマンドライン取得。終了要求の確認
       //
-      #region GetExternalCommand
-      //引数で無効化してない？
       if (CommandLine.ExtCmd == null || CommandLine.ExtCmd != false)
       {
-
+        bool requestAbort;
         Log.System.WriteLine("[ Client_GetExternalCommand ]");
-        string retLine = setting.Client_GetExternalCommand.Start_GetStdout();  //標準出力取得
+        GetExternalCommand(setting, AppArgs, out requestAbort);
 
-        //値が取得できた？
-        if (string.IsNullOrEmpty(retLine) == false)
+        //終了要求？
+        if (requestAbort)
         {
-          Log.System.WriteLine("      return =");
-          Log.System.Write(retLine);
-          var externalArgs = retLine.Split()
-                                    .Where(one => string.IsNullOrWhiteSpace(one) == false)
-                                    .Select(one => { return Regex.Replace(one, @"^("")(.*)("")$", "$2"); })// 前後の”除去
-                                    .ToArray();
-          CommandLine.ResetXmlPath();                    //新たなxmlパスが指定されたか判断できるようにnullをいれておく。
-          CommandLine.Parse(externalArgs, true, false);  //取得した文字列で上書き　（入力は上書きしない。ＸＭＬは上書きできる。）
-
-
-          //終了要求？
-          if (CommandLine.Abort == true)
-          {
-            Log.System.WriteLine("  accept request  Abort_pfAdapter");
-            Log.System.WriteLine("exit");
-            Log.System.WriteLine();
-            if (File.Exists(CommandLine.File + ".program.txt") == false)
-              Log.System.WriteLine("    Check the *.ts.program.txt existance if inadvertent exit.");
-            return;                                //アプリ終了
-          }
-
-
-          //新たなxmlが指定された？
-          if (CommandLine.XmlPath != null)
-          {
-            Log.System.WriteLine("  accept request  -xml");
-            //　xml再読込み
-            setting = Setting.LoadFile(CommandLine.XmlPath);
-            if (setting != null)
-              MacroForPath.SetValue(setting);
-            else
-            {
-              //　指定xmlファイルが存在しない
-              Log.System.WriteLine("exit");
-              Log.System.WriteLine();
-              return;                              //アプリ終了
-            }
-
-            //　xml追加引数
-            xmlCommandLine = setting.sCommandLine.Split().Where(one => string.IsNullOrWhiteSpace(one) == false).ToArray();
-            Log.System.WriteLine("  [ setting.sCommandLine 2 ]");
-            Log.System.WriteLine("    " + setting.sCommandLine);
-            Log.System.WriteLine();
-            //　引数再設定
-            CommandLine.ResetArgs();                       //リセット
-            CommandLine.Parse(AppArgs, true, true);        //Appの引数               (入力、ＸＭＬは上書きしない）
-            CommandLine.Parse(xmlCommandLine, true, true); //xmlの追加引数で上書き　（入力、ＸＭＬは上書きしない）
-          }
-
+          return;                                          //アプリ終了
         }
-        Log.System.WriteLine();
       }
-      #endregion
+
 
 
       //
-      //引数パース結果
+      //引数表示
       //
-      Log.System.WriteLine("[ CommandLine.Parse ]");
+      Log.System.WriteLine("[ CommandLine ]");
       Log.System.WriteLine(CommandLine.ToString());
 
 
@@ -201,7 +157,10 @@ namespace pfAdapter
       //
       //InputReaderの設定
       //
-      var limit = (0 < CommandLine.Limit) ? CommandLine.Limit : setting.dReadLimit_MiBsec;         //引数で指定されている？
+      Log.System.WriteLine("[ Reader Param ]");
+      var limit = (0 < CommandLine.Limit)                  //引数で指定されている？
+                        ? CommandLine.Limit
+                        : setting.dReadLimit_MiBsec;
       reader.SetParam(setting.dBuffSize_MiB, limit);
 
 
@@ -214,25 +173,35 @@ namespace pfAdapter
       if (CommandLine.PrePrc.HasValue)                     //引数あり、引数を優先
       {
         if ((bool)CommandLine.PrePrc)                      //  -PrePrc 1
-          setting.PreProcessList.Run("[ PreProcess ]");
+        {
+          Log.System.WriteLine("[ PreProcess ]");
+          setting.PreProcessList.Run();
+          Log.System.WriteLine();
+        }
       }
-      else if (0 < setting.PreProcessList.bEnable)         //引数なし & 設定ファイルでtrue
+      else if (0 < setting.PreProcessList.bEnable)         //設定ファイルでtrue
       {
-        setting.PreProcessList.Run("[ PreProcess ]");
+        Log.System.WriteLine("[ PreProcess ]");
+        setting.PreProcessList.Run();
+        Log.System.WriteLine();
       }
+
 
 
       //
       //MidProcess
       //
-      var midInterval = (0 < CommandLine.MidInterval) ? CommandLine.MidInterval : setting.dMidPrcInterval_min;  //引数で指定されている？
+      var midInterval = (0 < CommandLine.MidInterval)
+                              ? CommandLine.MidInterval
+                              : setting.dMidPrcInterval_min;
       MidProcessManager.Initialize(setting.MidProcessList, midInterval);
+
       if (CommandLine.MidPrc.HasValue)                     //引数あり、引数を優先
       {
         if ((bool)CommandLine.MidPrc)                      //　-MidPrc 1
           MidProcessManager.SetEnable();                   //　　有効にする、タイマーは停止
       }
-      else if (0 < setting.MidProcessList.bEnable)         //引数なし & 設定ファイルでtrue
+      else if (0 < setting.MidProcessList.bEnable)         //設定ファイルでtrue
       {
         MidProcessManager.SetEnable();                     //　　有効にする、タイマーは停止
       }
@@ -242,6 +211,7 @@ namespace pfAdapter
       //
       //出力ライター登録
       //
+      Log.System.WriteLine("[ Register Writer ]");
       var writer = new OutputWriter();
       bool register = writer.RegisterWriter(setting.ClientList_WriteStdin);
       if (register == false)
@@ -249,8 +219,10 @@ namespace pfAdapter
         Log.System.WriteLine("出力先プロセスが起動していません。");
         Log.System.WriteLine("exit");
         Log.System.WriteLine();
-        return;                        //アプリ終了
+        return;                                            //アプリ終了
       }
+
+
 
 
 
@@ -258,15 +230,150 @@ namespace pfAdapter
       //
       //メインループ
       //
-      int timeUpdateTitle = 0;                             //タイトルを更新したTickCount
-      int timeGCCollect = 0;                               //GC.Collect()したTickCount
       Log.System.WriteLine();
       Log.System.WriteLine("[ Main Loop ]");
+      MainLoop(reader, writer);
+
+
+      //
+      //MidProcess中断
+      //
+      MidProcessManager.CancelTask();
+
+
+
+      //
+      //PostProcess
+      //
+      if (CommandLine.PostPrc.HasValue)                    //引数あり、引数を優先
+      {
+        if ((bool)CommandLine.PostPrc)                     //　-PostPrc 1
+        {
+          Log.System.WriteLine("[ PostProcess ]");
+          setting.PostProcessList.Run();
+          Log.System.WriteLine();
+        }
+      }
+      else if (0 < setting.PostProcessList.bEnable)        //設定ファイルでtrue
+      {
+        Log.System.WriteLine("[ PostProcess ]");
+        setting.PostProcessList.Run();
+        Log.System.WriteLine();
+      }
+
+
+      Log.System.WriteLine("exit");
+      Log.System.WriteLine();
+      Log.System.WriteLine();
+
+    }//func
+
+
+
+
+
+
+    #region 外部プロセスからコマンドラインを取得
+    /// <summary>
+    /// 外部プロセスからコマンドラインを取得
+    /// </summary>
+    /// <param name="setting"></param>
+    /// <param name="AppArgs"></param>
+    /// <param name="RequestAbort">終了要求があったか</param>
+    static void GetExternalCommand(Setting setting, string[] AppArgs, out bool RequestAbort)
+    {
+      RequestAbort = false;
+
+      //標準出力取得
+      string retLine = setting.Client_GetExternalCommand.Start_GetStdout();
+      if (string.IsNullOrWhiteSpace(retLine)) return;
+
+
+
+      Log.System.WriteLine("      return =");
+      Log.System.Write(retLine);
+
+      //空白で分ける。　　”があれば除去
+      var externalCmd = retLine.Split()
+                                .Where(one => string.IsNullOrWhiteSpace(one) == false)
+                                .Select(one => { return Regex.Replace(one, @"^("")(.*)("")$", "$2"); })      // 前後の”除去
+                                .ToArray();
+      CommandLine.ResetXmlPath();
+      CommandLine.Parse(externalCmd, true, false);         //コマンドライン上書き　（入力は上書きしない。ＸＭＬは上書する。）
+
+
+
+      //終了要求？
+      if (CommandLine.Abort == true)
+      {
+        Log.System.WriteLine("  accept request  Abort_pfAdapter");
+        Log.System.WriteLine("exit");
+        Log.System.WriteLine();
+        if (File.Exists(CommandLine.File + ".program.txt") == false)
+          Log.System.WriteLine("    Check the *.ts.program.txt existance if inadvertent exit.");
+        RequestAbort = true;                               //アプリ終了要求
+        return;
+      }
+
+
+
+      //新たなxmlが指定された？
+      if (CommandLine.XmlPath != null)
+      {
+        Log.System.WriteLine("  accept request  -xml");
+        setting = Setting.LoadFile(CommandLine.XmlPath);
+
+        if (setting == null)
+        {
+          //　指定ファイルが存在しない
+          Log.System.WriteLine("exit");
+          Log.System.WriteLine();
+          RequestAbort = true;
+          return;                                  //アプリ終了
+        }
+
+
+        //　xml追加引数
+        var xmlCommandLine = setting.sCommandLine
+                                    .Split()
+                                    .Where(one => string.IsNullOrWhiteSpace(one) == false)
+                                    .ToArray();
+        Log.System.WriteLine("  [ Setting.sCommandLine 2 ]");
+        Log.System.WriteLine("    " + setting.sCommandLine);
+        Log.System.WriteLine();
+
+        //　引数再設定
+        CommandLine.Reset();                           //リセット
+        CommandLine.Parse(AppArgs, true, true);        //Appの引数               (入力、ＸＭＬは上書きしない）
+        CommandLine.Parse(xmlCommandLine, true, true); //xmlの追加引数で上書き　（入力、ＸＭＬは上書きしない）
+      }
+
+      Log.System.WriteLine();
+      return;
+    }
+    #endregion
+
+
+
+
+
+
+    #region メインループ
+    /// <summary>
+    /// メインループ
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="writer"></param>
+    static void MainLoop(InputReader reader, OutputWriter writer)
+    {
+      int timeUpdateTitle = 0;
+      int timeGCCollect = 0;
+
       while (true)
       {
         //読込み
         byte[] readData = reader.ReadBytes();
-        if (readData == null) continue;                     //値を取得できなかった。（Buffロック失敗、未書込エリアの読込み）
+        if (readData == null) continue;                     //値を取得できない。（Buffロック失敗、未書込エリアの読込み）
         else if (readData.Length == 0) break;               //パイプ切断 ＆ ファイル終端
 
 
@@ -281,36 +388,36 @@ namespace pfAdapter
 
 
 
-        //ウィンドウタイトル更新
-        if (1 * 1000 < Environment.TickCount - timeUpdateTitle)                          //Nsec毎
+        //コンソールタイトル更新
+        if (0.9 * 1000 < Environment.TickCount - timeUpdateTitle)
         {
           string status = string.Format("[file] {0,5:f2} MiB/s  [pipe,file] {1,4},{2,4} MiB    [mem] cur {3,4:f1}, avg {4,4:f1}, max {5,4:f1}",
-                           (double)(reader.tickReadSpeed / 1024 / 1024),                 //ファイル読込み速度
-                           (int)(LogStatus.TotalPipeRead / 1024 / 1024),                 //ファイル読込み量
-                           (int)(LogStatus.TotalFileRead / 1024 / 1024),                 //パイプ読込み量
-                           ((double)System.GC.GetTotalMemory(false) / 1024 / 1024),      //メモリ使用量  現在
-                           LogStatus.Memory_Avg,                                         //              平均
-                           LogStatus.Memory_Max                                          //              最大
-                           );
+                            (double)(reader.ReadSpeed / 1024 / 1024),                    //読込み速度　ファイル
+                            (int)(LogStatus.TotalPipeRead / 1024 / 1024),                //総読込み量　ファイル
+                            (int)(LogStatus.TotalFileRead / 1024 / 1024),                //総読込み量　パイプ
+                            ((double)System.GC.GetTotalMemory(false) / 1024 / 1024),     //メモリ使用量  現在
+                            LogStatus.Memory_Avg,                                        //              平均
+                            LogStatus.Memory_Max                                         //              最大
+                            );
+
           Console.Title = "(" + DateTime.Now.ToString("T") + ") " + status;              //タイトル更新
 
           if (DateTime.Now.Minute % 1 == 0
-                && DateTime.Now.Second % 60 == 0)                                        //Nmin毎にコンソール書込み
+                && DateTime.Now.Second % 60 == 0)                                        //コンソール
             Console.Error.WriteLine("  " + status);
 
           if (DateTime.Now.Minute % 5 == 0
-                && DateTime.Now.Second % 60 == 0)                                        //Nmin毎にログ書込み
+                && DateTime.Now.Second % 60 == 0)                                        //ログファイル
             Log.System.WriteLine("  " + status);
 
           timeUpdateTitle = Environment.TickCount;
-
         }
 
 
-        //ガベージコレクター実行
-        if (345 < Environment.TickCount - timeGCCollect)   //Nms毎
+        //ガベージコレクター
+        if (345 < Environment.TickCount - timeGCCollect)
         {
-          LogStatus.Log_UsedMemory();                      //メモリ使用量記録
+          LogStatus.Log_UsedMemory();
           GC.Collect();
           timeGCCollect = Environment.TickCount;
         }
@@ -318,47 +425,29 @@ namespace pfAdapter
       }
 
 
-
-
-      //
       //終了処理
-      //
-      Log.System.WriteLine(LogStatus.ToString());
+      Log.System.WriteLine();
+      Log.System.WriteLine();
+      Log.System.WriteLine(LogStatus.OutText_TotalRead());
       reader.Close();
       writer.Close();
-
-      MidProcessManager.CancelTask();                      //MidProcess中断
-
-
-      //
-      //PostProcess
-      //
-      if (CommandLine.PostPrc.HasValue)                    //引数あり、引数を優先
-      {
-        if ((bool)CommandLine.PostPrc)                     //　-PostPrc 1
-          setting.PostProcessList.Run("[ PostProcess ]");
-      }
-      else if (0 < setting.PostProcessList.bEnable)        //引数なし & 設定ファイルでtrue
-      {
-        setting.PostProcessList.Run("[ PostProcess ]");
-      }
+    }
+    #endregion
 
 
-      Log.System.WriteLine("exit");
-      Log.System.WriteLine();
-      Log.System.WriteLine();
 
-
-    }//func
   }//class
 
 
 
 
-  //======================================
-  //コマンドライン引数
-  //======================================
-  #region CommandLineParser
+
+
+
+  #region コマンドライン引数
+  /// <summary>
+  /// コマンドライン引数を処理する。
+  /// </summary>
   static class CommandLine
   {
     public static String Pipe { get; private set; }        //未割り当てだとnull
@@ -376,9 +465,17 @@ namespace pfAdapter
     //
     //コンストラクター
     //  置換に使われるときにnullだとエラーがでるので空文字列をいれる。
-    static CommandLine() { Pipe = File = string.Empty; Limit = MidInterval = -1; }
-    //初期値に設定（入力以外）
-    public static void ResetArgs()
+    static CommandLine()
+    {
+      Pipe = File = string.Empty;
+      Limit = MidInterval = -1;
+    }
+
+
+    /// <summary>
+    /// 初期値に設定する。（入力以外）
+    /// </summary>
+    public static void Reset()
     {
       XmlPath = null;
       InputLog = new bool();           //boolの規定値はfalse
@@ -390,11 +487,24 @@ namespace pfAdapter
       PostPrc = new bool?();
       Abort = new bool();
     }
-    public static void ResetXmlPath() { XmlPath = null; }
 
 
-    //
-    //引数解析
+    /// <summary>
+    /// XmlPathを削除する。
+    /// </summary>
+    public static void ResetXmlPath()
+    {
+      XmlPath = null;
+    }
+
+
+
+    /// <summary>
+    /// 引数解析
+    /// </summary>
+    /// <param name="args">解析する引数</param>
+    /// <param name="except_input">入力に関する項目を更新しない</param>
+    /// <param name="except_xml">ｘｍｌパスを更新しない</param>
     public static void Parse(string[] args, bool except_input = false, bool except_xml = false)
     {
 
@@ -407,72 +517,78 @@ namespace pfAdapter
 
       for (int i = 0; i < args.Count(); i++)
       {
-        string name, param = "";
-        double parse;
-        name = args[i].ToLower();                          //引数を小文字に変換
-        param = (i + 1 < args.Count()) ? args[i + 1] : "";
+        string key, sValue;
+        bool canParse;
+        double dValue;
 
-        if (name.IndexOf("-") == 0 || name.IndexOf("/") == 0)
-          name = name.Substring(1, name.Length - 1);       //  - / をはずす
+        key = args[i].ToLower();
+        sValue = (i + 1 < args.Count()) ? args[i + 1] : "";
+        canParse = double.TryParse(sValue, out dValue);
+
+
+        //  - / をはずす
+        if (key.IndexOf("-") == 0 || key.IndexOf("/") == 0)
+          key = key.Substring(1, key.Length - 1);
         else
           continue;
 
 
-        switch (name)
+        //小文字で比較
+        switch (key)
         {
-          //小文字で比較
-          case "pipe":
+          case "npipe":
             if (except_input == false)
-              Pipe = param;
+              Pipe = sValue;
             break;
 
           case "file":
             if (except_input == false)
-            {
-              //ファイルが存在しなくてもいい。パス形式かをチェックする。
-              //ファイルの存在はFileReader作成時に確認。
-              try
-              {
-                var fi = new FileInfo(param);
-                File = param;
-              }
-              catch { }                //ファイルパスの形式が無効
-            }
+              File = sValue;
             break;
 
           case "xml":
             if (except_xml == false)
-            {
-              XmlPath = param;
-            }
+              XmlPath = sValue;
             break;
 
           case "inputlog":
-            ////InputLog = true;       //必要な時以外はコメントアウトで無効化
+            ////this.InputLog = true;       //必要な時以外はコメントアウトで無効化
+            break;
+
+
+          case "limit":
+            if (canParse)
+              Limit = (0 < dValue) ? dValue : -1;
+            break;
+
+          case "midint":
+            if (canParse)
+              MidInterval = (0 < dValue) ? dValue : -1;
             break;
 
           case "abort_pfadapter":
             Abort = true;
             break;
 
-          case "limit":
-          case "midint":
+
           case "extcmd":
+            if (canParse)
+              ExtCmd = (0 < dValue);
+            break;
+
           case "preprc":
+            if (canParse)
+              PrePrc = (0 < dValue);
+            break;
+
           case "midprc":
+            if (canParse)
+              MidPrc = (0 < dValue);
+            break;
+
           case "postprc":
-            if (double.TryParse(param, out parse))         //paramを数値に変換
-            {
-              switch (name)
-              {
-                case "limit": Limit = (0 < parse) ? parse : -1; break;
-                case "midint": MidInterval = (0 < parse) ? parse : -1; break;
-                case "extcmd": ExtCmd = (0 < parse); break;
-                case "preprc": PrePrc = (0 < parse); break;
-                case "midprc": MidPrc = (0 < parse); break;
-                case "postprc": PostPrc = (0 < parse); break;
-              }
-            }
+            if (canParse)
+              PostPrc = (0 < dValue);
             break;
 
           default:
@@ -484,22 +600,29 @@ namespace pfAdapter
     }//func
 
 
+    /// <summary>
+    /// コマンドライン一覧を出力する。
+    /// </summary>
+    /// <returns></returns>
     public static new string ToString()
     {
       var sb = new StringBuilder();
-      sb.AppendLine("  Args.Pipe        = " + CommandLine.Pipe);
-      sb.AppendLine("  Args.File        = " + CommandLine.File);
-      sb.AppendLine("  Args.XmlPath     = " + CommandLine.XmlPath);
-      sb.AppendLine("  Args.Limit       = " + CommandLine.Limit);
-      sb.AppendLine("  Args.MidInterval = " + CommandLine.MidInterval);
-      sb.AppendLine("  Args.ExtCmd      = " + CommandLine.ExtCmd);
-      sb.AppendLine("  Args.PrePrc      = " + CommandLine.PrePrc);
-      sb.AppendLine("  Args.MidPrc      = " + CommandLine.MidPrc);
-      sb.AppendLine("  Args.PostPrc     = " + CommandLine.PostPrc);
+      sb.AppendLine("    Pipe        = " + Pipe);
+      sb.AppendLine("    File        = " + File);
+      sb.AppendLine("    XmlPath     = " + XmlPath);
+      sb.AppendLine("    Limit       = " + Limit);
+      sb.AppendLine("    MidInterval = " + MidInterval);
+      sb.AppendLine("    ExtCmd      = " + ExtCmd);
+      sb.AppendLine("    PrePrc      = " + PrePrc);
+      sb.AppendLine("    MidPrc      = " + MidPrc);
+      sb.AppendLine("    PostPrc     = " + PostPrc);
       return sb.ToString();
     }
+
+
   }//calss
   #endregion
+
 
 
 

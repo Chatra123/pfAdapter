@@ -41,7 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Text\ExceptionInfo.cs" />
+    <Compile Include="Exception\ExceptionInfo.cs" />
+    <Compile Include="Text\XmlRW.cs" />
     <Compile Include="Text\FileRW.cs" />
     <Compile Include="Text\Setting.cs" />
     <Compile Include="Client\Client.cs" />

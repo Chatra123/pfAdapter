@@ -12,18 +12,10 @@ using System.Text.RegularExpressions;
 
 namespace pfAdapter
 {
-  //設定ファイルの置換マクロ用の値を中継。
-  public static class MacroForPath
-  {
-    public static string SubDir { get; private set; }
-    public static void SetValue(Setting setting)
-    {
-      SubDir = setting.sSubDir.Trim();
-    }
-  }
 
-
-
+  /// <summary>
+  /// クライアントのリスト
+  /// </summary>
   [Serializable]
   public class ClientList
   {
@@ -32,8 +24,10 @@ namespace pfAdapter
     public double dRandDelay_sec = 30;
     public List<Client> List = new List<Client>();
 
-
-    public void Run(string logComment = "")
+    /// <summary>
+    /// ClientListを実行する。
+    /// </summary>
+    public void Run()
     {
       //有効？
       if (bEnable <= 0) return;
@@ -45,7 +39,6 @@ namespace pfAdapter
       var rand = new Random(seed);
       Thread.Sleep(rand.Next(0, (int)(dRandDelay_sec * 1000)));
 
-      if (logComment != "") { Log.System.WriteLine(logComment); }
 
       //実行
       for (int i = 0; i < List.Count; i++)
@@ -60,12 +53,14 @@ namespace pfAdapter
 
         client.Start(sessionPath, sessionArgs);
       }
-
-      Log.System.WriteLine();
     }
   }
 
 
+
+  /// <summary>
+  /// 出力用クライアント
+  /// </summary>
   [Serializable]
   public class Client
   {
@@ -78,7 +73,6 @@ namespace pfAdapter
     public double dWaitTimeout_sec = -1;
 
 
-    [XmlIgnore]
     public string Name { get { return Path.GetFileName(sBasePath).Trim(); } }
     [XmlIgnore]
     public Process Process { get; protected set; }
@@ -86,21 +80,22 @@ namespace pfAdapter
     public BinaryWriter StdinWriter { get; protected set; }
 
 
-    //======================================
-    //プロセス作成
-    //======================================
+    /// <summary>
+    /// プロセス作成
+    /// </summary>
+    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
+    /// <param name="sessionArgs">今回のみ使用する引数</param>
+    /// <returns>作成したプロセス</returns>
     protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
     {
-      //無効 or ファイルが存在しない
+      //チェック
       if (bEnable <= 0) return null;
       if (sBasePath == null) return null;
-
-      Thread.Sleep((int)(dDelay_sec * 1000));
 
 
       var prc = new Process();
 
-      //FileName
+      //Path
       sBasePath = sBasePath ?? "";
       sessionPath = sessionPath ?? sBasePath;                                  //指定パスがなければsBasePathを使用
       sessionPath = ReplaceMacro_PathArgs(sessionPath);                        //パス置換
@@ -109,7 +104,7 @@ namespace pfAdapter
 
       //Arguments
       sBaseArgs = sBaseArgs ?? "";
-      sessionArgs = sessionArgs ?? sBaseArgs;                                  //指定パスがなければsBasePathを使用
+      sessionArgs = sessionArgs ?? sBaseArgs;                                  //指定パスがなければsBaseArgsを使用
       sessionArgs = ReplaceMacro_PathArgs(sessionArgs);                        //引数置換
       prc.StartInfo.Arguments = sessionArgs.Trim();
 
@@ -119,15 +114,17 @@ namespace pfAdapter
       Log.System.WriteLine("      SessionPath  :" + sessionPath);
       Log.System.WriteLine("      SessionArgs  :" + sessionArgs);
       Log.System.WriteLine("                   :");
-
+      Log.System.WriteLine();
       return prc;
     }
 
 
 
-    //======================================
-    //引数置換
-    //======================================
+    /// <summary>
+    /// 引数を置換
+    /// </summary>
+    /// <param name="before">置換前の値</param>
+    /// <returns>置換後の値</returns>
     protected string ReplaceMacro_PathArgs(string before)
     {
       if (string.IsNullOrEmpty(before)) return before;
@@ -150,11 +147,6 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$fPathWithoutExt\$", fPathWithoutExt, RegexOptions.IgnoreCase);
       }
 
-      //  MacroForPath
-      if (MacroForPath.SubDir != null)
-        after = Regex.Replace(after, @"\$SubDir\$", MacroForPath.SubDir, RegexOptions.IgnoreCase);
-
-
       //  ProgramInfo
       if (ProgramInfo.GotInfo == true)
       {
@@ -174,14 +166,24 @@ namespace pfAdapter
 
 
 
-    //======================================
-    //プロセス実行  通常実行
-    //======================================
+
+
+    /// <summary>
+    /// プロセス実行  通常実行
+    /// </summary>
+    /// <param name="sessionPath">今回のみ使用するファイルパス。指定がなければsBasePathを使う。</param>
+    /// <param name="sessionArgs">今回のみ使用する引数。指定がなければsBaseArgsを使う。</param>
+    /// <returns>プロセスが実行できたか</returns>
     public bool Start(string sessionPath = null, string sessionArgs = null)
     {
+
       Process = CreateProcess(sessionPath, sessionArgs);
       if (Process == null) return false;
 
+      Thread.Sleep((int)(dDelay_sec * 1000));
+
+
+      //コンソールウィンドウ非表示
       Process.StartInfo.CreateNoWindow = 0 < bNoWindow;
       Process.StartInfo.UseShellExecute = !(0 < bNoWindow);
 
@@ -192,10 +194,10 @@ namespace pfAdapter
         launch = Process.Start();
         if (0 < bWaitForExit)
         {
-          //WaitForExit(int) は-1以外の負数だと例外発生
           if (0 <= dWaitTimeout_sec)
             Process.WaitForExit((int)(dWaitTimeout_sec * 1000));
           else
+            //WaitForExit(int)は-1でない負数だと例外発生
             Process.WaitForExit(-1);
         }
       }
@@ -213,13 +215,19 @@ namespace pfAdapter
 
 
 
-    //======================================
-    //プロセス実行  標準出力の取得
-    //======================================
+    /// <summary>
+    /// プロセス実行  標準出力を取得
+    /// </summary>
+    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
+    /// <param name="sessionArgs">今回のみ使用する引数</param>
+    /// <returns>プロセスが実行できたか</returns>
     public string Start_GetStdout(string sessionArgs = null)
     {
-      Process = CreateProcess(sessionArgs);
+      Process = CreateProcess(null, sessionArgs);
       if (Process == null) return null;
+
+      Thread.Sleep((int)(dDelay_sec * 1000));
+
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
@@ -230,7 +238,8 @@ namespace pfAdapter
       bool launch;
       string results;
       try
-      {//標準出力を読み取る、プロセス終了まで待機
+      {
+        //標準出力を読み取る、プロセス終了まで待機
         launch = Process.Start();
         results = Process.StandardOutput.ReadToEnd();
         Process.WaitForExit();
@@ -251,16 +260,25 @@ namespace pfAdapter
 
 
 
+
+  /// <summary>
+  /// 標準入力への出力用クライアント
+  /// </summary>
   [Serializable]
   public class Client_WriteStdin : Client
   {
-    //======================================
-    //プロセス実行　標準入力に書き込む
-    //======================================
+    /// <summary>
+    /// プロセス実行  標準入力に書き込む
+    /// </summary>
+    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
+    /// <param name="sessionArgs">今回のみ使用する引数</param>
+    /// <returns>プロセスが実行できたか</returns>
     public bool Start_WriteStdin(string sessionArgs = null)
     {
-      Process = CreateProcess(sessionArgs);
+      Process = CreateProcess(null, sessionArgs);
       if (Process == null) return false;
+
+      Thread.Sleep((int)(dDelay_sec * 1000));
 
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
@@ -268,21 +286,19 @@ namespace pfAdapter
 
       //入出力のリダイレクト
       //標準入力
-      Process.StartInfo.RedirectStandardInput = true;                          //リダイレクト
+      Process.StartInfo.RedirectStandardInput = true;
 
       //標準出力
-      Process.StartInfo.RedirectStandardOutput = false;                        //リダイレクトしない
-      ////Process.OutputDataReceived += (o, e) => { };                         //標準出力を捨てる
+      Process.StartInfo.RedirectStandardOutput = false;
 
       //標準エラー
-      //create_lwiのバッファが詰まるのでfalse or 非同期で取り出す
+      //createLwiのバッファが詰まるのでfalse or 非同期で取り出す
       //　falseだとコンソールに表示されるので非同期で取り出して捨てる
       Process.StartInfo.RedirectStandardError = true;
-      //標準エラーを取り出す。表示はしない。
+      //標準エラーを取り出す。
       Process.ErrorDataReceived += (o, e) =>
       {
-        ////if (String.IsNullOrEmpty(e.Data) == false)
-        ////  Console.Error.WriteLine(e.Data);    //標準エラー表示
+        //do nothing
       };
 
 
@@ -292,7 +308,6 @@ namespace pfAdapter
       {
         launch = Process.Start();
         StdinWriter = new BinaryWriter(Process.StandardInput.BaseStream);      //同期　　書き込み用ライター
-        ////Process.BeginOutputReadLine();                                       //非同期　標準出力を取得
         Process.BeginErrorReadLine();                                          //非同期　標準エラーを取得
       }
       catch (Exception exc)
@@ -311,34 +326,46 @@ namespace pfAdapter
 
 
 
-  //======================================
-  //ファイル出力用ライター　　　　デバッグ用
-  //======================================
+
   #region Client_OutFile
+  /// <summary>
+  /// ファイル出力用クライアント
+  /// </summary>
+  ///  StdinWriterにデータを書き込むとそのままファイル出力する。　　デバッグ用
   public class Client_OutFile : Client_WriteStdin
   {
     public Client_OutFile()
     {
       bEnable = 1;
-      //ダミーProcess      if (client.Process.HasExited==false)回避用
+
+      //ダミーのProcessを割り当てる。プロセスの生存チェック回避用。
+      //if (client.Process.HasExited==false)を回避する。
       Process = Process.GetCurrentProcess();
-      StdinWriter = GetOutFileWriter();
+      StdinWriter = CreateOutFileWriter();
     }
-    BinaryWriter GetOutFileWriter()
+
+    /// <summary>
+    /// ファイル出力ライター作成
+    /// </summary>
+    private BinaryWriter CreateOutFileWriter()
     {
-      string outDir = @"E:\__out2_pfAdapter\";
-      int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
-      string timestamp = DateTime.Now.ToString("MMdd_HHmm");
-      string outPath = Path.Combine(outDir, "_Outfile-pfAdapter_" + timestamp + "_" + pid + ".ts");
+      string outfilePath = new Func<string>(() =>
+      {
+        string outDir = @"E:\";
+        int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+        string timestamp = DateTime.Now.ToString("MMdd_HHmm");
+        return Path.Combine(outDir, "_Outfile-pfAdapter_" + timestamp + "_" + pid + ".ts");
+      })();
+
       try
       {
-        var stream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+        var stream = new FileStream(outfilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
         var writer = new BinaryWriter(stream);
         return writer;
       }
       catch
       {
-        return null;
+        throw new IOException("Client_OutFileの作成に失敗。ファイル出力先パスを確認。");
       }
     }
 
