@@ -1,18 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-
 
 namespace pfAdapter
 {
-
   //================================
   //XML読込み、書込み
   //================================
-  class XmlRW
+  internal class XmlRW
   {
     /// <summary>
     /// XmlFileを読み込みオブジェクトに変換
@@ -28,7 +22,6 @@ namespace pfAdapter
       var serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
       for (int i = 1; i <= 5; i++)
       {
-
         try
         {
           //FileStream  共有設定  FileShare.Read
@@ -62,8 +55,6 @@ namespace pfAdapter
       return default(T);
     }
 
-
-
     /// <summary>
     /// XmlFileを読み込みオブジェクトに変換する。読込成功したファイルのバックアップを作成する。
     /// </summary>
@@ -76,9 +67,6 @@ namespace pfAdapter
       Save_withBackup<T>(fileName, loadone);               //読込み成功したファイルをバックアップ
       return loadone;
     }
-
-
-
 
     /// <summary>
     /// XmlFileに保存する
@@ -109,8 +97,6 @@ namespace pfAdapter
       return false;
     }
 
-
-
     /// <summary>
     /// XmlFileに保存する。既存のファイルをリネームしてバックアップをとる。
     /// </summary>
@@ -133,8 +119,5 @@ namespace pfAdapter
       //設定保存
       return Save(filename, settings);
     }
-
-
-
   }
 }

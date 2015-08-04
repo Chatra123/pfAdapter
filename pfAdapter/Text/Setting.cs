@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Xml.Serialization;
 
 namespace pfAdapter
 {
-
   [Serializable]
   public class Setting
   {
@@ -28,8 +24,6 @@ namespace pfAdapter
             AppName = Path.GetFileNameWithoutExtension(AppPath),
             DefXmlName = AppName + ".xml";
 
-
-
     /// <summary>
     /// 設定ファイルを読み込む
     /// </summary>
@@ -37,7 +31,6 @@ namespace pfAdapter
     /// <returns>読込んだ設定</returns>
     public static Setting LoadFile(string xmlpath = null)
     {
-
       //指定されたファイルがない？
       if (string.IsNullOrEmpty(xmlpath) == false && File.Exists(xmlpath) == false)
       {
@@ -45,7 +38,6 @@ namespace pfAdapter
         Log.System.WriteLine("XmlPath  :" + xmlpath);
         return null;
       }
-
 
       if (xmlpath == null)
       {
@@ -65,17 +57,10 @@ namespace pfAdapter
       file.sCommandLine = (string.IsNullOrWhiteSpace(file.sCommandLine))
                               ? new String(' ', 8) : file.sCommandLine;
 
-
       XmlRW.Save(xmlpath, file);                 //古いバージョンのファイルなら新たに追加された項目がxmlに加わる。
-
 
       return file;
     }
-
-
-
-
-
 
     /// <summary>
     /// サンプル設定Ａ　　通常使用を想定
@@ -100,7 +85,6 @@ namespace pfAdapter
 
       //PreProcessList
       setting.PreProcessList.List = new List<Client>() { sampleClient, };
-
 
       //ClientList_WriteStdin
       setting.ClientList_WriteStdin = new List<Client_WriteStdin>()
@@ -128,7 +112,6 @@ namespace pfAdapter
         },
       };
 
-
       //MidProcessList
       setting.MidProcessList.List = new List<Client>()
       {
@@ -141,7 +124,7 @@ namespace pfAdapter
       };
 
       //PostProcessList
-      setting.PostProcessList.List = new List<Client>() 
+      setting.PostProcessList.List = new List<Client>()
       {
         //LGLauncher
         new Client()
@@ -160,9 +143,6 @@ namespace pfAdapter
       return setting;
     }
 
-
-
-
     /// <summary>
     /// サンプル設定Ｂ　　pfAdapterの動作テスト用
     /// </summary>
@@ -179,7 +159,7 @@ namespace pfAdapter
       };
 
       //ClientList_WriteStdin
-      setting.ClientList_WriteStdin = new List<Client_WriteStdin>() 
+      setting.ClientList_WriteStdin = new List<Client_WriteStdin>()
       {
         //Caption2Ass_PCR_pf
         new Client_WriteStdin()
@@ -191,13 +171,5 @@ namespace pfAdapter
       };
       return setting;
     }
-
-
-
-
-
-
-
-
   }//class
 }

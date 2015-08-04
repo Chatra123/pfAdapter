@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using System.Diagnostics;
-using System.Xml.Serialization;
-using System.Threading;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
-
+using System.Threading;
+using System.Xml.Serialization;
 
 namespace pfAdapter
 {
-
   /// <summary>
   /// クライアントのリスト
   /// </summary>
@@ -39,7 +35,6 @@ namespace pfAdapter
       var rand = new Random(seed);
       Thread.Sleep(rand.Next(0, (int)(dRandDelay_sec * 1000)));
 
-
       //実行
       for (int i = 0; i < List.Count; i++)
       {
@@ -56,8 +51,6 @@ namespace pfAdapter
     }
   }
 
-
-
   /// <summary>
   /// 出力用クライアント
   /// </summary>
@@ -66,19 +59,20 @@ namespace pfAdapter
   {
     //ＸＭＬに保存する値
     public int bEnable = 1;
+
     public double dDelay_sec = 0;
     public string sBasePath, sBaseArgs;
     public int bNoWindow = 1;
     public int bWaitForExit = 1;
     public double dWaitTimeout_sec = -1;
 
-
     public string Name { get { return Path.GetFileName(sBasePath).Trim(); } }
+
     [XmlIgnore]
     public Process Process { get; protected set; }
+
     [XmlIgnore]
     public BinaryWriter StdinWriter { get; protected set; }
-
 
     /// <summary>
     /// プロセス作成
@@ -91,7 +85,6 @@ namespace pfAdapter
       //チェック
       if (bEnable <= 0) return null;
       if (sBasePath == null) return null;
-
 
       var prc = new Process();
 
@@ -108,7 +101,6 @@ namespace pfAdapter
       sessionArgs = ReplaceMacro_PathArgs(sessionArgs);                        //引数置換
       prc.StartInfo.Arguments = sessionArgs.Trim();
 
-
       Log.System.WriteLine("      BasePath     :" + sBasePath);
       Log.System.WriteLine("      BaseArgs     :" + sBaseArgs);
       Log.System.WriteLine("      SessionPath  :" + sessionPath);
@@ -117,8 +109,6 @@ namespace pfAdapter
       Log.System.WriteLine();
       return prc;
     }
-
-
 
     /// <summary>
     /// 引数を置換
@@ -163,11 +153,6 @@ namespace pfAdapter
       return after;
     }
 
-
-
-
-
-
     /// <summary>
     /// プロセス実行  通常実行
     /// </summary>
@@ -176,12 +161,10 @@ namespace pfAdapter
     /// <returns>プロセスが実行できたか</returns>
     public bool Start(string sessionPath = null, string sessionArgs = null)
     {
-
       Process = CreateProcess(sessionPath, sessionArgs);
       if (Process == null) return false;
 
       Thread.Sleep((int)(dDelay_sec * 1000));
-
 
       //コンソールウィンドウ非表示
       Process.StartInfo.CreateNoWindow = 0 < bNoWindow;
@@ -212,9 +195,6 @@ namespace pfAdapter
       return launch;
     }
 
-
-
-
     /// <summary>
     /// プロセス実行  標準出力を取得
     /// </summary>
@@ -227,7 +207,6 @@ namespace pfAdapter
       if (Process == null) return null;
 
       Thread.Sleep((int)(dDelay_sec * 1000));
-
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
@@ -257,10 +236,6 @@ namespace pfAdapter
     }
   }
 
-
-
-
-
   /// <summary>
   /// 標準入力への出力用クライアント
   /// </summary>
@@ -279,7 +254,6 @@ namespace pfAdapter
       if (Process == null) return false;
 
       Thread.Sleep((int)(dDelay_sec * 1000));
-
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
@@ -301,7 +275,6 @@ namespace pfAdapter
         //do nothing
       };
 
-
       //プロセス実行
       bool launch;
       try
@@ -320,14 +293,10 @@ namespace pfAdapter
       }
       return launch;
     }
-
   }
 
-
-
-
-
   #region Client_OutFile
+
   /// <summary>
   /// ファイル出力用クライアント
   /// </summary>
@@ -368,11 +337,7 @@ namespace pfAdapter
         throw new IOException("Client_OutFileの作成に失敗。ファイル出力先パスを確認。");
       }
     }
-
   }
-  #endregion
 
-
-
-
+  #endregion Client_OutFile
 }

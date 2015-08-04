@@ -1,30 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Diagnostics;
-using System.Xml.Serialization;
-using System.Threading;
+﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace pfAdapter
 {
-  static class MidProcessManager
+  internal static class MidProcessManager
   {
-    static bool Enable = false;
-    static ClientList midProcessList;
-    static readonly object syncTask = new object();        //Taskは１つずつ実行する
-    static Queue<Task> taskQueue = new Queue<Task>();
-    static Task activeTask;                                //実行中のTaskへの参照
+    private static bool Enable = false;
+    private static ClientList midProcessList;
+    private static readonly object syncTask = new object();        //Taskは１つずつ実行する
+    private static Queue<Task> taskQueue = new Queue<Task>();
+    private static Task activeTask;                                //実行中のTaskへの参照
 
-    static System.Timers.Timer enqueTimer, dequeTimer;
-    static double tickInterval_min;                        //midProcessListを実行する間隔
-    static int taskTickCounter = 0;                        //実行回数、Mid:１..Ｎ、Pre:０、Post:－１
-
-
-
+    private static System.Timers.Timer enqueTimer, dequeTimer;
+    private static double tickInterval_min;                        //midProcessListを実行する間隔
+    private static int taskTickCounter = 0;                        //実行回数、Mid:１..Ｎ、Pre:０、Post:－１
 
     /// <summary>
     /// 初期化
@@ -46,10 +37,11 @@ namespace pfAdapter
       dequeTimer.Interval = 10 * 1000;
       dequeTimer.Elapsed += OnTimedEvent_deque;
     }
-    public static void SetEnable() { Enable = true; }
 
-
-
+    public static void SetEnable()
+    {
+      Enable = true;
+    }
 
     /// <summary>
     /// タイマーを動かす。
@@ -68,9 +60,6 @@ namespace pfAdapter
         }
       }
     }
-
-
-
 
     /// <summary>
     /// プロセスリスト実行用のTaskを追加
@@ -94,7 +83,6 @@ namespace pfAdapter
       }
     }
 
-
     /// <summary>
     /// パス、引数用の置換
     /// </summary>
@@ -108,9 +96,6 @@ namespace pfAdapter
       return after;
     }
 
-
-
-
     /// <summary>
     /// Taskを実行
     /// </summary>
@@ -119,7 +104,6 @@ namespace pfAdapter
       if (Enable == false) return;
       if (Monitor.TryEnter(syncTask, 30) == true)           //ロック
       {
-
         if (0 < taskQueue.Count)
         {
           activeTask = taskQueue.Dequeue();
@@ -128,9 +112,6 @@ namespace pfAdapter
         Monitor.Exit(syncTask);                            //ロック解除
       }
     }
-
-
-
 
     /// <summary>
     /// 全タスクをキャンセル、タスクが終了するまで待機
@@ -150,7 +131,6 @@ namespace pfAdapter
         dequeTimer.Enabled = false;
         taskQueue.Clear();
       }
-
 
       //activeTask、OnTimedEvent_enque関数、OnTimedEvent_deque関数の中を実行中なら終了まで待機
       //ロックが３回取得できたら処理が終了していると判断する。
@@ -172,20 +152,5 @@ namespace pfAdapter
       Log.System.WriteLine("  MidProcess is canceled");
       Log.System.WriteLine();
     }
-
-
-
-
   }
 }
-
-
-
-
-
-
-
-
-
-
-
