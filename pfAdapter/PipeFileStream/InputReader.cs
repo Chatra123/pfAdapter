@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 
@@ -11,34 +7,32 @@ namespace pfAdapter
   /// <summary>
   /// パケットサイズ参照用
   /// </summary>
-  static class Packet { public const int Size = 188; }     //任意の値、188以外でもいい
-
+  internal static class Packet { public const int Size = 188; }     //任意の値、188以外でもいい
 
   /// <summary>
   /// データをパイプ、ファイル経由で取り出す
   /// </summary>
-  class InputReader
+  internal class InputReader
   {
-    string PipeName, FilePath;
-    BufferedPipeClient pipeReader;
-    FileStream fileStream;
-    BinaryReader fileReader;
-    long filePositon;                                      //次に読み込むバイトの位置
-
+    private string PipeName, FilePath;
+    private BufferedPipeClient pipeReader;
+    private FileStream fileStream;
+    private BinaryReader fileReader;
+    private long filePositon;                                      //次に読み込むバイトの位置
 
     public double ReadSpeed { get; private set; }          //ファイル読込速度     　byte/sec　表示用
-    double ReadSpeedLimit = -1;                            //ファイル読込速度上限　 byte/sec ０以下なら制限しない
-    double tickReadSize = 0;                               //速度計算用　　ファイル読込量
-    int tickBeginTime = Environment.TickCount;             //速度計算用  　計測開始時間
-    int timeAppStart = Environment.TickCount;              //アプリ起動時間
-    int timeReadValuePacket = int.MaxValue;                //最後に値パケットを読み込んだ時間
-
-
+    private double ReadSpeedLimit = -1;                            //ファイル読込速度上限　 byte/sec ０以下なら制限しない
+    private double tickReadSize = 0;                               //速度計算用　　ファイル読込量
+    private int tickBeginTime = Environment.TickCount;             //速度計算用  　計測開始時間
+    private int timeAppStart = Environment.TickCount;              //アプリ起動時間
+    private int timeReadValuePacket = int.MaxValue;                //最後に値パケットを読み込んだ時間
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public InputReader() { }
+    public InputReader()
+    {
+    }
 
     public void Close()
     {
@@ -46,9 +40,6 @@ namespace pfAdapter
       if (fileReader != null) fileReader.Close();
       if (fileStream != null) fileStream.Close();
     }
-
-
-
 
     /// <summary>
     /// 設定を変更する。
@@ -66,7 +57,6 @@ namespace pfAdapter
       if (0 < newLimit_MiBsec)
         ReadSpeedLimit = newLimit_MiBsec * 1024 * 1024;
 
-
       //ログ
       if (pipeReader != null && pipeReader.IsConnected)
         Log.System.WriteLine("    pipe          buffmax = {0,2:N0}    MiB", pipeReader.BuffMaxSize / 1024 / 1024);
@@ -75,9 +65,6 @@ namespace pfAdapter
         Log.System.WriteLine("    fileReader      limit = {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
       Log.System.WriteLine();
     }
-
-
-
 
     /// <summary>
     /// パイプ接続、ファイル確認
@@ -103,7 +90,6 @@ namespace pfAdapter
         }
       }
 
-
       //ファイル
       if (string.IsNullOrEmpty(FilePath) == false)
         for (int i = 0; i < 4 * 10; i++)
@@ -116,7 +102,6 @@ namespace pfAdapter
           }
           Thread.Sleep(250);           //まだファイルが作成されていない？
         }
-
 
       //ログ
       if (pipeReader != null && pipeReader.IsConnected)
@@ -131,14 +116,8 @@ namespace pfAdapter
 
       Log.System.WriteLine();
 
-
       return pipeReader != null || fileReader != null;
     }
-
-
-
-
-
 
     /// <summary>
     /// データ読込
@@ -151,7 +130,6 @@ namespace pfAdapter
     /// </remarks>
     public byte[] ReadBytes()
     {
-
       //
       //パイプ読込
       byte[] pipeData = PipeReadBytes();
@@ -172,10 +150,6 @@ namespace pfAdapter
       }
       else
         throw new Exception();         //ここが処理されることはない
-
-
-
-
 
       //
       //ファイル読込
@@ -198,13 +172,7 @@ namespace pfAdapter
       }
       else
         throw new Exception();         //ここが処理されることはない
-
     }//func
-
-
-
-
-
 
     /// <summary>
     /// パイプ読込
@@ -219,7 +187,6 @@ namespace pfAdapter
     {
       if (pipeReader == null) return new byte[] { };
 
-
       //
       //要求データとバッファデータとの位置関係を示す。読込み失敗時の動作を決定する。
       //  Indicator_demandAtBuff =  1      要求データ位置よりバッファがファイル後方にある。
@@ -227,11 +194,8 @@ namespace pfAdapter
       //                         = -1      要求データ位置よりバッファがファイル前方にある。
       int Indicator_demandAtBuff;
 
-
       //パイプ読込
       var pipeData = pipeReader.Read(filePositon, Packet.Size * 3000, out Indicator_demandAtBuff); //Packet.Size * 3072 = 564 KiB
-
-
 
       if (pipeData != null && 0 < pipeData.Length)
       {
@@ -242,7 +206,6 @@ namespace pfAdapter
 
         if (pipeData.Length != Packet.Size * 3000) Thread.Sleep(300);          //要求したデータ量より少ないので待機
         return pipeData;
-
       }
       else if (pipeReader.IsConnected)
       {
@@ -253,7 +216,6 @@ namespace pfAdapter
           //ファイル読込みをしてバッファ位置を追いかける。
           Log.InputRead.WriteLine("    Indicator_demandAtBuff     = 1   Not contain in the buff.  read the file");
           return new byte[] { };
-
         }
         else if (Indicator_demandAtBuff == 0)
         {
@@ -263,7 +225,6 @@ namespace pfAdapter
           Log.InputRead.WriteLine("    fail to lock or Buff doesn't have extra data now");
           Thread.Sleep(30);
           return null;
-
         }
         else if (Indicator_demandAtBuff == -1)
         {
@@ -275,11 +236,8 @@ namespace pfAdapter
           Thread.Sleep(30);
           LogStatus.Indicator_demandAtBuff_m1++;
           return null;
-
         }
       }
-
-
 
       //パイプが閉じた＆バッファにデータがない？
       if (pipeReader.IsConnected == false
@@ -299,13 +257,7 @@ namespace pfAdapter
         //次のループで残りのバッファを読込む。
         return null;
       }
-
     }
-
-
-
-
-
 
     /// <summary>
     /// ファイル読込
@@ -320,11 +272,10 @@ namespace pfAdapter
     {
       if (fileReader == null) return new byte[] { };
 
-
       //
       //読込速度制限
       double tickDuration = Environment.TickCount - tickBeginTime;             //計測開始からの経過時間
-      double tickReadSpeedLimit = ReadSpeedLimit;                              //制限速度 
+      double tickReadSpeedLimit = ReadSpeedLimit;                              //制限速度
 
       if (200 < tickDuration)      //Nmsごとにカウンタリセット
       {
@@ -354,20 +305,13 @@ namespace pfAdapter
         }
       }
 
-
-
-
-
       for (int retry = 0; retry <= 2; retry++)
       {
-
         //
         //ファイル読込み
         fileStream.Seek(filePositon, SeekOrigin.Begin);
         var fileData = fileReader.ReadBytes(Packet.Size * 1000);     //Packet.Size * 1024 = 188 KiB
         tickReadSize += fileData.Length;                             //読込量記録  速度制限用
-
-
 
         //
         //ファイル終端に到達？
@@ -393,7 +337,6 @@ namespace pfAdapter
               Log.System.WriteLine("  Reach EOF with pipe connection. sleep()");
             Thread.Sleep(5 * 1000);
             return null;               //リトライ ReadBytes()
-
           }
           else//パイプが閉じている
           {
@@ -411,8 +354,6 @@ namespace pfAdapter
             }
           }
         }
-
-
 
         //
         //未書込みエリアを読み込んだか？
@@ -455,9 +396,6 @@ namespace pfAdapter
           }
         }
 
-
-
-
         //読込量をログに記録
         if (pipeReader != null)
           LogStatus.FileReadWithPipe += fileData.Length;
@@ -465,25 +403,18 @@ namespace pfAdapter
           LogStatus.FileReadWithoutPipe += fileData.Length;
         LogStatus.Log_ReadFileChunk(fileData.Length);
 
-
         //読込成功
         filePositon += fileData.Length;
         Log.InputRead.WriteLine("  □get file:  len = {0,8:N0}    fpos = {1,12:N0}",
                                   fileData.Length, filePositon);
         return fileData;
-
       }//for  retry
-
 
       throw new Exception("FileReadBytes(): unknown file read");          //ここが処理されることはない
     }//func
 
-
-
-
-
     /// <summary>
-    /// ゼロパケットを含んでいるか？ 
+    /// ゼロパケットを含んでいるか？
     /// </summary>
     /// <param name="readData">調べる対象のデータ</param>
     /// <param name="valueData">値のみにトリムされたデータ</param>
@@ -493,7 +424,7 @@ namespace pfAdapter
     //    先頭５％より後ろがゼロなら valuedData = nullを返す。
     //　  readDataのサイズは”パケットサイズ＊２”以上であること。
     /// </remarks>
-    bool HasZeroPacket(byte[] readData, out byte[] valueData)
+    private bool HasZeroPacket(byte[] readData, out byte[] valueData)
     {
       //データにゼロでない値があるか？
       Func<byte[], bool> HasValue =
@@ -506,7 +437,6 @@ namespace pfAdapter
           return false;
         };
 
-
       int numPacket100 = (int)Math.Floor((double)readData.Length / Packet.Size);         //総パケット数
 
       //　総パケット数が２未満なら処理できない。
@@ -516,15 +446,11 @@ namespace pfAdapter
         throw new Exception("HasZeroPacket():  numPacket100 < 2");
       }
 
-
-
       int numPacket005 = (int)(0.05 * numPacket100);       //総パケット数の５％
       numPacket005 = 1 < numPacket005 ? numPacket005 : 1;  //１以上
       var packet = new byte[Packet.Size];                  //作業用パケット
       valueData = new byte[] { };                         //戻り値の値パケット
       bool hasZeroPacket = false;                          //戻り値のbool
-
-
 
       for (int i = numPacket100 - 1; 0 < i; i -= numPacket005)
       {
@@ -543,20 +469,19 @@ namespace pfAdapter
           hasZeroPacket = true;
       }
 
-
       //値が取得できないときはnullを返す。
       if (valueData.Length == 0) valueData = null;
 
       return hasZeroPacket;
-
     }
+
     /*
      *  numPakcet100 = 100
      *  numPakcet005 =   5
      *
      *             i =      0   ...  19   ...  39   ...  59   ...  79   ...  99
      *                ｜■■■■｜■■■■｜■■■■｜■■■□｜□□□□｜□□□□｜□
-     *                                                  
+     *
      *                                                                   ｜     ：パケットの境界
      *                                                                ■■■■  ：値パケット
      *                                                                ■■■□  ：一部値パケット
@@ -565,43 +490,10 @@ namespace pfAdapter
      *  処理
      *  ・まず最初に最後尾 i = 99からゼロパケットか調べる。
      *  ・ゼロパケットなら５％だけ戻り i = 94を調べる。
-     *  ・i = 59 パケットで値をみつける。 
+     *  ・i = 59 パケットで値をみつける。
      *  ・i = 0 .. 58 を値パケットとして返す。
      *  ・末尾に１パケット未満のデータあれば常に切り捨てる。ここでは i = 99パケットの後ろ。
-     *  
+     *
      */
-
-
-
-
   }//class
 }//namespace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

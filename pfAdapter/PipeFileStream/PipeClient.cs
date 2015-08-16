@@ -1,35 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Security.Principal;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace pfAdapter
 {
   /// <summary>
   /// バッファ付きパイプクライアント
   /// </summary>
-  class BufferedPipeClient : PipeClient
+  internal class BufferedPipeClient : PipeClient
   {
-    Task taskPipeReader;                                   //パイプ読込タスク
-    CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
+    private Task taskPipeReader;                                   //パイプ読込タスク
+    private CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
     private readonly object syncBuff = new object();
 
     public List<byte> Buff;
-    bool ClearBuff_Flag = false;                           //バッファ追加失敗時にBuffをクリアする
-    long ClearBuff_AdvancePos = 0;                         //バッファクリア時に進めるファイルポジション
+    private bool ClearBuff_Flag = false;                           //バッファ追加失敗時にBuffをクリアする
+    private long ClearBuff_AdvancePos = 0;                         //バッファクリア時に進めるファイルポジション
     public int BuffMaxSize { get; private set; }
 
-    long BuffBottomPos { get { lock (syncBuff) { return BuffTopPos + Buff.Count() - 1; } } }
-    long BuffTopPos = 0;                                   //Buff先頭バイトのファイルにおける位置
-    int timeReduceMemory;                                  //最後にBuff.Capacity削減を試みたTickCount
-
-
-
+    private long BuffBottomPos { get { lock (syncBuff) { return BuffTopPos + Buff.Count() - 1; } } }
+    private long BuffTopPos = 0;                                   //Buff先頭バイトのファイルにおける位置
+    private int timeReduceMemory;                                  //最後にBuff.Capacity削減を試みたTickCount
 
     /// <summary>
     /// コンストラクタ
@@ -50,7 +45,6 @@ namespace pfAdapter
       taskCanceller = new CancellationTokenSource();
       taskPipeReader = Task.Factory.StartNew(DataPipeReader, taskCanceller.Token);
 
-
       //デバッグ用ログ
       if (Packet.Size < 10)
       {
@@ -61,8 +55,6 @@ namespace pfAdapter
 #pragma warning restore 0162
       }
     }
-
-
 
     /// <summary>
     /// バッファサイズ変更、拡張のみ
@@ -76,10 +68,6 @@ namespace pfAdapter
         BuffMaxSize = BuffMaxSize < newSize_B ? newSize_B : BuffMaxSize;
       }
     }
-
-
-
-
 
     /// <summary>
     /// 終了処理
@@ -104,9 +92,6 @@ namespace pfAdapter
     {
       Close();
     }
-
-
-
 
     /// <summary>
     /// 要求されたデータがバッファ内にあるか？
@@ -137,11 +122,6 @@ namespace pfAdapter
       return hasData;
     }
 
-
-
-
-
-
     /// <summary>
     /// パイプバッファから読込む
     /// </summary>
@@ -156,8 +136,6 @@ namespace pfAdapter
       Indicator_demandAtBuff = 0;
       if (pipeClient == null || ClearBuff_Flag) return null;                   //パイプ未作成 or バッファ未クリア
 
-
-
       if (Monitor.TryEnter(syncBuff, 100) == true)         //ロック
       {
         Log.InputRead.WriteLine("  BuffTopPos {0,12:N0}  len {1,10:N0}", BuffTopPos, Buff.Count());
@@ -170,7 +148,6 @@ namespace pfAdapter
         }
         if (demandSize < 0)  //バッファの終端　or　バッファよりファイル後方のファイルポジションを要求
           Log.InputRead.WriteLine("△wait for buff reach to {0,14:N0}", demandTopPos);
-
 
         //
         //要求されたデータがバッファ内にあるか？
@@ -197,13 +174,10 @@ namespace pfAdapter
       else
         LogStatus.FailToLockBuff__Read++;                  //ロック失敗
 
-
       if (retData != null)   //ログに記録
         LogStatus.Log_ReadBuffChunk(retData.Length);
 
-
-
-      // Indicator_demandAtBuff 
+      // Indicator_demandAtBuff
       //       =  1      要求データ位置よりバッファがファイル後方にある。
       //       =  0      要求データ位置がバッファ内にある。
       //       = -1      要求データ位置よりバッファがファイル前方にある。
@@ -216,11 +190,8 @@ namespace pfAdapter
       else
         Indicator_demandAtBuff = -1;
 
-
       return retData;
     }
-
-
 
     /// <summary>
     /// パイプ読込みループ
@@ -241,13 +212,9 @@ namespace pfAdapter
           continue;
         }
 
-
-
-
         //パイプから読み込み
         byte[] readData = null;
         readData = ReadPipe(Packet.Size * 3000);           //Packet.Size * 3072 = 564 KiB
-
 
         //
         //読込成功？
@@ -271,14 +238,11 @@ namespace pfAdapter
           Thread.Sleep(30);
         }
 
-
-
         //
         //バッファに追加
         if (readData != null)
         {
           Log.PipeBuff.WriteByte("Read from pipe     ", readData);
-
 
           if (Monitor.TryEnter(syncBuff, 150) == true)     //ロック
           {
@@ -291,7 +255,6 @@ namespace pfAdapter
               ClearBuff_AdvancePos = 0;
               LogStatus.ClearBuff++;
             }
-
 
             //Bufferに入るサイズか？
             if (readData.Length <= BuffMaxSize)
@@ -307,7 +270,6 @@ namespace pfAdapter
               Buff.AddRange(readData);
               Log.PipeBuff.WriteByte("  +++Add    " + readData.Length + "   Buff", Buff);
 
-
               //
               //ログ
               //バッファへの追加量記録
@@ -322,7 +284,6 @@ namespace pfAdapter
               Log.InputRead.WriteLine("++add  buf {0,7:N0} :   BuffTopPos {1,14:N0}  len {2,10:N0}",
                                               readData.Length, BuffTopPos, Buff.Count());
 
-
               //メモリ削減
               if (1234 * 5 < Environment.TickCount - timeReduceMemory)
               {
@@ -333,8 +294,6 @@ namespace pfAdapter
                   timeReduceMemory = Environment.TickCount;
                 }
               }
-
-
             }
             else
             {
@@ -346,7 +305,6 @@ namespace pfAdapter
               Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + readData.Length) + "  BuffTopPos = " + BuffTopPos);
             }
             Monitor.Exit(syncBuff);    //ロック解除
-
           }
           else
           {
@@ -359,23 +317,15 @@ namespace pfAdapter
             LogStatus.FailToLockBuff_Write++;
           }
         }
-
-
       }//end while
       Log.PipeBuff.WriteLine("  Exit DataPipeReader()");
     }//func
-
-
   }//end class
-
-
-
-
 
   /// <summary>
   /// NamedPipeClient
   /// </summary>
-  class PipeClient
+  internal class PipeClient
   {
     protected NamedPipeClientStream pipeClient;
 
@@ -389,19 +339,18 @@ namespace pfAdapter
                               PipeOptions.None, TokenImpersonationLevel.None);
     }
 
-
     /// <summary>
     /// Close
     /// </summary>
-    public void Close() { if (pipeClient != null) pipeClient.Close(); }
-
+    public void Close()
+    {
+      if (pipeClient != null) pipeClient.Close();
+    }
 
     /// <summary>
     /// IsConnected
     /// </summary>
     public bool IsConnected { get { return pipeClient.IsConnected; } }
-
-
 
     /// <summary>
     /// Connect  sync
@@ -417,7 +366,6 @@ namespace pfAdapter
       try { pipeClient.Connect(0); }
       catch (TimeoutException) { }
 
-
       for (int i = 0; i < (timeout / 50); i++)
       {
         if (IsConnected) break;
@@ -426,10 +374,7 @@ namespace pfAdapter
         catch (TimeoutException) { }
         Thread.Sleep(50);
       }
-
     }
-
-
 
     /// <summary>
     /// Read  sync
@@ -454,10 +399,4 @@ namespace pfAdapter
       return readBuffer;
     }
   }
-
-
-
 }
-
-
-

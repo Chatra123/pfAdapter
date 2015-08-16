@@ -1,44 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Diagnostics;
+using System.Text;
 
 namespace pfAdapter
 {
   //======================================
   //  ログ
   //======================================
-  #region Log
-  class Log
+
+  #region ログ
+
+  internal class Log
   {
-    static string AppPath = Assembly.GetExecutingAssembly().Location;
-    static string AppDir = Path.GetDirectoryName(AppPath);
-    static string AppNameWithoutExt = Path.GetFileNameWithoutExtension(AppPath);
+    public static Log System, InputRead, PipeBuff;                        //ログオブジェクト
 
-    //static
-    static readonly object sync = new object();
-    static StreamWriter SharedWriter;
-    static StringBuilder SharedLogText;
-    public static Log System, InputRead, PipeBuff;
-
+    private static readonly object sync = new object();
+    private static StreamWriter SharedWriter;                             //共有のライター
+    private static StringBuilder SharedLogText;                           //共有のログテキスト
 
     public bool Enable = false, OutConsole = false, OutFile = false;
-    StreamWriter Writer;
-    StringBuilder LogText;
-    string FileName;
-    bool ExclusiveFile = false;
+    private StreamWriter Writer;                                          //専用のライター
+    private StringBuilder LogText;                                        //専用のログテキスト
+    private string FileName;                                              //専用のログファイルの名前
+    private bool ExclusiveFile = false;                                   //専用のログファイルを割り当てるか
 
+    //アプリケーション名
+    private static readonly string
+            AppPath = Assembly.GetExecutingAssembly().Location,
+            AppDir = Path.GetDirectoryName(AppPath),
+            AppNameWithoutExt = Path.GetFileNameWithoutExtension(AppPath);
 
+    #region コンストラクター
 
-    //======================================
-    //コンストラクター
-    //======================================
-    #region Log
+    /// <summary>
+    /// static　コンストラクター
+    /// </summary>
     static Log()
     {
       System = new Log(false);
@@ -46,30 +45,33 @@ namespace pfAdapter
       PipeBuff = new Log(true, "pfPipeBuff");
     }
 
-
+    /// <summary>
+    /// コンストラクター
+    /// </summary>
     public Log(bool exclusive, string filename = "")
     {
       ExclusiveFile = exclusive;       //SharedWriterでなく専用Writerを割り当て
-      if (exclusive)
+
+      if (ExclusiveFile)
       {
-        //専用ライターを割り当てる
+        //専用ライター
         FileName = filename;
         LogText = new StringBuilder();
       }
       else
       {
-        //Shared
-        if (SharedLogText == null) SharedLogText = new StringBuilder();
+        //共有ライター
+        SharedLogText = SharedLogText ?? new StringBuilder();
         LogText = SharedLogText;
       }
     }
 
-
     /// <summary>
-    /// 古いログファイル削除
+    /// デストラクター
     /// </summary>
     ~Log()
     {
+      //古いログファイル削除
       lock (sync)
       {
         for (int i = 1; i <= 16; i++)
@@ -92,33 +94,27 @@ namespace pfAdapter
       }
     }
 
-    #endregion
+    #endregion コンストラクター
 
-
-
-    //======================================
-    //ライター作成
-    //======================================
-    #region CreateWriter
+    #region ライター作成
 
     /// <summary>
     /// ライターを割り当てる
     /// </summary>
-    void SetWriter()
+    private void SetWriter()
     {
-      //Shared writer
-      if (ExclusiveFile == false)
-      {
-        if (SharedWriter == null) SharedWriter = CreateWriter(AppNameWithoutExt);
-        Writer = SharedWriter;
-      }
-      else
+      if (ExclusiveFile)
       {
         //専用ライター
         Writer = CreateWriter(FileName);
       }
+      else
+      {
+        //共有ライター
+        if (SharedWriter == null) SharedWriter = CreateWriter(AppNameWithoutExt);
+        Writer = SharedWriter;
+      }
     }
-
 
     /// <summary>
     /// ファイル書込み用ライターを作成
@@ -126,7 +122,7 @@ namespace pfAdapter
     /// <param name="filename">作成するファイル名</param>
     /// <returns></returns>
     /// <remarks>ファイル名は*.1.log ～ *.16.logになる。</remarks>
-    static StreamWriter CreateWriter(string filename)
+    private static StreamWriter CreateWriter(string filename)
     {
       StreamWriter writer = null;
       for (int i = 1; i <= 16; i++)
@@ -142,13 +138,11 @@ namespace pfAdapter
           else
             writer = new StreamWriter(path, true, new UTF8Encoding(true));     //追記or新規、BOMつきUTF-8
           break;
-
         }
-        catch { }  //オープン失敗。別プロセスがファイル使用中
-
+        catch { }  //別プロセスがファイル使用中
       }
 
-      //ライター作成成功、ヘッダー書込み
+      //作成成功、ヘッダー書込み
       if (writer != null)
       {
         writer.WriteLine();
@@ -157,17 +151,16 @@ namespace pfAdapter
       }
       return writer;
     }
-    #endregion
 
+    #endregion ライター作成
 
+    #region 書込
 
-
-    #region Write_core
     /// <summary>
     /// ログに書き込む
     /// </summary>
     /// <param name="text">書き込むテキスト</param>
-    public void Write_core(string text = "")
+    private void Write_core(string text = "")
     {
       if (Enable == false) return;
       lock (sync)
@@ -195,77 +188,82 @@ namespace pfAdapter
       }
     }
 
-
-
-
     /// <summary>
     /// 各行の先頭にタイムコードを付加する。
     /// </summary>
     /// <param name="text">タイムコードを付加するテキスト</param>
-    public void Write_withTimecode(string text = "")
+    private string Append_Timecode(string basetext)
     {
       lock (sync)
       {
-        var lineList = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
+        //行ごとに分離
+        var splText = basetext.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
 
-        bool IsMultiLine = (2 <= lineList.Count);
-        if (IsMultiLine && string.IsNullOrEmpty(lineList[lineList.Count - 1]))
-          lineList.RemoveAt(lineList.Count - 1);           //Split時に末尾に追加される空文字列を削除
+        bool isMultiLine = (2 <= splText.Count);
+        if (isMultiLine
+          && string.IsNullOrEmpty(splText[splText.Count - 1]))
+          splText.RemoveAt(splText.Count - 1);             //Split時に末尾に追加される空文字列を除去
 
-        foreach (var line in lineList)
+        var timedText = new StringBuilder();               //戻り値　タイムコード付加後のテキスト
+
+        foreach (var line in splText)
         {
-          string timcodeLine = line;
+          string timedline = "";
 
           if (LogText.Length == 0)
           {
             //ログの先頭ならタイムコード付加
-            timcodeLine = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
+            timedline = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
           }
           else
           {
             //改行コードの直後ならタイムコード付加
-            bool isTopOfLine1 = 1 < LogText.Length
+            bool hasLineFeed1 = 1 < LogText.Length
                                   && LogText[LogText.Length - 2] == '\r'
                                   && LogText[LogText.Length - 1] == '\n';
 
-            bool isTopOfLine2 = 0 < LogText.Length
+            bool hasLineFeed2 = 0 < LogText.Length
                                   && LogText[LogText.Length - 1] == '\n';
 
-            if (isTopOfLine1 || isTopOfLine2)
+            if (hasLineFeed1 || hasLineFeed2)
             {
-
-              timcodeLine = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
+              timedline = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
             }
           }
 
-          if (IsMultiLine) timcodeLine += Environment.NewLine;
+          if (isMultiLine) timedline += Environment.NewLine;
 
-          Write_core(timcodeLine);
+          timedText.Append(timedline);
         }
+
+        return timedText.ToString();
       }
     }
-    #endregion
 
-
-
-
-    #region Write
     //======================================
     //文字列
     //======================================
     /// <summary>
-    /// ログに文字を追加
+    /// 文字を追加
     /// </summary>
-    /// <param name="text">追加したい文字列</param>
-    public void Write(string text = "") { Write_withTimecode(text); }
+    public void Write(string text = "")
+    {
+      if (Enable == false) return;
 
+      text = Append_Timecode(text);
+      Write_core(text);
+    }
 
     /// <summary>
-    /// ログに１行追加
+    /// １行追加
     /// </summary>
-    /// <param name="text">追加したい文字列</param>
-    public void WriteLine(string line = "") { Write(line + Environment.NewLine); }
+    public void WriteLine(string line = "")
+    {
+      if (Enable == false) return;
 
+      line = Append_Timecode(line + Environment.NewLine);
+      Write_core(line);
+    }
 
     /// <summary>
     /// format指定で１行追加
@@ -275,9 +273,12 @@ namespace pfAdapter
     /// <remarks> string Format(string format, params Object[] args)と同じ</remarks>
     public void WriteLine(string format, params object[] args)
     {
+      if (Enable == false) return;
+
       string line = format;
       switch (args.Count())
       {
+        case 0: break;
         case 1: line = string.Format(format, args[0]); break;
         case 2: line = string.Format(format, args[0], args[1]); break;
         case 3: line = string.Format(format, args[0], args[1], args[2]); break;
@@ -288,8 +289,6 @@ namespace pfAdapter
       WriteLine(line);
     }
 
-
-
     //======================================
     //バイト配列
     //======================================
@@ -299,29 +298,18 @@ namespace pfAdapter
     /// <param name="comment">先頭に表示するコメント</param>
     /// <param name="byteSet">ログに表示したいバイト列</param>
     /// <remarks>バイト列の大きさが２０以上なら前後６ずつに省略されます。</remarks>
-    public void WriteByte(string comment, List<byte> byteSet)
-    {
-      WriteByte(comment, byteSet.ToArray());
-    }
-
-
-    /// <summary>
-    /// ログに１６進数表示のバイト列をを追加
-    /// </summary>
-    /// <param name="comment">先頭に表示するコメント</param>
-    /// <param name="byteSet">ログに表示したいバイト列</param>
-    /// <remarks>バイト列の大きさが２０以上なら前後６ずつに省略されます。</remarks>
-    public void WriteByte(string comment, byte[] byteSet)
+    public void WriteByte(string comment, IEnumerable<Byte> byteSet)
     {
       if (Enable == false) return;
 
       string byteline = comment;
-      byteline += "[" + byteSet.Length + "]:  ";
+      int len = byteSet.ToArray().Length;
+
+      byteline += "[" + len + "]:  ";
       if (byteline.Length < 26)
-        byteline += new String(' ', 26 - byteline.Length); //コメントの空きをスペースで埋める
+        byteline += new String(' ', 26 - byteline.Length); //空きをスペースで埋める
 
-
-      if (byteSet.Length <= 20)
+      if (len <= 20)
       {
         foreach (var b in byteSet)
           byteline += string.Format("{0:X2} ", b);
@@ -330,31 +318,31 @@ namespace pfAdapter
       {
         //20文字以上なら前後6個ずつ
         var front = byteSet.Skip(0).Take(6).ToArray();
-        var back = byteSet.Skip(byteSet.Length - 6).Take(6).ToArray();
+        var back = byteSet.Skip(len - 6).Take(6).ToArray();
+
         foreach (var b in front)
           byteline += string.Format("{0:X2} ", b);
-        byteline += " ...len " + byteSet.Length + "..  ";
+
+        byteline += " ...len " + len + "..  ";
+
         foreach (var b in back)
           byteline += string.Format("{0:X2} ", b);
       }
 
-
       WriteLine(byteline);
     }
-    #endregion
 
-
+    #endregion 書込
   }
-  #endregion
 
-
-
+  #endregion ログ
 
   #region LogStatus
+
   /// <summary>
   /// 状態記録用ログ
   /// </summary>
-  static class LogStatus
+  internal static class LogStatus
   {
     private static int Write_Buffer__le__10KB = 0,         //１回のバッファ書込量
                       Write_Buffer__le__50KB = 0,
@@ -377,6 +365,7 @@ namespace pfAdapter
     public static long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //データ総読込量
     public static long TotalPipeRead = 0;                                                          //パイプ総読込量
     public static long TotalFileRead { get { return FileReadWithPipe + FileReadWithoutPipe; } }    //ファイル総読込量
+
     public static long FileReadWithPipe,                                                           //パイプ接続中のファイル総読込量
                         FileReadWithoutPipe;                                                       //パイプ切断中のファイル総読込量
 
@@ -394,8 +383,6 @@ namespace pfAdapter
                         FilePos_whenPipeClosed = 0,        //パイプが閉じた時のファイルポジション
                         AccessTimes_UnwriteArea = 0,       //未書込みエリアへのアクセス回数
                         Indicator_demandAtBuff_m1 = 0;     //buffIndicator == -1 の回数
-
-
 
     //======================================
     //  テキストを出力
@@ -431,8 +418,6 @@ namespace pfAdapter
       return text.ToString();
     }
 
-
-
     /// <summary>
     /// データ総読込量をテキストで出力します。
     /// </summary>
@@ -452,8 +437,6 @@ namespace pfAdapter
         string.Format("      FileReadWithoutPipe = {0,14:N0}", FileReadWithoutPipe));
       return text.ToString();
     }
-
-
 
     /// <summary>
     /// 各項目をテキストで出力します。
@@ -478,10 +461,6 @@ namespace pfAdapter
       return text.ToString();
     }
 
-
-
-
-
     //======================================
     //  １回の書込量、読込量を記録
     //======================================
@@ -499,8 +478,6 @@ namespace pfAdapter
       else LogStatus.Write_Buffer__gt_400KB++;
     }
 
-
-
     /// <summary>
     /// １回のバッファ読込量を記録します。
     /// </summary>
@@ -515,7 +492,6 @@ namespace pfAdapter
       else LogStatus.Read__Buffer__gt_400KB++;
     }
 
-
     /// <summary>
     /// １回のファイル読込量を記録します。
     /// </summary>
@@ -529,7 +505,6 @@ namespace pfAdapter
       else LogStatus.Read__File____gt_400KB++;
     }
 
-
     /// <summary>
     /// メモリ使用量を記録。MiB
     /// </summary>
@@ -542,12 +517,6 @@ namespace pfAdapter
       Memory_Avg = Memory_Sum / Memory_SumCount;
     }
   }
-  #endregion
 
-
-
-
-
-
-
+  #endregion LogStatus
 }

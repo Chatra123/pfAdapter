@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 
 namespace pfAdapter
 {
-
-
-  static class ExceptionInfo
+  internal static class ExceptionInfo
   {
     /// <summary>
     /// 例外発生時に内容をファイルに保存する。
@@ -22,7 +17,6 @@ namespace pfAdapter
       try
       {
         var excp = (Exception)args.ExceptionObject;
-
 
         //例外の情報
         string excpInfo =
@@ -36,11 +30,9 @@ namespace pfAdapter
             return info.ToString();
           })(excp);
 
-
         //出力テキスト
         var text = new StringBuilder();
         text.AppendLine(excpInfo);
-
 
         //出力ファイルパス
         string logPath =
@@ -57,11 +49,8 @@ namespace pfAdapter
             return Path.Combine(AppDir, logName);
           })();
 
-
         //ファイル作成
         File.AppendAllText(logPath, text.ToString(), new UTF8Encoding(true));
-
-
       }
       finally
       {
@@ -70,6 +59,4 @@ namespace pfAdapter
       }
     }
   }
-
-
 }

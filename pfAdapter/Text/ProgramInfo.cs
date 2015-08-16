@@ -1,26 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace pfAdapter
 {
   /// <summary>
-  /// *.ts.program.txtから各情報を取得する。
+  /// 番組情報を取得する。  *.ts.program.txt
   /// </summary>
-  static class ProgramInfo
+  internal static class ProgramInfo
   {
-
     public static String Datetime { get; private set; }
     public static String Channel { get; private set; }
     public static String Program { get; private set; }
     public static bool GotInfo { get; private set; }
-
-
 
     static ProgramInfo()
     {
@@ -28,8 +21,6 @@ namespace pfAdapter
       Datetime = Channel = Program = string.Empty;
       GotInfo = false;
     }
-
-
 
     /// <summary>
     /// *.ts.program.txtから情報取得
@@ -40,16 +31,18 @@ namespace pfAdapter
       if (GotInfo) return;
       Log.System.WriteLine("  Try to get    *.ts.program.txt");
 
-
       //ファイルチェック
       for (int i = 0; i < 5 * 10; i++)
       {
         if (File.Exists(infoTextPath)) break;
         Thread.Sleep(200);
       }
-      if (File.Exists(infoTextPath) == false) { return; }
-
-
+      //ファイルがない
+      if (File.Exists(infoTextPath) == false)
+      {
+        Log.System.WriteLine("  Fail to get");
+        return;
+      }
 
       //テキスト読込み
       List<string> infotext = null;
@@ -62,21 +55,21 @@ namespace pfAdapter
             4 <= infotext.Count) break;
         Thread.Sleep(1000);
       }
-      if (infotext == null) return;
-
+      //テキスト取得失敗
+      if (infotext == null)
+      {
+        Log.System.WriteLine("  Fail to get");
+        return;
+      }
 
       //情報取得
-      Log.System.WriteLine("  Get the info  *.ts.program.txt");
+      Log.System.WriteLine("  Get the info");
       Log.System.WriteLine();
 
       GotInfo = true;
       if (1 <= infotext.Count) { Datetime = infotext[0]; }
       if (2 <= infotext.Count) { Channel = infotext[1]; }
       if (3 <= infotext.Count) { Program = infotext[2]; }
-
     }
   }
-
-
-
 }

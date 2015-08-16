@@ -1,25 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Diagnostics;
-using System.Xml.Serialization;
+using System.Threading.Tasks;
 
 namespace pfAdapter
 {
-  class OutputWriter
+  internal class OutputWriter
   {
-    List<Client_WriteStdin> WriterList;
+    private List<Client_WriteStdin> WriterList;
     public bool HasWriter { get { return WriterList != null && 0 < WriterList.Count; } }
-
-
 
     /// <summary>
     /// ライターを閉じる
     /// </summary>
-    ~OutputWriter() { Close(); }
+    ~OutputWriter()
+    {
+      Close();
+    }
+
     public void Close()
     {
       foreach (var one in WriterList)
@@ -28,9 +25,6 @@ namespace pfAdapter
           one.StdinWriter.Close();
       }
     }
-
-
-
 
     /// <summary>
     /// ライター実行
@@ -43,7 +37,6 @@ namespace pfAdapter
 
       WriterList = new List<Client_WriteStdin>(newWriterList);
       WriterList.Reverse();                                 //末尾から登録するので逆順に。
-
 
       //プロセス実行
       for (int i = WriterList.Count - 1; 0 <= i; i--)
@@ -59,21 +52,14 @@ namespace pfAdapter
 
         //実行失敗
         if (writer.StdinWriter == null) { WriterList.Remove(writer); continue; }
-
       }
       Log.System.WriteLine();
-
 
       ////ファイル出力ライターの登録  デバッグ用
       ////WriterList.Add(new Client_OutFile());
 
-
       return HasWriter;
     }
-
-
-
-
 
     /// <summary>
     /// データを書込み
@@ -84,13 +70,11 @@ namespace pfAdapter
     {
       var tasklist = new List<Task<bool>>();
 
-
       //タスク作成、各プロセスに書込み
       foreach (var oneWriter in WriterList)
       {
         var writeTask = Task<bool>.Factory.StartNew((arg) =>
         {
-
           var writer = (Client_WriteStdin)arg;
           try
           {
@@ -111,18 +95,14 @@ namespace pfAdapter
             return false;
           }
           return true;
-
         }, oneWriter);       //引数oneWriterはtask.AsyncState経由で参照される。
 
         tasklist.Add(writeTask);
       }
 
-
-
       //全タスクが完了するまで待機、タイムアウトＮ秒
       Task.WaitAll(tasklist.ToArray(), 20 * 1000);
       //Task.WaitAll(tasklist.ToArray(), 2 * 60 * 1000);
-
 
       //結果の確認
       bool succeedWriting = true;
@@ -138,7 +118,6 @@ namespace pfAdapter
             WriterList.Remove(writer);                     //WriterListから登録解除
             succeedWriting = false;
           }
-
         }
         else
         {
@@ -152,13 +131,7 @@ namespace pfAdapter
         }
       }
 
-
       return succeedWriting;
-
     }//func
   }//class
-
-
-
-
 }

@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Diagnostics;
-
+using System.Text;
 
 namespace pfAdapter
 {
-
   /// <summary>
   /// 文字エンコード一覧
   /// </summary>
@@ -18,7 +14,7 @@ namespace pfAdapter
   ///  avs, d2v, lwi, bat      Shift-JIS
   ///  srt                     UTF-8 bom
   /// </remarks>
-  class TextEnc
+  internal class TextEnc
   {
     public static readonly
       Encoding Ascii = new ASCIIEncoding(),
@@ -28,18 +24,18 @@ namespace pfAdapter
                ;
   }
 
-
   //================================
   //読込み
   //================================
+
   #region 読込み
+
   /// <summary>
   /// FileShare.ReadWriteを設定して読み込む。
   /// File.ReadAllLines();は別のプロセスが使用中のファイルを読み込めなかった。
   /// </summary>
-  class FileR
+  internal class FileR
   {
-
     //=====================================
     //static
     //=====================================
@@ -74,9 +70,6 @@ namespace pfAdapter
       }
     }
 
-
-
-
     /// <summary>
     /// テキストファイルを読込む
     /// </summary>
@@ -100,8 +93,6 @@ namespace pfAdapter
       }
       return text;
     }
-
-
 
     /// <summary>
     /// バイナリファイルを読込む
@@ -131,13 +122,10 @@ namespace pfAdapter
       return readData.ToArray();
     }
 
-
-
-
     //=====================================
     //instance
     //=====================================
-    StreamReader reader = null;
+    private StreamReader reader = null;
 
     /// <summary>
     /// コンストラクター
@@ -152,14 +140,13 @@ namespace pfAdapter
         reader = new StreamReader(stream, enc);
     }
 
-
-
     /// <summary>
     /// 閉じる
     /// </summary>
-    public void Close() { reader.Close(); }
-
-
+    public void Close()
+    {
+      reader.Close();
+    }
 
     /// <summary>
     /// Ｎ行読込む。
@@ -180,8 +167,6 @@ namespace pfAdapter
       }
       return textlist;
     }
-
-
 
     /// <summary>
     /// アセンブリ内のリソース読込み。
@@ -210,27 +195,19 @@ namespace pfAdapter
       reader.Close();
 
       return text;
-
     }
-
   }
-  #endregion
 
-
-
-
-
-
-
+  #endregion 読込み
 
   #region 書込み
-  ///  
+
+  ///
   ///  WriteText(IEnumerable<string> text)が必要なのでクラス作成
   ///  File.Write()は引数に直接 string[]をとれない。
-  /// 
-  class FileW
+  ///
+  internal class FileW
   {
-
     //=====================================
     //static
     //=====================================
@@ -248,7 +225,6 @@ namespace pfAdapter
       return writer;
     }
 
-
     /// <summary>
     /// バイナリ追記
     /// </summary>
@@ -261,15 +237,10 @@ namespace pfAdapter
       stream.Close();
     }
 
-
-
-
-
-
     //=====================================
     //instance
     //=====================================
-    StreamWriter writer;
+    private StreamWriter writer;
 
     /// <summary>
     /// コンストラクター
@@ -281,18 +252,21 @@ namespace pfAdapter
       writer = CreateWriter(path, enc);
     }
 
-
     /// <summary>
     /// 閉じる
     /// </summary>
-    public void Close() { writer.Close(); }
-
+    public void Close()
+    {
+      writer.Close();
+    }
 
     /// <summary>
     /// 改行コード変更を"\n"にする
     /// </summary>
-    public void SetNewline_n() { writer.NewLine = "\n"; }
-
+    public void SetNewline_n()
+    {
+      writer.NewLine = "\n";
+    }
 
     /// <summary>
     /// テキスト書込み
@@ -303,7 +277,6 @@ namespace pfAdapter
       WriteText(new string[] { line });
     }
 
-
     /// <summary>
     /// テキスト書込み
     /// </summary>
@@ -313,13 +286,7 @@ namespace pfAdapter
       foreach (var line in text)
         writer.WriteLine(line);
     }
-
   }
-  #endregion
 
-
-
-
-
-
+  #endregion 書込み
 }

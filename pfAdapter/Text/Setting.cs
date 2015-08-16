@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Xml.Serialization;
+using System.Reflection;
 
 namespace pfAdapter
 {
-
   [Serializable]
   public class Setting
   {
@@ -24,11 +21,9 @@ namespace pfAdapter
 
     //設定ファイル名
     public static readonly string
-            AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location,
+            AppPath = Assembly.GetExecutingAssembly().Location,
             AppName = Path.GetFileNameWithoutExtension(AppPath),
             DefXmlName = AppName + ".xml";
-
-
 
     /// <summary>
     /// 設定ファイルを読み込む
@@ -37,7 +32,6 @@ namespace pfAdapter
     /// <returns>読込んだ設定</returns>
     public static Setting LoadFile(string xmlpath = null)
     {
-
       //指定されたファイルがない？
       if (string.IsNullOrEmpty(xmlpath) == false && File.Exists(xmlpath) == false)
       {
@@ -46,13 +40,12 @@ namespace pfAdapter
         return null;
       }
 
-
       if (xmlpath == null)
       {
         //デフォルト名を使用
         if (File.Exists(Setting.DefXmlName) == false)
         {
-          var defaultSetting = LoadSample_A();
+          var defaultSetting = Sample_A();
           XmlRW.Save(Setting.DefXmlName, defaultSetting);  //デフォルト設定保存
         }
         xmlpath = Setting.DefXmlName;
@@ -65,22 +58,15 @@ namespace pfAdapter
       file.sCommandLine = (string.IsNullOrWhiteSpace(file.sCommandLine))
                               ? new String(' ', 8) : file.sCommandLine;
 
-
       XmlRW.Save(xmlpath, file);                 //古いバージョンのファイルなら新たに追加された項目がxmlに加わる。
-
 
       return file;
     }
 
-
-
-
-
-
     /// <summary>
     /// サンプル設定Ａ　　通常使用を想定
     /// </summary>
-    public static Setting LoadSample_A()
+    public static Setting Sample_A()
     {
       var setting = new Setting();
 
@@ -100,7 +86,6 @@ namespace pfAdapter
 
       //PreProcessList
       setting.PreProcessList.List = new List<Client>() { sampleClient, };
-
 
       //ClientList_WriteStdin
       setting.ClientList_WriteStdin = new List<Client_WriteStdin>()
@@ -128,7 +113,6 @@ namespace pfAdapter
         },
       };
 
-
       //MidProcessList
       setting.MidProcessList.List = new List<Client>()
       {
@@ -141,7 +125,7 @@ namespace pfAdapter
       };
 
       //PostProcessList
-      setting.PostProcessList.List = new List<Client>() 
+      setting.PostProcessList.List = new List<Client>()
       {
         //LGLauncher
         new Client()
@@ -160,14 +144,11 @@ namespace pfAdapter
       return setting;
     }
 
-
-
-
     /// <summary>
     /// サンプル設定Ｂ　　pfAdapterの動作テスト用
     /// </summary>
     /// <returns>サンプル設定Ｂ</returns>
-    public static Setting LoadSample_B()
+    public static Setting Sample_B()
     {
       var setting = new Setting();
 
@@ -179,7 +160,7 @@ namespace pfAdapter
       };
 
       //ClientList_WriteStdin
-      setting.ClientList_WriteStdin = new List<Client_WriteStdin>() 
+      setting.ClientList_WriteStdin = new List<Client_WriteStdin>()
       {
         //Caption2Ass_PCR_pf
         new Client_WriteStdin()
@@ -191,13 +172,5 @@ namespace pfAdapter
       };
       return setting;
     }
-
-
-
-
-
-
-
-
   }//class
 }
