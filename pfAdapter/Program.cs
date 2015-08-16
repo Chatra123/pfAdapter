@@ -37,7 +37,7 @@ namespace pfAdapter
       //パイプ接続、ファイル確認
       //
       Log.System.WriteLine("[ Reader Connect ]");
-      var reader = new InputReader();                      //パイプ接続を最優先で行う。
+      var reader = new InputReader();                      //パイプ接続は最優先で行う。
       var connected = reader.ConnectInput(CommandLine.Pipe, CommandLine.File);
       if (connected == false)
       {
@@ -70,7 +70,7 @@ namespace pfAdapter
 
       if (setting == null)
       {
-        //指定ファイルが存在しない
+        //指定の設定ファイルが存在しない
         Log.System.WriteLine("exit");
         Log.System.WriteLine();
         return;                                            //アプリ終了
@@ -230,8 +230,6 @@ namespace pfAdapter
     /// <summary>
     /// 外部プロセスからコマンドラインを取得
     /// </summary>
-    /// <param name="setting"></param>
-    /// <param name="AppArgs"></param>
     /// <param name="RequestAbort">終了要求があったか</param>
     private static void GetExternalCommand(Setting setting, string[] AppArgs, out bool RequestAbort)
     {
@@ -305,8 +303,6 @@ namespace pfAdapter
     /// <summary>
     /// メインループ
     /// </summary>
-    /// <param name="reader"></param>
-    /// <param name="writer"></param>
     private static void MainLoop(InputReader reader, OutputWriter writer)
     {
       int timeUpdateTitle = 0;
@@ -473,7 +469,7 @@ namespace pfAdapter
             break;
 
           case "inputlog":
-            ////this.InputLog = true;       //必要な時以外はコメントアウトで無効化
+            ////InputLog = true;       //必要な時以外はコメントアウトで無効化
             break;
 
           case "limit":

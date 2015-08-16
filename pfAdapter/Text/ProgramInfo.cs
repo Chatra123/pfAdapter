@@ -6,7 +6,7 @@ using System.Threading;
 namespace pfAdapter
 {
   /// <summary>
-  /// *.ts.program.txtから各情報を取得する。
+  /// 番組情報を取得する。  *.ts.program.txt
   /// </summary>
   internal static class ProgramInfo
   {
@@ -37,7 +37,12 @@ namespace pfAdapter
         if (File.Exists(infoTextPath)) break;
         Thread.Sleep(200);
       }
-      if (File.Exists(infoTextPath) == false) { return; }
+      //ファイルがない
+      if (File.Exists(infoTextPath) == false)
+      {
+        Log.System.WriteLine("  Fail to get");
+        return;
+      }
 
       //テキスト読込み
       List<string> infotext = null;
@@ -50,10 +55,15 @@ namespace pfAdapter
             4 <= infotext.Count) break;
         Thread.Sleep(1000);
       }
-      if (infotext == null) return;
+      //テキスト取得失敗
+      if (infotext == null)
+      {
+        Log.System.WriteLine("  Fail to get");
+        return;
+      }
 
       //情報取得
-      Log.System.WriteLine("  Get the info  *.ts.program.txt");
+      Log.System.WriteLine("  Get the info");
       Log.System.WriteLine();
 
       GotInfo = true;

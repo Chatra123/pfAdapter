@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace pfAdapter
 {
@@ -20,7 +21,7 @@ namespace pfAdapter
 
     //設定ファイル名
     public static readonly string
-            AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location,
+            AppPath = Assembly.GetExecutingAssembly().Location,
             AppName = Path.GetFileNameWithoutExtension(AppPath),
             DefXmlName = AppName + ".xml";
 
@@ -44,7 +45,7 @@ namespace pfAdapter
         //デフォルト名を使用
         if (File.Exists(Setting.DefXmlName) == false)
         {
-          var defaultSetting = LoadSample_A();
+          var defaultSetting = Sample_A();
           XmlRW.Save(Setting.DefXmlName, defaultSetting);  //デフォルト設定保存
         }
         xmlpath = Setting.DefXmlName;
@@ -65,7 +66,7 @@ namespace pfAdapter
     /// <summary>
     /// サンプル設定Ａ　　通常使用を想定
     /// </summary>
-    public static Setting LoadSample_A()
+    public static Setting Sample_A()
     {
       var setting = new Setting();
 
@@ -147,7 +148,7 @@ namespace pfAdapter
     /// サンプル設定Ｂ　　pfAdapterの動作テスト用
     /// </summary>
     /// <returns>サンプル設定Ｂ</returns>
-    public static Setting LoadSample_B()
+    public static Setting Sample_B()
     {
       var setting = new Setting();
 
