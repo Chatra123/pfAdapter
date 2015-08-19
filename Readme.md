@@ -72,7 +72,9 @@ MidProcessListの実行間隔  min
     sLockFile
 指定した拡張子のファイルをロックします。  
 PostProcessList実行前の待機期間にはd2vファイルをロックするプロセスがありません。  
+この間はファイルの移動が可能になってしまうため、ファイルロックし移動を禁止します。  
 ロックするのはPostProcessList実行前の待機時間のみです。  
+データ送信中、PostProcessList実行中はロックしません。  
 
 
 
