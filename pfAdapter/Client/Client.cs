@@ -17,13 +17,19 @@ namespace pfAdapter
   {
     public int bEnable = 1;
     public double dDelay_sec = 0;
-    public double dRandDelay_sec = 30;
+    public double dRandDelay_sec = 20;
     public List<Client> List = new List<Client>();
 
     /// <summary>
     /// ClientListを実行する。
     /// </summary>
-    public void Run()
+    public void WaitAndRun()
+    {
+      Wait();
+      Run();
+    }
+
+    public void Wait()
     {
       //有効？
       if (bEnable <= 0) return;
@@ -34,6 +40,14 @@ namespace pfAdapter
       int seed = Process.GetCurrentProcess().Id + DateTime.Now.Millisecond;
       var rand = new Random(seed);
       Thread.Sleep(rand.Next(0, (int)(dRandDelay_sec * 1000)));
+    }
+
+
+    public void Run()
+    {
+      //有効？
+      if (bEnable <= 0) return;
+      if (List.Where((client) => 0 < client.bEnable).Count() == 0) return;
 
       //実行
       for (int i = 0; i < List.Count; i++)

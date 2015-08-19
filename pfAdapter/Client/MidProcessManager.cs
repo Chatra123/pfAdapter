@@ -75,7 +75,7 @@ namespace pfAdapter
               lock (syncTask)          //ロック
               {
                 Log.System.WriteLine("    MidPrc__(  " + taskTickCounter + "  )");
-                midProcessList.Run();
+                midProcessList.WaitAndRun();
                 taskTickCounter++;
               }
             })

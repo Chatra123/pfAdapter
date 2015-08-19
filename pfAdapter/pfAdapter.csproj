@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client\FileLocker.cs" />
     <Compile Include="Exception\ExceptionInfo.cs" />
     <Compile Include="Text\XmlRW.cs" />
     <Compile Include="Text\FileRW.cs" />

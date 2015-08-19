@@ -9,13 +9,14 @@ namespace pfAdapter
   public class Setting
   {
     public string sCommandLine = "        ";               //XMLコマンドライン
-    public double dBuffSize_MiB = 3.0;                     //パイプバッファサイズ       default   3
-    public double dReadLimit_MiBsec = 20;                  //ファイル読込速度制限       default  20
-    public double dMidPrcInterval_min = 10;                //Mid中間プロセスの実行間隔  default  10
+    public double dBuffSize_MiB = 3.0;                     //パイプバッファサイズ
+    public double dReadLimit_MiBsec = 20;                  //ファイル読込速度制限
+    public double dMidPrcInterval_min = 10;                //中間プロセスの実行間隔
+    public string sLockFile = " .ts; .pp.d2v; .pp.lwi; .pp.lwifooter; .srt; .ass; .noncap; ";  //ファイルロック用の拡張子
 
     public ClientList PreProcessList = new ClientList();
     public Client Client_GetExternalCommand = new Client();
-    public List<Client_WriteStdin> ClientList_WriteStdin = new List<Client_WriteStdin>();    //データ送信先のClient
+    public List<Client_WriteStdin> ClientList_WriteStdin = new List<Client_WriteStdin>();  //データ送信先のClient
     public ClientList MidProcessList = new ClientList();
     public ClientList PostProcessList = new ClientList();
 
@@ -95,21 +96,21 @@ namespace pfAdapter
         {
           sBasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
           sBaseArgs = "   -pipe  -o \"$fPath$\"   -format srt  -NonCapTag   ",
-          dDelay_sec = 2,
+          dDelay_sec = 1,
         },
         //DGIndex_pf
         new Client_WriteStdin()
         {
           sBasePath = @"   ..\DGIndex_pf\DGIndex_pf.exe   ",
           sBaseArgs = "   -pipe \"$fPath$\"   -o \"$fPath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
-          dDelay_sec = 2,
+          dDelay_sec = 1,
         },
         //create_lwi
         new Client_WriteStdin()
         {
           sBasePath = @"   ..\CreateLwi\CreateLwi.exe   ",
           sBaseArgs = "   -pipe \"$fPath$\"   -lwi \"$fPath$.pp\"  -footer   ",
-          dDelay_sec = 2,
+          dDelay_sec = 1,
         },
       };
 
