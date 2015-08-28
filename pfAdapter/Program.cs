@@ -53,6 +53,7 @@ namespace pfAdapter
       //
       //多重起動の負荷分散
       //
+      //他のpfAdapterのパイプ接続を優先する。
       int PID = Process.GetCurrentProcess().Id;
       int rand_msec = new Random(PID).Next(2 * 1000, 6  * 1000);
       Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);

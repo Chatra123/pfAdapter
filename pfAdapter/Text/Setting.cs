@@ -95,21 +95,21 @@ namespace pfAdapter
         new Client_WriteStdin()
         {
           sBasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
-          sBaseArgs = "   -pipe  -o \"$fPath$\"   -format srt  -NonCapTag   ",
+          sBaseArgs = "   -pipe  -o \"$fPath$\"  -format srt  -NonCapTag   ",
           dDelay_sec = 1,
         },
         //DGIndex_pf
         new Client_WriteStdin()
         {
           sBasePath = @"   ..\DGIndex_pf\DGIndex_pf.exe   ",
-          sBaseArgs = "   -pipe \"$fPath$\"   -o \"$fPath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
+          sBaseArgs = "   -pipe \"$fPath$\" -o \"$fPath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
           dDelay_sec = 1,
         },
         //create_lwi
         new Client_WriteStdin()
         {
           sBasePath = @"   ..\CreateLwi\CreateLwi.exe   ",
-          sBaseArgs = "   -pipe \"$fPath$\"   -lwi \"$fPath$.pp\"  -footer   ",
+          sBaseArgs = "   -pipe \"$fPath$\"  -lwi \"$fPath$.pp\"  -footer   ",
           dDelay_sec = 1,
         },
       };
