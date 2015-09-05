@@ -53,8 +53,9 @@ namespace pfAdapter
       //
       //多重起動の負荷分散
       //
+      //他のpfAdapterのパイプ接続を優先する。
       int PID = Process.GetCurrentProcess().Id;
-      int rand_msec = new Random(PID).Next(3 * 1000, 8 * 1000);
+      int rand_msec = new Random(PID).Next(2 * 1000, 6  * 1000);
       Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
       Thread.Sleep(rand_msec);
 
@@ -108,6 +109,11 @@ namespace pfAdapter
       ProgramInfo.TryToGetInfo(CommandLine.File + ".program.txt");
 
       //
+      //FileLocker
+      //
+      FileLocker.Initialize(setting.sLockFile);
+
+      //
       //外部プロセスからコマンドライン取得。終了要求の確認
       //
       if (CommandLine.ExtCmd == null || CommandLine.ExtCmd != false)
@@ -146,14 +152,14 @@ namespace pfAdapter
         if ((bool)CommandLine.PrePrc)                      //  -PrePrc 1
         {
           Log.System.WriteLine("[ PreProcess ]");
-          setting.PreProcessList.Run();
+          setting.PreProcessList.WaitAndRun();
           Log.System.WriteLine();
         }
       }
       else if (0 < setting.PreProcessList.bEnable)         //設定ファイルでtrue
       {
         Log.System.WriteLine("[ PreProcess ]");
-        setting.PreProcessList.Run();
+        setting.PreProcessList.WaitAndRun();
         Log.System.WriteLine();
       }
 
@@ -209,6 +215,8 @@ namespace pfAdapter
         if ((bool)CommandLine.PostPrc)                     //　-PostPrc 1
         {
           Log.System.WriteLine("[ PostProcess ]");
+          setting.PostProcessList.Wait();
+          FileLocker.Unlock();                             //ファイルの移動禁止　解除
           setting.PostProcessList.Run();
           Log.System.WriteLine();
         }
@@ -216,6 +224,8 @@ namespace pfAdapter
       else if (0 < setting.PostProcessList.bEnable)        //設定ファイルでtrue
       {
         Log.System.WriteLine("[ PostProcess ]");
+        setting.PostProcessList.Wait();
+        FileLocker.Unlock();
         setting.PostProcessList.Run();
         Log.System.WriteLine();
       }
@@ -357,10 +367,13 @@ namespace pfAdapter
         }
       }
 
+
       //終了処理
       Log.System.WriteLine();
       Log.System.WriteLine();
       Log.System.WriteLine(LogStatus.OutText_TotalRead());
+
+      FileLocker.Lock();               //ファイルの移動禁止
       reader.Close();
       writer.Close();
     }

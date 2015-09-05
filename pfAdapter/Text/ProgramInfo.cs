@@ -10,10 +10,10 @@ namespace pfAdapter
   /// </summary>
   internal static class ProgramInfo
   {
+    public static bool GotInfo { get; private set; }
     public static String Datetime { get; private set; }
     public static String Channel { get; private set; }
     public static String Program { get; private set; }
-    public static bool GotInfo { get; private set; }
 
     static ProgramInfo()
     {
@@ -66,10 +66,11 @@ namespace pfAdapter
       Log.System.WriteLine("  Get the info");
       Log.System.WriteLine();
 
-      GotInfo = true;
       if (1 <= infotext.Count) { Datetime = infotext[0]; }
       if (2 <= infotext.Count) { Channel = infotext[1]; }
       if (3 <= infotext.Count) { Program = infotext[2]; }
+
+      GotInfo = true;
     }
   }
 }
