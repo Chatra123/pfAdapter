@@ -7,7 +7,11 @@
 
 ------------------------------------------------------------------
 ### 使い方
+ファイルとパイプ
 pfAdapter.exe  -file "C:\video.ts"  -npipe namedpipe123
+
+ファイル
+pfAdapter.exe  "C:\video.ts"
 
 
 
