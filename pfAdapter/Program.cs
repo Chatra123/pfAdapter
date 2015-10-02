@@ -55,7 +55,7 @@ namespace pfAdapter
       //
       //他のpfAdapterのパイプ接続を優先する。
       int PID = Process.GetCurrentProcess().Id;
-      int rand_msec = new Random(PID).Next(2 * 1000, 6  * 1000);
+      int rand_msec = new Random(PID).Next(2 * 1000, 6 * 1000);
       Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
       Thread.Sleep(rand_msec);
 
@@ -334,9 +334,10 @@ namespace pfAdapter
         MidProcessManager.StartTimerIfStopped();
 
         //コンソールタイトル更新
-        if (0.9 * 1000 < Environment.TickCount - timeUpdateTitle)
+        if (1.0 * 1000 < Environment.TickCount - timeUpdateTitle)
         {
-          string status = string.Format("[file] {0,5:f2} MiB/s  [pipe,file] {1,4},{2,4} MiB    [mem] cur {3,4:f1}, avg {4,4:f1}, max {5,4:f1}",
+          string status = string.Format(
+                            "[file] {0,5:f2} MiB/s  [pipe,file] {1,4},{2,4} MiB    [mem] cur {3,4:f1}, avg {4,4:f1}, max {5,4:f1}",
                             (double)(reader.ReadSpeed / 1024 / 1024),                    //読込み速度　ファイル
                             (int)(LogStatus.TotalPipeRead / 1024 / 1024),                //総読込み量　ファイル
                             (int)(LogStatus.TotalFileRead / 1024 / 1024),                //総読込み量　パイプ
@@ -349,10 +350,11 @@ namespace pfAdapter
 
           if (DateTime.Now.Minute % 1 == 0
                 && DateTime.Now.Second % 60 == 0)                                        //コンソール
-            Console.Error.WriteLine("  " + status);
+            Console.Error.WriteLine(
+              DateTime.Now.ToString("HH:mm:ss.fff") + ":    " + status);
 
           if (DateTime.Now.Minute % 5 == 0
-                && DateTime.Now.Second % 60 == 0)                                        //ログファイル
+                && DateTime.Now.Second % 60 == 0)                                        //ログコンソール、ログファイル
             Log.System.WriteLine("  " + status);
 
           timeUpdateTitle = Environment.TickCount;
