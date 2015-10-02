@@ -15,17 +15,18 @@ namespace pfAdapter
 
   internal class Log
   {
-    public static Log System, InputRead, PipeBuff;                        //ログオブジェクト
+    public static Log System, InputRead, PipeBuff;                        //Logオブジェクト
 
     private static readonly object sync = new object();
     private static StreamWriter SharedWriter;                             //共有のライター
     private static StringBuilder SharedLogText;                           //共有のログテキスト
 
     public bool Enable = false, OutConsole = false, OutFile = false;
+
+    private bool ExclusiveFile = false;                                   //専用のログファイルを割り当てるか
     private StreamWriter Writer;                                          //専用のライター
     private StringBuilder LogText;                                        //専用のログテキスト
     private string FileName;                                              //専用のログファイルの名前
-    private bool ExclusiveFile = false;                                   //専用のログファイルを割り当てるか
 
     //アプリケーション名
     private static readonly string
