@@ -3,44 +3,51 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
+
 namespace pfAdapter
 {
+  using OctNov.IO;
+
   /// <summary>
-  /// 番組情報を取得する。  *.ts.program.txt
+  /// 番組情報を取得する。  *.ts.program.txt   shift-jis
   /// </summary>
   internal static class ProgramInfo
   {
-    public static bool GotInfo { get; private set; }
-    public static String Datetime { get; private set; }
+    public static bool HasInfo { get; private set; }
     public static String Channel { get; private set; }
     public static String Program { get; private set; }
+
 
     static ProgramInfo()
     {
       //nullだと置換処理で例外がでるので空文字列をいれておく。
-      Datetime = Channel = Program = string.Empty;
-      GotInfo = false;
+      Channel = Program = string.Empty;
     }
+
 
     /// <summary>
     /// *.ts.program.txtから情報取得
     /// </summary>
-    /// <param name="infoTextPath"> *.ts.program.txtのファイルパス</param>
-    public static void TryToGetInfo(string infoTextPath)
+    /// <param name="tspath"> *.tsファイルパス</param>
+    public static void TryToGetInfo(string tspath)
     {
-      if (GotInfo) return;
-      Log.System.WriteLine("  Try to get    *.ts.program.txt");
+      if (HasInfo) return;
+
+      string infoPath = tspath + ".program.txt";
+
 
       //ファイルチェック
-      for (int i = 0; i < 5 * 10; i++)
+      for (int i = 0; i < 4 * 6; i++)
       {
-        if (File.Exists(infoTextPath)) break;
-        Thread.Sleep(200);
+        if (File.Exists(infoPath)) break;
+
+        Thread.Sleep(250);
       }
+
       //ファイルがない
-      if (File.Exists(infoTextPath) == false)
+      if (File.Exists(infoPath) == false)
       {
-        Log.System.WriteLine("  Fail to get");
+        Log.System.WriteLine("    Fail to get  *.ts.program.txt");
         return;
       }
 
@@ -50,27 +57,25 @@ namespace pfAdapter
       {
         //４行以上取得できるまで繰り返す。タイムアウトＮ秒
         //４行取得できたなら３行目は確実にある。
-        infotext = FileR.ReadAllLines(infoTextPath);
+        infotext = FileR.ReadAllLines(infoPath);
         if (infotext != null &&
             4 <= infotext.Count) break;
-        Thread.Sleep(1000);
+        Thread.Sleep(500);
       }
       //テキスト取得失敗
       if (infotext == null)
       {
-        Log.System.WriteLine("  Fail to get");
+        Log.System.WriteLine("    Fail to get  *.ts.program.txt");
         return;
       }
 
       //情報取得
-      Log.System.WriteLine("  Get the info");
-      Log.System.WriteLine();
+      Log.System.WriteLine("    Get the  *.ts.program.txt");
 
-      if (1 <= infotext.Count) { Datetime = infotext[0]; }
       if (2 <= infotext.Count) { Channel = infotext[1]; }
       if (3 <= infotext.Count) { Program = infotext[2]; }
 
-      GotInfo = true;
+      HasInfo = true;
     }
   }
 }

@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,18 +43,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\FileLocker.cs" />
+    <Compile Include="Client\FileMoveLocker.cs" />
     <Compile Include="Exception\ExceptionInfo.cs" />
-    <Compile Include="Text\XmlRW.cs" />
+    <Compile Include="Setting\Mono.Options\Options.cs" />
+    <Compile Include="Setting\Mono.Options\Options_icase.cs" />
+    <Compile Include="Setting\AppSetting.cs" />
+    <Compile Include="Setting\Setting_BlackCH.cs" />
+    <Compile Include="Setting\Setting_File.cs" />
+    <Compile Include="Setting\Setting_CmdLine.cs" />
+    <Compile Include="Setting\XmlRW.cs" />
     <Compile Include="Text\FileRW.cs" />
-    <Compile Include="Text\Setting.cs" />
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\MidProcessManager.cs" />
+    <Compile Include="Text\StringConverter.cs" />
     <Compile Include="Text\Log.cs" />
     <Compile Include="Text\ProgramInfo.cs" />
-    <Compile Include="PipeFileStream\InputReader.cs" />
-    <Compile Include="PipeFileStream\PipeClient.cs" />
-    <Compile Include="PipeFileStream\OutputWriter.cs" />
+    <Compile Include="ReaderWriter\InputReader.cs" />
+    <Compile Include="ReaderWriter\PipeClient.cs" />
+    <Compile Include="ReaderWriter\OutputWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -1,0 +1,5 @@
+
+    GPL v3
+    Copyright (C) 2014  CHATRA
+    http://www.gnu.org/licenses/
+

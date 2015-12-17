@@ -1,22 +1,34 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.Text.RegularExpressions;
+
+#region title
+#endregion
 
 namespace pfAdapter
 {
+  using OctNov.Excp;
+
+
   internal class Program
   {
     private static void Main(string[] AppArgs)
     {
       ////テスト引数
-      //List<string> testArgs = new List<string>();
-      //testArgs.Add(@"-file");
-      //testArgs.Add(@"cap8s.ts");
+      //var testArgs = new List<string>();
+      //testArgs.Add(@"-File");
+      //testArgs.Add(@"ac2s.ts");
       //AppArgs = testArgs.ToArray();
+
+
+
 
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += ExceptionInfo.OnUnhandledException;
@@ -27,525 +39,543 @@ namespace pfAdapter
       Log.System.Enable = true;
       Log.System.OutConsole = true;
       Log.System.OutFile = true;
+      //Log.System.AutoFlush = false;     //通常時はfalse    // true false
+
+
 
       //
-      //App引数解析
+      //App引数解析    パイプ名、ファイルパス取得
       //
-      CommandLine.Parse(AppArgs);                          //パイプ名、ファイルパス取得
+      AppSetting.ParseCmdLine(AppArgs);
+
 
       //
       //パイプ接続、ファイル確認
       //
-      Log.System.WriteLine("[ Reader Connect ]");
-      var reader = new InputReader();                      //パイプ接続は最優先で行う。
-      var connected = reader.ConnectInput(CommandLine.Pipe, CommandLine.File);
-      if (connected == false)
+      //　パイプ接続は最優先で行うこと。３秒以内
+      Log.System.WriteLine("[ Connect Reader ]");
+      InputReader readerA, readerB;
       {
-        Log.System.WriteLine("[ App CommandLine ]");
-        foreach (var arg in AppArgs) Log.System.WriteLine(arg);
-        Log.System.WriteLine();
-        Log.System.WriteLine("入力が確認できません。");
-        Log.System.WriteLine("exit");
-        Log.System.WriteLine();
-        return;                                            //アプリ終了
+        //InputReader
+        readerA = new InputReader("MainA");
+        readerB = new InputReader("Enc_B");
+
+        var isConnectedA = readerA.Connect(AppSetting.Pipe, AppSetting.File);
+        var isConnectedB = readerB.Connect(AppSetting.Pipe, AppSetting.File, true);
+
+        // no reader?
+        if (isConnectedA == false)
+        {
+          //設定ファイルが無ければ作成
+          var setting = AppSetting.LoadFile();
+
+          Log.System.WriteLine("[ App CommandLine ]");
+          foreach (var arg in AppArgs) Log.System.WriteLine(arg);
+          Log.System.WriteLine();
+          Log.System.WriteLine("入力が確認できません。");
+          Log.System.WriteLine("exit");
+          Log.System.WriteLine();
+          Log.Close();
+
+          Thread.Sleep(2 * 1000);
+          return;                                            //アプリ終了
+        }
       }
+
 
       //
       //多重起動の負荷分散
       //
-      //他のpfAdapterのパイプ接続を優先する。
-      int PID = Process.GetCurrentProcess().Id;
-      int rand_msec = new Random(PID).Next(2 * 1000, 6 * 1000);
-      Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
-      Thread.Sleep(rand_msec);
-
-      //
-      ///設定ファイル
-      //
-      //  カレントディレクトリ
-      var AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-      var AppDir = Path.GetDirectoryName(AppPath);
-      Directory.SetCurrentDirectory(AppDir);
-
-      var setting = Setting.LoadFile(CommandLine.XmlPath);
-
-      if (setting == null)
       {
-        //指定の設定ファイルが存在しない
-        Log.System.WriteLine("exit");
+        //  他のpfAdapterのパイプ接続を優先するためにSleep()
+        int rand_msec = new Random(App.PID).Next(2 * 1000, 6 * 1000);
+        Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();
-        return;                                            //アプリ終了
+        Thread.Sleep(rand_msec);
       }
 
-      //sCommandLineをスペースで分ける。
-      var xmlCommandLine = setting.sCommandLine.Split()
-                             .Where(s => string.IsNullOrWhiteSpace(s) == false).ToArray();
-      CommandLine.Parse(xmlCommandLine, true, true);       //xmlの追加引数で上書き　（入力、-xmlは上書きしない）
-
-      //
-      //ログ
-      //
-      //  App引数
-      Log.System.WriteLine("[ App CommandLine ]");
-      foreach (var arg in AppArgs) Log.System.WriteLine(arg);
-      Log.System.WriteLine();
-
-      //  xml引数
-      Log.System.WriteLine("  [ Setting.sCommandLine ]");
-      Log.System.WriteLine("    " + setting.sCommandLine);
-      Log.System.WriteLine();
-
-      if (CommandLine.InputLog)
-      {
-        //  入力記録ログ有効化
-        Log.InputRead.Enable = true;
-        Log.InputRead.OutConsole = false;
-        Log.InputRead.OutFile = true;
-      }
 
       //
       //番組情報取得
       //
-      ProgramInfo.TryToGetInfo(CommandLine.File + ".program.txt");
-
-      //
-      //FileLocker
-      //
-      FileLocker.Initialize(setting.sLockFile);
-
-      //
-      //外部プロセスからコマンドライン取得。終了要求の確認
-      //
-      if (CommandLine.ExtCmd == null || CommandLine.ExtCmd != false)
+      Log.System.WriteLine("  [ program.txt ]");
       {
-        bool requestAbort;
-        Log.System.WriteLine("[ Client_GetExternalCommand ]");
-        GetExternalCommand(setting, AppArgs, out requestAbort);
+        ProgramInfo.TryToGetInfo(AppSetting.File);
+        AppSetting.Check_IsBlackCH(ProgramInfo.Channel);
 
-        //終了要求？
-        if (requestAbort)
+        Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
+        Log.System.WriteLine("      IsNonCMCutCH  = " + AppSetting.IsNonCMCutCH);
+        Log.System.WriteLine("      IsNonEnc__CH  = " + AppSetting.IsNonEnc__CH);
+        Log.System.WriteLine();
+      }
+      //Clientのマクロを設定１
+      {
+        Client.Macro_SrcPath = AppSetting.File;
+        Client.Macro_Channel = ProgramInfo.Channel;
+        Client.Macro_Program = ProgramInfo.Program;
+        Client.Macro_EncProfile = AppSetting.EncProfile;
+      }
+
+
+      //カレントディレクトリ設定
+      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+      string AppDir = System.IO.Path.GetDirectoryName(AppPath);
+      Directory.SetCurrentDirectory(AppDir);
+
+      //
+      ///設定ファイル
+      //
+      bool loadedfile = AppSetting.LoadFile();
+
+      //コマンドライン指定のxmlファイルが存在しない？
+      if (loadedfile == false)
+      {
+        Log.System.WriteLine("exit");
+        Log.System.WriteLine();
+        Log.Close();
+
+        Thread.Sleep(2 * 1000);
+        return;                                            //アプリ終了
+      }
+
+
+
+      //
+      //ログ
+      //
+      {
+        //  App引数
+        Log.System.WriteLine("[ App CommandLine ]");
+        foreach (var arg in AppArgs)
+          Log.System.WriteLine(arg);
+        Log.System.WriteLine();
+
+        //  xml引数
+        Log.System.WriteLine("  [ Setting.sCommandLine ]");
+        Log.System.WriteLine("    " + AppSetting.sCommandLine);
+        Log.System.WriteLine();
+        Log.System.WriteLine();
+        Log.System.WriteLine();
+
+        //デバッグ用  入力ログ
+        if (true)                      //  true  false
         {
-          return;                                          //アプリ終了
+#pragma warning disable 0162           //警告0162：到達できないコード
+          //readerA.Enable_LogInput(Log.InputA);
+          //readerB.Enable_LogInput(Log.InputB);
+#pragma warning restore 0162
         }
       }
 
+
       //
-      //引数表示
+      //外部プロセスからコマンドライン取得
+      //
+      if (AppSetting.EnableRun_ExtCmd)
+      {
+        #region Client_GetExternalCommand
+
+        string[] extra_cmdline = null;
+        {
+          Log.System.WriteLine("[ Client_GetExternalCommand ]");
+
+          //プロセスを実行できていなかったら reutrn nullされる
+          var clinet = AppSetting.Client_GetExternalCommand;
+          string line = clinet.Start_GetStdout();
+
+          if (line != null)
+          {
+            Log.System.WriteLine("      return =");
+            Log.System.Write(line);
+
+            //空白で分ける。　　”があれば除去
+            extra_cmdline = line.Split()
+                             .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
+                             .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
+                             .ToArray();
+          }
+        }
+
+        if (extra_cmdline != null)
+          AppSetting.ParseCmdline_OverWrite(extra_cmdline);
+
+        //終了要求がある？
+        if (AppSetting.Abort == true)
+        {
+          Log.System.WriteLine("  accept request  -Abort");
+          if (File.Exists(AppSetting.File + ".program.txt") == false)
+            Log.System.WriteLine("    Check the  *.ts.program.txt  existance if inadvertent exit.");
+
+          Log.System.WriteLine("exit");
+          Log.System.WriteLine();
+          Log.Close();
+          return;                                          //アプリ終了
+        }
+        #endregion
+      }
+
+
+      //
+      //コマンドライン引数表示
       //
       Log.System.WriteLine("[ CommandLine ]");
-      Log.System.WriteLine(CommandLine.ToString());
+      Log.System.WriteLine(AppSetting.Cmdline_ToString());
+
+      //Clientのマクロを設定２
+      //　コマンドラインが確定した後に再び設定する。
+      {
+        Client.Macro_EncProfile = AppSetting.EncProfile;
+      }
+
+
+      //
+      //PrcessList
+      //
+      //  PreProcess
+      if (AppSetting.EnableRun_PrePrc_App)
+      {
+
+        Log.System.WriteLine("[ PreProcess__App ]");
+        AppSetting.PreProcess__App.Wait_and_Run();                //実行
+        Log.System.WriteLine();
+      }
+
+      //  MidProcess
+      MidProcessManager midPrcManager = null;
+      if (AppSetting.EnableRun_MidPrc_MainA)
+      {
+        midPrcManager = new MidProcessManager();
+        midPrcManager.Initialize(                          //初期設定のみ、タイマーは停止
+                        AppSetting.MidProcess__MainA,
+                        AppSetting.dMidPrcInterval_min);
+      }
+
+      //  PostPrcess
+      ClientList PostPrcess = null;
+      if (AppSetting.EnableRun_PostPrc_MainA)
+      {
+        PostPrcess = AppSetting.PostProcess_MainA;
+      }
+
+
+      //
+      //FileLocker 初期化
+      //
+      ProhibitFileMove.Initialize(AppSetting.File, AppSetting.sLockFile);
+
 
       //
       //InputReaderの設定
       //
-      Log.System.WriteLine("[ Reader Param ]");
-      var limit = (0 < CommandLine.Limit)                  //引数で指定されている？
-                        ? CommandLine.Limit
-                        : setting.dReadLimit_MiBsec;
-      reader.SetParam(setting.dBuffSize_MiB, limit);
+      Log.System.WriteLine("  [ Reader Param ]");
+      readerA.SetParam(AppSetting.dBuffSize_MiB, AppSetting.dReadLimit_MiBsec);
+      readerB.SetParam(-1, AppSetting.dReadLimit_MiBsec, true);
 
-      //
-      //PreProcess
-      //
-      if (CommandLine.PrePrc.HasValue)                     //引数あり、引数を優先
-      {
-        if ((bool)CommandLine.PrePrc)                      //  -PrePrc 1
-        {
-          Log.System.WriteLine("[ PreProcess ]");
-          setting.PreProcessList.WaitAndRun();
-          Log.System.WriteLine();
-        }
-      }
-      else if (0 < setting.PreProcessList.bEnable)         //設定ファイルでtrue
-      {
-        Log.System.WriteLine("[ PreProcess ]");
-        setting.PreProcessList.WaitAndRun();
-        Log.System.WriteLine();
-      }
-
-      //
-      //MidProcess
-      //
-      var midInterval = (0 < CommandLine.MidInterval)
-                              ? CommandLine.MidInterval
-                              : setting.dMidPrcInterval_min;
-      MidProcessManager.Initialize(setting.MidProcessList, midInterval);
-
-      if (CommandLine.MidPrc.HasValue)                     //引数あり、引数を優先
-      {
-        if ((bool)CommandLine.MidPrc)                      //　-MidPrc 1
-          MidProcessManager.SetEnable();                   //　　有効にする、タイマーは停止
-      }
-      else if (0 < setting.MidProcessList.bEnable)         //設定ファイルでtrue
-      {
-        MidProcessManager.SetEnable();                     //　　有効にする、タイマーは停止
-      }
 
       //
       //出力ライター登録
       //
       Log.System.WriteLine("[ Register Writer ]");
-      var writer = new OutputWriter();
-      bool register = writer.RegisterWriter(setting.ClientList_WriteStdin);
-      if (register == false)
+      OutputWriter writerA, writerB;
       {
-        Log.System.WriteLine("出力先プロセスが起動していません。");
-        Log.System.WriteLine("exit");
-        Log.System.WriteLine();
-        return;                                            //アプリ終了
-      }
+        writerA = new OutputWriter();
+        writerB = new OutputWriter();
 
-      //
-      //メインループ
-      //
-      Log.System.WriteLine();
-      Log.System.WriteLine("[ Main Loop ]");
-      MainLoop(reader, writer);
-
-      //
-      //MidProcess中断
-      //
-      MidProcessManager.CancelTask();
-
-      //
-      //PostProcess
-      //
-      if (CommandLine.PostPrc.HasValue)                    //引数あり、引数を優先
-      {
-        if ((bool)CommandLine.PostPrc)                     //　-PostPrc 1
+        if (AppSetting.EnableRun_MainA)
         {
-          Log.System.WriteLine("[ PostProcess ]");
-          setting.PostProcessList.Wait();
-          FileLocker.Unlock();                             //ファイルの移動禁止　解除
-          setting.PostProcessList.Run();
-          Log.System.WriteLine();
+          Log.System.WriteLine("  Main_A:");
+          writerA.RegisterWriter(AppSetting.Client_MainA);
+          writerA.Timeout = TimeSpan.FromSeconds(20);      // 20 sec
         }
-      }
-      else if (0 < setting.PostProcessList.bEnable)        //設定ファイルでtrue
-      {
-        Log.System.WriteLine("[ PostProcess ]");
-        setting.PostProcessList.Wait();
-        FileLocker.Unlock();
-        setting.PostProcessList.Run();
-        Log.System.WriteLine();
-      }
 
-      Log.System.WriteLine("exit");
-      Log.System.WriteLine();
-      Log.System.WriteLine();
-    }//func
-
-    #region 外部プロセスからコマンドラインを取得
-
-    /// <summary>
-    /// 外部プロセスからコマンドラインを取得
-    /// </summary>
-    /// <param name="RequestAbort">終了要求があったか</param>
-    private static void GetExternalCommand(Setting setting, string[] AppArgs, out bool RequestAbort)
-    {
-      RequestAbort = false;
-
-      //標準出力取得
-      string retLine = setting.Client_GetExternalCommand.Start_GetStdout();
-      if (string.IsNullOrWhiteSpace(retLine)) return;
-
-      Log.System.WriteLine("      return =");
-      Log.System.Write(retLine);
-
-      //空白で分ける。　　”があれば除去
-      var externalCmd = retLine.Split()
-                                .Where(one => string.IsNullOrWhiteSpace(one) == false)
-                                .Select(one => { return Regex.Replace(one, @"^("")(.*)("")$", "$2"); })      // 前後の”除去
-                                .ToArray();
-      CommandLine.ResetXmlPath();
-      CommandLine.Parse(externalCmd, true, false);         //コマンドライン上書き　（入力は上書きしない。ＸＭＬは上書する。）
-
-      //終了要求？
-      if (CommandLine.Abort == true)
-      {
-        Log.System.WriteLine("  accept request  Abort_pfAdapter");
-        Log.System.WriteLine("exit");
-        Log.System.WriteLine();
-        if (File.Exists(CommandLine.File + ".program.txt") == false)
-          Log.System.WriteLine("    Check the *.ts.program.txt existance if inadvertent exit.");
-        RequestAbort = true;                               //アプリ終了要求
-        return;
-      }
-
-      //新たなxmlが指定された？
-      if (CommandLine.XmlPath != null)
-      {
-        Log.System.WriteLine("  accept request  -xml");
-        setting = Setting.LoadFile(CommandLine.XmlPath);
-
-        if (setting == null)
+        if (AppSetting.EnableRun_Enc_B)
         {
-          //　指定ファイルが存在しない
+          Log.System.WriteLine("  Enc__B:");
+          writerB.RegisterWriter(AppSetting.Client_Enc_B);
+          writerB.Timeout = TimeSpan.FromHours(24);        // 24 hour      無期限( -1 )にはしないこと。
+
+        }
+        /*
+         * 　□　タイムアウトについて
+         * task  MainA,  Enc_Bの両方が動いているときに、
+         * writerB.Timeout_msec = -1;  だと
+         * MainAの標準入力への書込みが短時間 or 完全に止まることがあり、
+         * 書き込み処理がタイムアウトする。
+         * task  MainAだけが動いているなら止まることはない。
+         * 
+         * writerA.Timeout_msec = -1;  writerB.Timeout_msec = -1;  のように、
+         * 両方のタイムアウトを無期限にすると、録画終了後にwriterAの書込み処理が再開され、
+         * pfAdapterの処理は正常に終了する。
+         * 録画終了後にファイル読込みが行われて、時間がかかるだけ。
+         * 
+         * 原因は不明
+         * Task.WaitAll();の仕様？
+         * 
+         */
+
+        //デバッグ用　ファイル出力を登録
+        //writerA.RegisterOutFileWriter(AppSetting.File + ".pfOutfile_A.ts");
+        //writerB.RegisterOutFileWriter(AppSetting.File + ".pfOutfile_B.ts");
+
+        // no writer?
+        if (writerA.HasWriter == false && writerB.HasWriter == false)
+        {
+          Log.System.WriteLine("出力先プロセスが起動していません。");
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
-          RequestAbort = true;
-          return;                                  //アプリ終了
+          Log.Close();
+
+          Thread.Sleep(2 * 1000);
+          return;                                            //アプリ終了
         }
-
-        //　xml追加引数
-        var xmlCommandLine = setting.sCommandLine
-                                    .Split()
-                                    .Where(one => string.IsNullOrWhiteSpace(one) == false)
-                                    .ToArray();
-        Log.System.WriteLine("  [ Setting.sCommandLine 2 ]");
-        Log.System.WriteLine("    " + setting.sCommandLine);
-        Log.System.WriteLine();
-
-        //　引数再設定
-        CommandLine.Reset();                           //リセット
-        CommandLine.Parse(AppArgs, true, true);        //Appの引数               (入力、ＸＭＬは上書きしない）
-        CommandLine.Parse(xmlCommandLine, true, true); //xmlの追加引数で上書き　（入力、ＸＭＬは上書きしない）
       }
 
-      Log.System.WriteLine();
-      return;
-    }
 
-    #endregion 外部プロセスからコマンドラインを取得
 
-    #region メインループ
+      //MainSession
+      {
+        Log.System.WriteLine();
+        Log.System.WriteLine("[ Main Session ]");
+        Log.Flush();
+
+        var enc_B = MainSession.GetTask(
+                                    readerB, writerB,
+                                    null, null,
+                                    false);
+
+        var mainA = MainSession.GetTask(
+                                    readerA, writerA,
+                                    midPrcManager, PostPrcess,
+                                    true);
+        mainA.ContinueWith(t =>
+        {
+          if (enc_B.IsCompleted == false)
+            Log.System.WriteLine("    wait for Enc_B exit.  wait...");
+        });
+
+        mainA.Start();
+        enc_B.Start();
+        mainA.Wait();
+        enc_B.Wait();
+      }
+
+
+      //PostProcess_Enc
+      if (AppSetting.EnableRun_Enc_B)
+        if (AppSetting.EnableRun_PostPrc_Enc)
+        {
+          Log.System.WriteLine("[ PostProcess_Enc_B ]");
+          AppSetting.PostProcess_Enc_B.Wait();
+          ProhibitFileMove.Unlock();                           //移動禁止は待機中だけ
+          AppSetting.PostProcess_Enc_B.Run();
+          ProhibitFileMove.Lock();                             //移動禁止　　再
+          Log.System.WriteLine();
+        }
+
+      //PostProcess_App
+      if (AppSetting.EnableRun_PostPrc_App)
+      {
+        Log.System.WriteLine("[ PostProcess_App ]");
+        AppSetting.PostProcess_App.Wait();
+        ProhibitFileMove.Unlock();                           //移動禁止は待機中だけ
+        AppSetting.PostProcess_App.Run();
+        Log.System.WriteLine();
+      }
+
+      // Closing log
+      {
+        Log.System.WriteLine();
+        Log.System.WriteLine("elapse   {0,3:f0} min", App.ElapseTime.TotalMinutes);
+        Log.System.WriteLine("exit");
+        Log.System.WriteLine();
+        Log.System.WriteLine();
+        Log.Close();
+      }
+
+    }//func
+
+
 
     /// <summary>
-    /// メインループ
+    /// MainSession [main loop]
     /// </summary>
-    private static void MainLoop(InputReader reader, OutputWriter writer)
+    static class MainSession
     {
-      int timeUpdateTitle = 0;
-      int timeGCCollect = 0;
+      /// <summary>
+      /// Task間の同期
+      /// 　Taskごとのログを混ぜないための lock
+      /// 　Log側では１行分のロックしかできない。
+      /// </summary>
+      static readonly object syncLog = new object();
 
-      while (true)
+      /// <summary>
+      /// MainSession [main loop] をTaskで取得
+      /// </summary>
+      public static Task GetTask(
+                                 InputReader reader,
+                                 OutputWriter writer,
+                                 MidProcessManager midPrcManager_MainA,
+                                 ClientList postPrcList_MainA,
+                                 bool enable_UpdateLog
+                                )
       {
-        //読込み
-        byte[] readData = reader.ReadBytes();
-        if (readData == null) continue;                     //値を取得できない。（Buffロック失敗、未書込エリアの読込み）
-        else if (readData.Length == 0) break;               //パイプ切断 ＆ ファイル終端
+        Task task = new Task(() =>
+        {
+          if (writer.HasWriter == false) return;
 
-        //書込み
-        writer.WriteData(readData);
-        if (writer.HasWriter == false) break;
+          if (midPrcManager_MainA != null)
+            midPrcManager_MainA.StartTimer();
 
-        //MidProcess始動
-        //　　readDataを確認してからタイマーを動かす
-        MidProcessManager.StartTimerIfStopped();
+          while (true)
+          {
+            //読
+            byte[] readData = reader.ReadBytes();
+            if (readData == null) continue;                  //値を取得できない。（Buffロック失敗、未書込エリアの読込み）
+            else if (readData.Length == 0) break;            //パイプ切断 ＆ ファイル終端
 
-        //コンソールタイトル更新
-        if (1.0 * 1000 < Environment.TickCount - timeUpdateTitle)
+
+            //書
+            writer.WriteData(readData);
+            if (writer.HasWriter == false) break;
+
+
+            //コンソール、ログ更新
+            if (enable_UpdateLog)
+              UpdateLogStatus(
+                      reader.LogStatus.TotalPipeRead,
+                      reader.LogStatus.TotalFileRead);
+
+            TimedGC.Collect();
+          }
+
+
+          //終了処理
+          if (postPrcList_MainA != null)
+            ProhibitFileMove.Lock();             //ファイルの移動禁止
+
+          reader.Close();
+          writer.Close();
+
+
+          lock (syncLog)
+          {
+            Log.System.WriteLine();
+            Log.System.WriteLine(reader.Name + ":");
+            Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
+            Log.System.WriteLine(reader.LogStatus.OutText_Status());
+          }
+
+          // 同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
+          Thread.Sleep(4 * 1000);
+
+          lock (syncLog)
+          {
+            //MidProcessManager
+            if (midPrcManager_MainA != null)
+            {
+              Log.System.WriteLine("  MidProcessManager CancelTask()  wait...");
+              midPrcManager_MainA.CancelTask();
+              Log.System.WriteLine("  MidProcess is canceled");
+              Log.System.WriteLine();
+            }
+
+            //PostProcess
+            if (postPrcList_MainA != null)
+            {
+              Log.System.WriteLine("[ PostProcess_MainA ]");
+              postPrcList_MainA.Wait();
+              ProhibitFileMove.Unlock();           //移動禁止は待機中だけ
+              postPrcList_MainA.Run();
+              ProhibitFileMove.Lock();             //移動禁止　　再
+              Log.System.WriteLine();
+            }
+          }
+
+        });
+        return task;
+      }
+
+
+      /// <summary>
+      /// コンソールタイトル更新時間
+      /// </summary>
+      private static int timeUpdateTitle = 0;
+
+      /// <summary>
+      /// コンソールタイトル更新
+      /// </summary>
+      private static void UpdateLogStatus(long totalPipeRead, long totalFileRead)
+      {
+        //１秒毎
+        if (0.950 * 1000 < Environment.TickCount - timeUpdateTitle)
         {
           string status = string.Format(
-                            "[file] {0,5:f2} MiB/s  [pipe,file] {1,4},{2,4} MiB    [mem] cur {3,4:f1}, avg {4,4:f1}, max {5,4:f1}",
-                            (double)(reader.ReadSpeed / 1024 / 1024),                    //読込み速度　ファイル
-                            (int)(LogStatus.TotalPipeRead / 1024 / 1024),                //総読込み量　ファイル
-                            (int)(LogStatus.TotalFileRead / 1024 / 1024),                //総読込み量　パイプ
-                            ((double)System.GC.GetTotalMemory(false) / 1024 / 1024),     //メモリ使用量  現在
-                            LogStatus.Memory_Avg,                                        //              平均
-                            LogStatus.Memory_Max                                         //              最大
+                            "[pipe,file] {0,6},{1,6} MiB",
+                            (int)(totalPipeRead / 1024 / 1024),        //総読込み量　ファイル
+                            (int)(totalFileRead / 1024 / 1024)         //総読込み量　パイプ
                             );
 
-          Console.Title = "(" + DateTime.Now.ToString("T") + ") " + status;              //タイトル更新
+          //コンソールタイトル
+          //１秒毎
+          Console.Title = "  " + DateTime.Now.ToString("HH:mm:ss") + ":    " + status;
 
+          //コンソール表示
+          //１分毎
           if (DateTime.Now.Minute % 1 == 0
-                && DateTime.Now.Second % 60 == 0)                                        //コンソール
-            Console.Error.WriteLine(
-              DateTime.Now.ToString("HH:mm:ss.fff") + ":    " + status);
+                && DateTime.Now.Second % 60 == 0)
+            Console.Error.WriteLine(DateTime.Now.ToString("HH:mm:ss.fff") + ":    " + status);
 
+          //コンソール、ログファイル
+          //５分毎
           if (DateTime.Now.Minute % 5 == 0
-                && DateTime.Now.Second % 60 == 0)                                        //ログコンソール、ログファイル
+                && DateTime.Now.Second % 60 == 0)
             Log.System.WriteLine("  " + status);
 
           timeUpdateTitle = Environment.TickCount;
         }
+      }
 
-        //ガベージコレクター
-        if (345 < Environment.TickCount - timeGCCollect)
+      /// <summary>
+      ///  ガベージコレクター実行
+      ///  GCクラスはスレッドセーフ
+      /// </summary>
+      static class TimedGC
+      {
+        const int CollectSpan = 345;
+
+        static int timeGCCollect = 0;
+        public static void Collect()
         {
-          LogStatus.Log_UsedMemory();
-          GC.Collect();
-          timeGCCollect = Environment.TickCount;
+          if (CollectSpan < Environment.TickCount - timeGCCollect)
+          {
+            GC.Collect();
+            timeGCCollect = Environment.TickCount;
+          }
         }
       }
 
+    }//class MainSession
 
-      //終了処理
-      Log.System.WriteLine();
-      Log.System.WriteLine();
-      Log.System.WriteLine(LogStatus.OutText_TotalRead());
+  }//class Program
 
-      FileLocker.Lock();               //ファイルの移動禁止
-      reader.Close();
-      writer.Close();
-    }
 
-    #endregion メインループ
-  }//class
 
-  #region コマンドライン引数
 
-  /// <summary>
-  /// コマンドライン引数を処理する。
-  /// </summary>
-  internal static class CommandLine
-  {
-    public static String Pipe { get; private set; }        //未割り当てだとnull
-    public static String File { get; private set; }
-    public static String XmlPath { get; private set; }
-    public static bool InputLog { get; private set; }      //未割り当てだとfalse
-    public static double Limit { get; private set; }       //未割り当てだと0.0
-    public static double MidInterval { get; private set; }
-    public static bool? ExtCmd { get; private set; }       //未割り当てだとnull
-    public static bool? PrePrc { get; private set; }
-    public static bool? MidPrc { get; private set; }
-    public static bool? PostPrc { get; private set; }
-    public static bool Abort { get; private set; }
 
-    //
-    //コンストラクター
-    //  置換に使われるときにnullだとエラーがでるので空文字列をいれる。
-    static CommandLine()
-    {
-      Pipe = File = string.Empty;
-      Limit = MidInterval = -1;
-    }
 
-    /// <summary>
-    /// 初期値に設定する。（入力以外）
-    /// </summary>
-    public static void Reset()
-    {
-      XmlPath = null;
-      InputLog = new bool();           //boolの規定値はfalse
-      Limit = -1;
-      MidInterval = -1;
-      ExtCmd = new bool?();            //bool?の規定値はnull
-      PrePrc = new bool?();
-      MidPrc = new bool?();
-      PostPrc = new bool?();
-      Abort = new bool();
-    }
 
-    /// <summary>
-    /// XmlPathを削除する。
-    /// </summary>
-    public static void ResetXmlPath()
-    {
-      XmlPath = null;
-    }
 
-    /// <summary>
-    /// 引数解析
-    /// </summary>
-    /// <param name="args">解析する引数</param>
-    /// <param name="except_input">入力に関する項目を更新しない</param>
-    /// <param name="except_xml">ｘｍｌパスを更新しない</param>
-    public static void Parse(string[] args, bool except_input = false, bool except_xml = false)
-    {
-      //引数の１つ目がファイル？
-      if (0 < args.Count())
-        if (except_input == false)
-          if (System.IO.File.Exists(args[0]))
-            File = args[0];
 
-      for (int i = 0; i < args.Count(); i++)
-      {
-        string key, sValue;
-        bool canParse;
-        double dValue;
 
-        key = args[i].ToLower();
-        sValue = (i + 1 < args.Count()) ? args[i + 1] : "";
-        canParse = double.TryParse(sValue, out dValue);
 
-        //  - / をはずす
-        if (key.IndexOf("-") == 0 || key.IndexOf("/") == 0)
-          key = key.Substring(1, key.Length - 1);
-        else
-          continue;
 
-        //小文字で比較
-        switch (key)
-        {
-          case "npipe":
-            if (except_input == false)
-              Pipe = sValue;
-            break;
 
-          case "file":
-            if (except_input == false)
-              File = sValue;
-            break;
 
-          case "xml":
-            if (except_xml == false)
-              XmlPath = sValue;
-            break;
 
-          case "inputlog":
-            ////InputLog = true;       //必要な時以外はコメントアウトで無効化
-            break;
 
-          case "limit":
-            if (canParse)
-              Limit = (0 < dValue) ? dValue : -1;
-            break;
 
-          case "midint":
-            if (canParse)
-              MidInterval = (0 < dValue) ? dValue : -1;
-            break;
 
-          case "abort_pfadapter":
-            Abort = true;
-            break;
 
-          case "extcmd":
-            if (canParse)
-              ExtCmd = (0 < dValue);
-            break;
 
-          case "preprc":
-            if (canParse)
-              PrePrc = (0 < dValue);
-            break;
 
-          case "midprc":
-            if (canParse)
-              MidPrc = (0 < dValue);
-            break;
-
-          case "postprc":
-            if (canParse)
-              PostPrc = (0 < dValue);
-            break;
-
-          default:
-            break;
-        }//switch
-      }//for
-    }//func
-
-    /// <summary>
-    /// コマンドライン一覧を出力する。
-    /// </summary>
-    /// <returns></returns>
-    public static new string ToString()
-    {
-      var sb = new StringBuilder();
-      sb.AppendLine("    Pipe        = " + Pipe);
-      sb.AppendLine("    File        = " + File);
-      sb.AppendLine("    XmlPath     = " + XmlPath);
-      sb.AppendLine("    Limit       = " + Limit);
-      sb.AppendLine("    MidInterval = " + MidInterval);
-      sb.AppendLine("    ExtCmd      = " + ExtCmd);
-      sb.AppendLine("    PrePrc      = " + PrePrc);
-      sb.AppendLine("    MidPrc      = " + MidPrc);
-      sb.AppendLine("    PostPrc     = " + PostPrc);
-      return sb.ToString();
-    }
-  }//calss
-
-  #endregion コマンドライン引数
 }//namespace
