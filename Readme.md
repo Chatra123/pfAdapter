@@ -148,7 +148,7 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 
 
 
-#### プロセスリスト処理の流れ   （テキスト表記）
+#### プロセスリスト処理の流れ   （等幅フォント用表記）
 
 ┌─────────────────┐  
 ｜　　Client_GetExternalCommand 　　｜  
