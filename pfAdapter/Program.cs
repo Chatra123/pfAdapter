@@ -495,7 +495,7 @@ namespace pfAdapter
         return task;
       }
 
-
+    
       /// <summary>
       /// コンソールタイトル更新時間
       /// </summary>

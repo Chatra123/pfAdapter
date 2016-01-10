@@ -195,9 +195,9 @@ namespace pfAdapter.pfSetting
       {
          new Client()
          {
-           memo = "  RemoveTrash  ",
+           memo = "  Rename  ",
            bEnable = 1,
-           sBasePath = @"   PostProcess_RemoveTrash.bat   ",
+           sBasePath = @"   PostProcess_Rename.bat   ",
            sBaseArgs =  "  \"$fPath$\"  ",
          },
       };
