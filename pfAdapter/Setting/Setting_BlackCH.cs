@@ -10,6 +10,8 @@ using System.Text.RegularExpressions;
 
 namespace pfAdapter
 {
+  using OctNov.Text;
+
   /// <summary>
   /// NonCMCutCH.txt内に特定のチャンネル名があるか調べる
   /// </summary>
@@ -92,13 +94,13 @@ namespace pfAdapter
       //大文字全角ひらがなに変換
       string shortCh, nonNumCh;
 
-      targetCh = StringConverter.ToUWH(targetCh);
+      targetCh = StrConverter.ToUWH(targetCh);
       shortCh = (4 < targetCh.Length) ? targetCh.Substring(0, 4) : targetCh;   //前４文字
       nonNumCh = targetCh;
-      nonNumCh = StringConverter.RemoveNumber(nonNumCh);                       //数字除去
-      nonNumCh = StringConverter.RemoveSymbol(nonNumCh);                       //記号除去
+      nonNumCh = StrConverter.RemoveNumber(nonNumCh);                       //数字除去
+      nonNumCh = StrConverter.RemoveSymbol(nonNumCh);                       //記号除去
 
-      blackList = blackList.Select((line) => StringConverter.ToUWH(line));
+      blackList = blackList.Select((line) => StrConverter.ToUWH(line));
 
 
       //部分一致で検索

@@ -55,7 +55,7 @@
     <Compile Include="Text\FileRW.cs" />
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\MidProcessManager.cs" />
-    <Compile Include="Text\StringConverter.cs" />
+    <Compile Include="Text\StrConverter.cs" />
     <Compile Include="Text\Log.cs" />
     <Compile Include="Text\ProgramInfo.cs" />
     <Compile Include="ReaderWriter\InputReader.cs" />
