@@ -142,7 +142,7 @@ namespace pfAdapter
       }
 
       //load file
-      setting_file = Setting_File.LoadFile();
+      setting_file = Setting_File.LoadFile(xmlpath);
 
       //　xml追加引数
       var xmlCmdLine = setting_file.CommandLine

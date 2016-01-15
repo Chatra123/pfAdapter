@@ -52,14 +52,14 @@ namespace pfAdapter.pfSetting
     public static Setting_File LoadFile(string xmlpath = null)
     {
       //デフォルト名を使用
-      if (xmlpath == null)
+      if (string.IsNullOrEmpty(xmlpath))
       {
         xmlpath = Default_XmlPath;
 
         if (File.Exists(xmlpath) == false)
         {
           //設定ファイル作成
-          var def_Setting = Sample_A();               //    Sample_A    Sample_RunTest    new Setting_File(); 
+          var def_Setting = Sample_A();               //  Sample_A  Sample_RunTest  new Setting_File(); 
           XmlRW.Save(xmlpath, def_Setting);
         }
       }
