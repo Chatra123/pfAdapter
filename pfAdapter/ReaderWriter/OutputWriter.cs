@@ -70,7 +70,7 @@ namespace pfAdapter
         var writer = WriterList[i];
 
         //有効？
-        if (writer.bEnable <= 0) { WriterList.Remove(writer); continue; }
+        if (writer.Enable <= 0) { WriterList.Remove(writer); continue; }
 
         //実行
         Log.System.WriteLine("  " + writer.FileName);

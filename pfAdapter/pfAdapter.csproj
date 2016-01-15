@@ -43,7 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\FileMoveLocker.cs" />
+    <Compile Include="Client\ProhibitFileMove_pfA.cs" />
     <Compile Include="Exception\ExceptionInfo.cs" />
     <Compile Include="Setting\Mono.Options\Options.cs" />
     <Compile Include="Setting\Mono.Options\Options_icase.cs" />

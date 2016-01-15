@@ -16,12 +16,12 @@ namespace pfAdapter
   [Serializable]
   public class ClientList
   {
-    public int bEnable = 1;
-    public double dDelay_sec = 0;
-    public double dRandDelay_sec = 0;
+    public int Enable = 1;
+    public double Delay_sec = 0;
+    public double RandDelay_sec = 0;
     public List<Client> List = new List<Client>();
 
-    public bool Enable { get { return 0 < bEnable; } }
+    public bool IsEnable { get { return 0 < Enable; } }
 
     /// <summary>
     /// コンストラクター
@@ -52,14 +52,14 @@ namespace pfAdapter
     public void Wait()
     {
       //有効？
-      if (Enable == false) return;
-      if (List.Where((client) => client.Enable).Count() == 0) return;
+      if (IsEnable == false) return;
+      if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
       //待機
-      Thread.Sleep((int)(dDelay_sec * 1000));
+      Thread.Sleep((int)(Delay_sec * 1000));
       int seed = Process.GetCurrentProcess().Id + DateTime.Now.Millisecond;
       var rand = new Random(seed);
-      Thread.Sleep(rand.Next(0, (int)(dRandDelay_sec * 1000)));
+      Thread.Sleep(rand.Next(0, (int)(RandDelay_sec * 1000)));
     }
 
     /// <summary>
@@ -68,18 +68,18 @@ namespace pfAdapter
     public void Run()
     {
       //有効？
-      if (Enable == false) return;
-      if (List.Where((client) => client.Enable).Count() == 0) return;
+      if (IsEnable == false) return;
+      if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
       //実行
       for (int i = 0; i < List.Count; i++)
       {
         var client = List[i];
-        if (client.Enable == false) continue;
+        if (client.IsEnable == false) continue;
 
         // $MidCnt$ 置換
-        string sessionPath = client.sBasePath ?? "";
-        string sessionArgs = client.sBaseArgs ?? "";
+        string sessionPath = client.BasePath ?? "";
+        string sessionArgs = client.BaseArgs ?? "";
         sessionPath = MidProcessManager.ReplaceMacro_MidCnt(sessionPath);
         sessionArgs = MidProcessManager.ReplaceMacro_MidCnt(sessionArgs);
 
@@ -101,23 +101,23 @@ namespace pfAdapter
     public static string Macro_EncProfile;
 
     //ＸＭＬに保存する値
-    public int bEnable = 1;
+    public int Enable = 1;
     public string memo = "  ";
-    public string sName = "  ";
-    public string sBasePath = "  ";
-    public string sBaseArgs = "  ";
-    public double dDelay_sec = 0;
-    public int bNoWindow = 1;                              //Write_stdinでは機能しない。Redirectしたら常にno window
-    public int bWaitForExit = 1;
-    public double dWaitTimeout_sec = -1;
+    public string Name = "  ";
+    public string BasePath = "  ";
+    public string BaseArgs = "  ";
+    public double Delay_sec = 0;
+    public int NoWindow = 1;                              //Write_stdinでは機能しない。Redirectしたら常にno window
+    public int WaitForExit = 1;
+    public double WaitTimeout_sec = -1;
 
-    public bool Enable { get { return 0 < bEnable; } }
+    public bool IsEnable { get { return 0 < Enable; } }
 
-    public string FileName { get { return Path.GetFileName(sBasePath).Trim(); } }
+    public string FileName { get { return Path.GetFileName(BasePath).Trim(); } }
 
     public override string ToString()
     {
-      return (string.IsNullOrWhiteSpace(sName) == false) ? sName : FileName;
+      return (string.IsNullOrWhiteSpace(Name) == false) ? Name : FileName;
     }
 
 
@@ -136,22 +136,22 @@ namespace pfAdapter
     protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
     {
       //チェック
-      if (Enable == false) return null;
-      if (sBasePath == null) return null;
+      if (IsEnable == false) return null;
+      if (BasePath == null) return null;
 
       var prc = new Process();
 
       //Path
-      sBasePath = sBasePath ?? "";
-      sessionPath = sessionPath ?? sBasePath;              //sessionPathがなければsBasePathを使用
+      BasePath = BasePath ?? "";
+      sessionPath = sessionPath ?? BasePath;              //sessionPathがなければsBasePathを使用
       sessionPath = ReplaceMacro(sessionPath);             //マクロ置換
       sessionPath = sessionPath.Trim();
       if (string.IsNullOrWhiteSpace(sessionPath))
         return null;                                       //パスが無効
 
       //Arguments
-      sBaseArgs = sBaseArgs ?? "";
-      sessionArgs = sessionArgs ?? sBaseArgs;              //sessionArgsがなければsBaseArgsを使用
+      BaseArgs = BaseArgs ?? "";
+      sessionArgs = sessionArgs ?? BaseArgs;              //sessionArgsがなければsBaseArgsを使用
       sessionArgs = ReplaceMacro(sessionArgs);             //マクロ置換
       sessionArgs = sessionArgs.Trim();
 
@@ -160,8 +160,8 @@ namespace pfAdapter
       prc.StartInfo.FileName = sessionPath;
       prc.StartInfo.Arguments = sessionArgs;
 
-      Log.System.WriteLine("      BasePath     :" + sBasePath);
-      Log.System.WriteLine("      BaseArgs     :" + sBaseArgs);
+      Log.System.WriteLine("      BasePath     :" + BasePath);
+      Log.System.WriteLine("      BaseArgs     :" + BaseArgs);
       Log.System.WriteLine("      SessionPath  :" + sessionPath);
       Log.System.WriteLine("      SessionArgs  :" + sessionArgs);
       Log.System.WriteLine("                   :");
@@ -256,21 +256,21 @@ namespace pfAdapter
       Process = CreateProcess(sessionPath, sessionArgs);
       if (Process == null) return false;
 
-      Thread.Sleep((int)(dDelay_sec * 1000));
+      Thread.Sleep((int)(Delay_sec * 1000));
 
       //コンソールウィンドウ非表示
-      Process.StartInfo.CreateNoWindow = 0 < bNoWindow;
-      Process.StartInfo.UseShellExecute = !(0 < bNoWindow);
+      Process.StartInfo.CreateNoWindow = 0 < NoWindow;
+      Process.StartInfo.UseShellExecute = !(0 < NoWindow);
 
       //プロセス実行
       bool launch;
       try
       {
         launch = Process.Start();
-        if (0 < bWaitForExit)
+        if (0 < WaitForExit)
         {
-          if (0 <= dWaitTimeout_sec)
-            Process.WaitForExit((int)(dWaitTimeout_sec * 1000));
+          if (0 <= WaitTimeout_sec)
+            Process.WaitForExit((int)(WaitTimeout_sec * 1000));
           else
             //WaitForExit(int)は-1でない負数だと例外発生
             Process.WaitForExit(-1);
@@ -302,7 +302,7 @@ namespace pfAdapter
       Process = CreateProcess(null, sessionArgs);
       if (Process == null) return null;
 
-      Thread.Sleep((int)(dDelay_sec * 1000));
+      Thread.Sleep((int)(Delay_sec * 1000));
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
@@ -356,7 +356,7 @@ namespace pfAdapter
       if (prc == null) return false;               //Process起動失敗
 
       Process = prc;
-      Thread.Sleep((int)(dDelay_sec * 1000));
+      Thread.Sleep((int)(Delay_sec * 1000));
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
@@ -415,7 +415,7 @@ namespace pfAdapter
   {
     public Client_OutStdout()
     {
-      bEnable = 1;
+      Enable = 1;
 
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避
       //if (client.Process.HasExited==false)を回避する。
@@ -433,7 +433,7 @@ namespace pfAdapter
   {
     public Client_OutFile(string filepath)
     {
-      bEnable = 1;
+      Enable = 1;
 
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避
       //if (client.Process.HasExited==false)を回避する。

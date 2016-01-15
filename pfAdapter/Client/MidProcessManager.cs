@@ -122,7 +122,7 @@ namespace pfAdapter
             {
               lock (syncTask)          //ロック
               {
-                if (MidProcessList.Enable == false) return;
+                if (MidProcessList.IsEnable == false) return;
 
                 Log.System.WriteLine("    MidPrc__(  " + tickCounter + "  )");
                 MidProcessList.Wait();
@@ -130,11 +130,11 @@ namespace pfAdapter
                 //実行
                 foreach (var client in MidProcessList.List)
                 {
-                  if (client.Enable) continue;
+                  if (client.IsEnable) continue;
 
                   // $MidCnt$ 置換
-                  string sessionPath = client.sBasePath ?? "";
-                  string sessionArgs = client.sBaseArgs ?? "";
+                  string sessionPath = client.BasePath ?? "";
+                  string sessionArgs = client.BaseArgs ?? "";
                   sessionPath = ReplaceMacro_MidCnt(sessionPath);
                   sessionArgs = ReplaceMacro_MidCnt(sessionArgs);
                   client.Start(sessionPath, sessionArgs);

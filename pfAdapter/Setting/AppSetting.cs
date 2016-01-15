@@ -145,7 +145,7 @@ namespace pfAdapter
       setting_file = Setting_File.LoadFile();
 
       //　xml追加引数
-      var xmlCmdLine = setting_file.sCommandLine
+      var xmlCmdLine = setting_file.CommandLine
                                    .Split()
                                    .Where(arg => string.IsNullOrWhiteSpace(arg) == false)
                                    .ToArray();
@@ -173,9 +173,9 @@ namespace pfAdapter
 
 
     //設定ファイルから
-    public static double dBuffSize_MiB { get { return setting_file.dBuffSize_MiB; } }
-    public static string sCommandLine { get { return setting_file.sCommandLine; } }
-    public static string sLockFile { get { return setting_file.sLockMove; } }
+    public static double dBuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
+    public static string sCommandLine { get { return setting_file.CommandLine; } }
+    public static string sLockFile { get { return setting_file.LockMove; } }
 
     public static ClientList PreProcess__App { get { return setting_file.PreProcess__App; } }
     public static ClientList MidProcess__MainA { get { return setting_file.MidProcess__MainA; } }
@@ -228,7 +228,7 @@ namespace pfAdapter
         //コマンドラインにあれば優先する
         var limit = (-1 < cmdline.Limit)
                           ? cmdline.Limit
-                          : setting_file.dReadLimit_MiBsec;
+                          : setting_file.ReadLimit_MiBsec;
         return limit;
       }
     }
@@ -243,7 +243,7 @@ namespace pfAdapter
         //コマンドラインにあれば優先する
         var interval = (0 < cmdline.MidInterval)
                                  ? cmdline.MidInterval
-                                 : setting_file.dMidPrcInterval_min;
+                                 : setting_file.MidPrcInterval_min;
         return interval;
       }
     }
@@ -276,40 +276,40 @@ namespace pfAdapter
     /// ExtCmd           Enable
     /// </summary>
     public static bool EnableRun_ExtCmd
-    { get { return EnableRun_PrcList(cmdline.ExtCmd, setting_file.Client_GetExternalCommand.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.ExtCmd, setting_file.Client_GetExternalCommand.Enable); } }
 
     /// <summary>
     /// PrePrc_App       Enable
     /// </summary>
     public static bool EnableRun_PrePrc_App
-    { get { return EnableRun_PrcList(cmdline.PrePrc_App, setting_file.PreProcess__App.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.PrePrc_App, setting_file.PreProcess__App.Enable); } }
 
 
     /// <summary>
     /// MidPrc_MainA     Enable
     /// </summary>
     public static bool EnableRun_MidPrc_MainA
-    { get { return EnableRun_PrcList(cmdline.MidPrc_Main, setting_file.MidProcess__MainA.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.MidPrc_Main, setting_file.MidProcess__MainA.Enable); } }
 
 
     /// <summary>
     /// PostPrc_MainA    Enable
     /// </summary>
     public static bool EnableRun_PostPrc_MainA
-    { get { return EnableRun_PrcList(cmdline.PostPrc_Main, setting_file.PostProcess_MainA.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.PostPrc_Main, setting_file.PostProcess_MainA.Enable); } }
 
     /// <summary>
     /// PostPrc_Enc      Enable
     /// </summary>
     public static bool EnableRun_PostPrc_Enc
-    { get { return EnableRun_PrcList(cmdline.PostPrc_Enc, setting_file.PostProcess_Enc_B.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.PostPrc_Enc, setting_file.PostProcess_Enc_B.Enable); } }
 
 
     /// <summary>
     /// PostPrc_App      Enable
     /// </summary>
     public static bool EnableRun_PostPrc_App
-    { get { return EnableRun_PrcList(cmdline.PostPrc_App, setting_file.PostProcess_App.bEnable); } }
+    { get { return EnableRun_PrcList(cmdline.PostPrc_App, setting_file.PostProcess_App.Enable); } }
 
 
 
