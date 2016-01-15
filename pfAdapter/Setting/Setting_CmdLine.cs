@@ -96,8 +96,11 @@ namespace pfAdapter.pfSetting
         //suspend app
         .Add("suspend_main", (v) => this.Suspend_pfMainA = v != null)
         .Add("suspend_pfmain", (v) => this.Suspend_pfMainA = v != null)
+        .Add("suspend_pfamain", (v) => this.Suspend_pfMainA = v != null)
         .Add("suspend_enc", (v) => this.Suspend_pfEnc_B = v != null)
         .Add("suspend_pfenc", (v) => this.Suspend_pfEnc_B = v != null)
+        .Add("suspend_pfaenc", (v) => this.Suspend_pfEnc_B = v != null)
+        .Add("abort_pfa", (v) => this.Abort_pfAdapter = v != null)
         .Add("abort_pfadapter", (v) => this.Abort_pfAdapter = v != null)
 
         .Add("and_more", "help mes", (v) => { });
