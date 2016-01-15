@@ -6,10 +6,11 @@ using System.Text.RegularExpressions;
 //参照の追加　アセンブリ　Microsoft.VisualBasic
 using Microsoft.VisualBasic;           //Strings.StrConv
 
-namespace pfAdapter
+
+namespace OctNov
 {
   /// <summary>
-  /// 文字形式の変換
+  /// 文字形式の変換、除去
   /// </summary>
   static class StringConverter
   {
@@ -44,28 +45,30 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// 記号削除
+    /// 記号除去
     /// </summary>
     public static string RemoveSymbol(string text)
     {
       //半角
-      var symbol_N = @" !\""#$%&'()=-~^|\\`@{[}]*:+;_?/>.<,・";
+      const string symbol_N = @" !\""#$%&'()=-~^|\\`@{[}]*:+;_?/>.<,・";
       //全角
-      var symbol_W = @"・☆〇×￣【】" + Strings.StrConv(symbol_N, VbStrConv.Wide, 0x0411);
+      //  半角スラッシュ\ はStrings.StrConv()で変換できなかったのでリテラルで指定
+      string symbol_W = @"・☆〇×￣【】＼／" + Strings.StrConv(symbol_N, VbStrConv.Wide, 0x0411);
 
-      text = Regex.Replace(text, @"[" + symbol_N + "]", "");
-      text = Regex.Replace(text, @"[" + symbol_W + "]", "");
+      text = Regex.Replace(text, @"[\W]", "");          //文字、数字、アンダースコア以外除去
+      text = Regex.Replace(text, @"[_]", "");
+      text = Regex.Replace(text, @"[" + symbol_W + @"]", "");
+
       return text;
     }
 
     /// <summary>
-    /// 数字削除
+    /// 数字除去
     /// </summary>
     public static string RemoveNumber(string text)
     {
       return Regex.Replace(text, @"\d", "");
     }
   }
+
 }
-
-
