@@ -27,7 +27,7 @@ pfAdapter.exe  "C:\video.ts"
 入力ファイルパス
 
 
-    -npipe  pipename123
+    -npipe  pipename
 入力名前付きパイプ
 
 
@@ -52,18 +52,18 @@ MidProcessの実行間隔、min
     -PostPrc_Main  1
     -PostPrc_Enc   1
     -PostPrc_App   1
-プロセスリストの有効、無効。設定ファイルのbEnableは無視される。
+プロセスリストの有効、無効。設定ファイルのEnableは無視される。
 
 
     -EncProfile RunTest_mp4  
 マクロの $EncProfile$ を RunTest_mp4 に置換します
     
     
-    -Suspend_pfMain
+    -Suspend_pfAMain
 Main処理の実行中止  
     
     
-    -Suspend_pfEnc
+    -Suspend_pfAEnc
 Enc処理の実行中止  
     
     
@@ -76,7 +76,7 @@ pfAdapterを中断
 ### 設定
 実行時に設定ファイルがなければ作成されます。
 
-    sArgumets
+    Argumets
 追加引数  
 入力、-Xml以外の引数が追加できます。  
 　設定ファイル　→　実行ファイル引数　→　  
@@ -84,22 +84,22 @@ pfAdapterを中断
 の順で設定が上書きされます。  
 
 
-    dBuffSize_MiB
+    BuffSize_MiB
 パイプの最大バッファサイズ  MiB  
 開始、終了時には必ずファイル読込みが発生します。  
 それ以外で断続的なファイル読込みが発生する場合のみ大きくしてください。
 
 
-    dReadLimit_MiBsec
+    ReadLimit_MiBsec
 ファイル読込み最大速度  MiB/sec  
 ０以下で制限しない。  
 
 
-    dMidPrcInterval_min
+    MidPrcInterval_min
 MidProcessの実行間隔  min  
 
 
-    sLockFile
+    LockFile
 指定した拡張子のファイルをロックします。  
 PostProcess実行前の待機期間にはd2vファイルをロックするプロセスがありません。  
 この間はファイルの移動が可能になってしまうため、ファイルロックし移動を禁止します。  
@@ -199,9 +199,9 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 
 |  項目              |  説明                                           |
 |:-------------------|:------------------------------------------------|
-|  bEnable           |  リスト全体の有効、無効                         |
-|  dDelay_sec        |  リスト実行前に待機する秒数                     |
-|  dRandDelay_sec    |  dDelay_secの後に追加で待機するランダム秒数。   |
+|  Enable           |  リスト全体の有効、無効                         |
+|  Delay_sec        |  リスト実行前に待機する秒数                     |
+|  RandDelay_sec    |  dDelay_secの後に追加で待機するランダム秒数。   |
 
 
 
@@ -209,18 +209,18 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 
 |  項目              |  説明                                           |
 |:-------------------|:------------------------------------------------|
-|  bEnable           |  有効、無効                                     |
-|  dDelay_sec        |  実行前に待機する秒数                           |
-|  sBasePath         |  実行ファイルのパス、前後の空白は削除される。   |
-|  sBaseArgs         |  実行ファイルの引数、前後の空白は削除される。   |
-|  bNoWindow         |  コンソールウィンドウを非表示にする。           |
-|  bWaitForExit      |  プロセス終了まで待機する。                     |
-|  dWaitTimeout_sec  |  プロセス終了を待機する最大秒数、-1で無期限     |
+|  Enable           |  有効、無効                                     |
+|  Delay_sec        |  実行前に待機する秒数                           |
+|  BasePath         |  実行ファイルのパス、前後の空白は削除される。   |
+|  BaseArgs         |  実行ファイルの引数、前後の空白は削除される。   |
+|  NoWindow         |  コンソールウィンドウを非表示にする。           |
+|  WaitForExit      |  プロセス終了まで待機する。                     |
+|  WaitTimeout_sec  |  プロセス終了を待機する最大秒数、-1で無期限     |
 
 
 
 ---------------------------------------
-##### sBasePath、sBaseArgsで使えるマクロ  
+##### BasePath、BaseArgsで使えるマクロ  
 
 |  マクロ            |  説明                        |  例              |
 |:-------------------|:-----------------------------|:-----------------|
