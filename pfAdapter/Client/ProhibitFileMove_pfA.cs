@@ -12,7 +12,7 @@ namespace pfAdapter
   /// ファイルの移動禁止
   /// </summary>
   /// ポストプロセスの待機中にファイルをロックする。
-  static class ProhibitFileMove
+  static class ProhibitFileMove_pfA
   {
     static string[] BasePathPattern;
     static List<string> ExtList;                 //ロック対象の拡張子

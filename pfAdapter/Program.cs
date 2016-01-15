@@ -261,7 +261,7 @@ namespace pfAdapter
       //
       //FileLocker 初期化
       //
-      ProhibitFileMove.Initialize(AppSetting.File, AppSetting.sLockFile);
+      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.sLockFile);
 
 
       //
@@ -366,9 +366,9 @@ namespace pfAdapter
         {
           Log.System.WriteLine("[ PostProcess_Enc_B ]");
           AppSetting.PostProcess_Enc_B.Wait();
-          ProhibitFileMove.Unlock();                           //移動禁止は待機中だけ
+          ProhibitFileMove_pfA.Unlock();                           //移動禁止は待機中だけ
           AppSetting.PostProcess_Enc_B.Run();
-          ProhibitFileMove.Lock();                             //移動禁止　　再
+          ProhibitFileMove_pfA.Lock();                             //移動禁止　　再
           Log.System.WriteLine();
         }
 
@@ -377,7 +377,7 @@ namespace pfAdapter
       {
         Log.System.WriteLine("[ PostProcess_App ]");
         AppSetting.PostProcess_App.Wait();
-        ProhibitFileMove.Unlock();                           //移動禁止は待機中だけ
+        ProhibitFileMove_pfA.Unlock();                           //移動禁止は待機中だけ
         AppSetting.PostProcess_App.Run();
         Log.System.WriteLine();
       }
@@ -451,7 +451,7 @@ namespace pfAdapter
 
           //終了処理
           if (postPrcList_MainA != null)
-            ProhibitFileMove.Lock();             //ファイルの移動禁止
+            ProhibitFileMove_pfA.Lock();             //ファイルの移動禁止
 
           reader.Close();
           writer.Close();
@@ -484,9 +484,9 @@ namespace pfAdapter
             {
               Log.System.WriteLine("[ PostProcess_MainA ]");
               postPrcList_MainA.Wait();
-              ProhibitFileMove.Unlock();           //移動禁止は待機中だけ
+              ProhibitFileMove_pfA.Unlock();           //移動禁止は待機中だけ
               postPrcList_MainA.Run();
-              ProhibitFileMove.Lock();             //移動禁止　　再
+              ProhibitFileMove_pfA.Lock();             //移動禁止　　再
               Log.System.WriteLine();
             }
           }
