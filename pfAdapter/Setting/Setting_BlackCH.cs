@@ -36,11 +36,6 @@ namespace pfAdapter
       IsNonCMCutCH = ListContains_Target(targetCH, blackList_NonCMCut);
       IsNonEnc__CH = ListContains_Target(targetCH, blackList_NonEnc__);
 
-      ////Console.Error.WriteLine("      Channel       = " + ProgramInfo.Channel);
-      ////Console.Error.WriteLine("      IsNonCMCutCH  = " + AppSetting.IsNonCMCutCH);
-      ////Console.Error.WriteLine("      IsNonEnc__CH  = " + AppSetting.IsNonEnc__CH);
-      ////Console.Error.WriteLine();
-      ////Environment.Exit(0);
     }
 
 
