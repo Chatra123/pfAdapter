@@ -7,12 +7,12 @@ using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;           //Strings.StrConv
 
 
-namespace OctNov
+namespace OctNov.Text
 {
   /// <summary>
   /// 文字形式の変換、除去
   /// </summary>
-  static class StringConverter
+  static class StrConverter
   {
     /// <summary>
     /// 小文字半角カタカナに変換   ToLower, Narrow, Katakana 
