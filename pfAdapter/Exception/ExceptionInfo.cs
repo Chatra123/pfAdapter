@@ -1,17 +1,33 @@
-﻿using System;
+﻿/*
+ * 最終更新日　16/01/09
+ * 
+ * □概要
+ * 
+ * 　  例外の内容をerrlogファイルに保存する。
+ * 　  
+ * 
+ * □使い方
+ *    Program Main(string[] args)の先頭に
+ * 
+ *    //例外を捕捉する
+ *    AppDomain.CurrentDomain.UnhandledException += ExceptionInfo.OnUnhandledException;
+ * 
+ *    を追加する。
+ * 
+ *  
+ */
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace pfAdapter
+namespace OctNov.Excp
 {
   internal static class ExceptionInfo
   {
     /// <summary>
     /// 例外発生時に内容をファイルに保存する。
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="args"></param>
     public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
     {
       try
@@ -19,43 +35,35 @@ namespace pfAdapter
         var excp = (Exception)args.ExceptionObject;
 
         //例外の情報
-        string excpInfo =
-          new Func<Exception, string>((argExcp) =>
-          {
-            var info = new StringBuilder();
-            info.AppendLine("--------------------------------------------------");
-            info.AppendLine(DateTime.Now.ToString("G"));
-            info.AppendFormat("Exception  = {0}", argExcp.ToString());
-            info.AppendLine();
-            return info.ToString();
-          })(excp);
-
-        //出力テキスト
-        var text = new StringBuilder();
-        text.AppendLine(excpInfo);
+        var info = new StringBuilder();
+        {
+          info.AppendLine("--------------------------------------------------");
+          info.AppendLine(DateTime.Now.ToString("G"));
+          info.AppendFormat("Exception  = {0}", excp.ToString());
+          info.AppendLine();
+        }
 
         //出力ファイルパス
-        string logPath =
-          new Func<string>(() =>
-          {
-            string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            string AppDir = Path.GetDirectoryName(AppPath);
-            string AppName = Path.GetFileNameWithoutExtension(AppPath);
+        string logPath;
+        {
+          string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+          string AppDir = Path.GetDirectoryName(AppPath);
+          string AppName = Path.GetFileNameWithoutExtension(AppPath);
 
-            int PID = Process.GetCurrentProcess().Id;
-            string timecode = DateTime.Now.ToString("MMdd_HHmmss.fffff");
-            string logName = AppName + "__" + timecode + "_" + PID + ".errlog";
+          int PID = Process.GetCurrentProcess().Id;
+          string timecode = DateTime.Now.ToString(@"MM-dd_HH\hmm\mss\s_fff");
+          string logName = AppName + "__" + timecode + "_" + PID + ".errlog";
 
-            return Path.Combine(AppDir, logName);
-          })();
+          logPath = Path.Combine(AppDir, logName);
+        }
 
-        //ファイル作成
-        File.AppendAllText(logPath, text.ToString(), new UTF8Encoding(true));
+        //ファイル追記                                        UTF-8 bom
+        File.AppendAllText(logPath, info.ToString(), Encoding.UTF8);
       }
       finally
       {
-        var exception = (Exception)args.ExceptionObject;
-        throw exception;               //windowsのエラーダイアログをだす
+        var excp = (Exception)args.ExceptionObject;
+        throw excp;                    //Windowsのエラーダイアログを表示
       }
     }
   }

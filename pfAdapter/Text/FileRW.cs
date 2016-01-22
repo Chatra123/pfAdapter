@@ -1,60 +1,78 @@
-﻿using System;
+﻿/*
+ * 最終更新日　15/12/04
+ * 
+ * 概要
+ *   テキストファイルの読み書きにファイル共有設定をつける。
+ *   アセンブリリソースの読込み
+ *   
+ *  
+ */
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace pfAdapter
+namespace OctNov.IO
 {
   /// <summary>
   /// 文字エンコード一覧
   /// </summary>
   /// <remarks>
+  ///  *.ts.program.txt        Shift-JIS
+  /// 
   ///  avs, d2v, lwi, bat      Shift-JIS
   ///  srt                     UTF-8 bom
   /// </remarks>
   internal class TextEnc
   {
     public static readonly
-      Encoding Ascii = new ASCIIEncoding(),
+      Encoding Ascii = Encoding.ASCII,
                Shift_JIS = Encoding.GetEncoding("Shift_JIS"),
                UTF8 = new UTF8Encoding(false),
-               UTF8_bom = new UTF8Encoding(true)
+               UTF8_bom = Encoding.UTF8
                ;
   }
 
-  //================================
-  //読込み
-  //================================
+
 
   #region 読込み
 
   /// <summary>
   /// FileShare.ReadWriteを設定して読み込む。
-  /// File.ReadAllLines();は別のプロセスが使用中のファイルを読み込めなかった。
+  /// System.IO.File.ReadAllLines();は別のプロセスが使用中のファイルを読み込めなかった。
   /// </summary>
   internal class FileR
   {
-    //=====================================
-    //static
-    //=====================================
     /// <summary>
     /// ファイルストリーム作成
     /// </summary>
     /// <param name="path">読込むファイルのパス</param>
     /// <param name="LargeSwitch">大きなサイズのファイル読込みを許可するか</param>
     /// <returns>
-    /// 作成したファイルストリーム
-    /// 失敗時はnull
+    /// 成功　→　FileStream
+    /// 失敗　→　null
     /// </returns>
     public static FileStream CreateStream(string path, bool LargeSwitch = false)
     {
-      //１０ＭＢ以上なら、メモリに読み込む前に例外をスロー
-      //  　d2v、srt、txtファイルなら１０ＭＢ以上になることはない
-      var finfo = new FileInfo(path);
-      if (LargeSwitch == false && finfo.Exists && 10 * 1024 * 1024 <= finfo.Length)
-        throw new Exception("Large file, gt 10MB: " + path);
+      //１０ＭＢ以上なら、メモリーに読み込む前に例外をスロー
+      //    d2v、srt、txtファイルなら１０ＭＢ以上になることはない
+      //    lwi だけ１０ＭＢを超える。
+      try
+      {
+        var finfo = new FileInfo(path);
+
+        if (LargeSwitch == false
+          && finfo.Exists && 10 * 1024 * 1024 <= finfo.Length)
+          throw new Exception("Large file, gt 10MB: " + path);
+      }
+      catch
+      {
+        //ファイルがない
+        return null;
+      }
+
 
       FileStream stream = null;
       try
@@ -64,14 +82,14 @@ namespace pfAdapter
       }
       catch
       {
-        //ファイルが無い、ファイルチェックから読込みの間に削除された。srtだと発生する可能性がある。
+        //ファイルチェックから読込みの間に削除された。srtだと発生する可能性がある。
         if (stream != null) stream.Close();
         return null;
       }
     }
 
     /// <summary>
-    /// テキストファイルを読込む
+    /// テキストファイルを読込む    FileShare.ReadWrite
     /// </summary>
     /// <param name="path">対象のファイルパス</param>
     /// <param name="enc">文字エンコードの指定。デフォルトShift-JIS</param>
@@ -95,7 +113,7 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// バイナリファイルを読込む
+    /// バイナリファイルを読込む    FileShare.ReadWrite
     /// </summary>
     /// <param name="path">対象のファイルパス</param>
     /// <returns>読み込んだバイナリ</returns>
@@ -124,6 +142,7 @@ namespace pfAdapter
 
     //=====================================
     //instance
+    // lwi 読込み用
     //=====================================
     private StreamReader reader = null;
 
@@ -145,7 +164,8 @@ namespace pfAdapter
     /// </summary>
     public void Close()
     {
-      reader.Close();
+      if (reader != null)
+        reader.Close();
     }
 
     /// <summary>
@@ -171,13 +191,10 @@ namespace pfAdapter
     /// <summary>
     /// アセンブリ内のリソース読込み。
     /// </summary>
-    /// <param name="name">リソース名</param>
-    /// <param name="enc">文字エンコードの指定。デフォルトShift-JIS</param>
-    /// <returns>読み込んだテキスト</returns>
     /// <remarks>
     /// リソースが存在しないとnew StreamReader(null,enc)で例外
-    /// </remarks>
     /// bat, avs        Shift-JIS
+    /// </remarks>
     public static List<string> ReadFromResource(string name, Encoding enc = null)
     {
       enc = enc ?? TextEnc.Shift_JIS;
@@ -202,15 +219,8 @@ namespace pfAdapter
 
   #region 書込み
 
-  ///
-  ///  WriteText(IEnumerable<string> text)が必要なのでクラス作成
-  ///  File.Write()は引数に直接 string[]をとれない。
-  ///
   internal class FileW
   {
-    //=====================================
-    //static
-    //=====================================
     /// <summary>
     /// ライター作成　　パス形式が無効なら例外
     /// </summary>
@@ -220,7 +230,7 @@ namespace pfAdapter
     public static StreamWriter CreateWriter(string path, Encoding enc = null)
     {
       enc = enc ?? TextEnc.Shift_JIS;
-      var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);        //ファイルシェア
+      var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);        //FileShare
       var writer = new StreamWriter(stream, enc);                                                  //文字エンコード
       return writer;
     }
@@ -239,11 +249,12 @@ namespace pfAdapter
 
     //=====================================
     //instance
+    // lwi 書込み用
     //=====================================
     private StreamWriter writer;
 
     /// <summary>
-    /// コンストラクター
+    /// コンストラクター    FileShare.Read
     /// </summary>
     /// <param name="path">書込み対象のファイルパス</param>
     /// <param name="enc">文字エンコードの指定。デフォルトShift-JIS</param>
@@ -257,11 +268,12 @@ namespace pfAdapter
     /// </summary>
     public void Close()
     {
-      writer.Close();
+      if (writer != null)
+        writer.Close();
     }
 
     /// <summary>
-    /// 改行コード変更を"\n"にする
+    /// 改行コードを"\n"に変更
     /// </summary>
     public void SetNewline_n()
     {
