@@ -55,7 +55,7 @@ MidProcessの実行間隔、min
 プロセスリストの有効、無効。設定ファイルのEnableは無視される。
 
 
-    -EncProfile RunTest_mp4  
+    -EncProfile  RunTest_mp4  
 マクロの $EncProfile$ を RunTest_mp4 に置換します
     
     
@@ -84,18 +84,18 @@ pfAdapterを中断
 の順で設定が上書きされます。  
 
 
-    BuffSize_MiB
+    BuffSize_MiB  3.0
 パイプの最大バッファサイズ  MiB  
 開始、終了時には必ずファイル読込みが発生します。  
 それ以外で断続的なファイル読込みが発生する場合のみ大きくしてください。
 
 
-    ReadLimit_MiBsec
+    ReadLimit_MiBsec  10.0
 ファイル読込み最大速度  MiB/sec  
 ０以下で制限しない。  
 
 
-    MidPrcInterval_min
+    MidPrcInterval_min  10.0
 MidProcessの実行間隔  min  
 
 
@@ -197,42 +197,42 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 ---------------------------------------
 ##### Listの設定
 
-|  項目              |  説明                                           |
-|:-------------------|:------------------------------------------------|
-|  Enable           |  リスト全体の有効、無効                         |
-|  Delay_sec        |  リスト実行前に待機する秒数                     |
-|  RandDelay_sec    |  dDelay_secの後に追加で待機するランダム秒数。   |
+|  項目              |  説明                                          |
+|:-------------------|:-----------------------------------------------|
+|  Enable            |  リスト全体の有効、無効                        |
+|  Delay_sec         |  リスト実行前に待機する秒数                    |
+|  RandDelay_sec     |  dDelay_secの後に追加で待機するランダム秒数。  |
 
 
 
 ##### Clientの値
 
-|  項目              |  説明                                           |
-|:-------------------|:------------------------------------------------|
-|  Enable           |  有効、無効                                     |
-|  Delay_sec        |  実行前に待機する秒数                           |
-|  BasePath         |  実行ファイルのパス、前後の空白は削除される。   |
-|  BaseArgs         |  実行ファイルの引数、前後の空白は削除される。   |
-|  NoWindow         |  コンソールウィンドウを非表示にする。           |
-|  WaitForExit      |  プロセス終了まで待機する。                     |
-|  WaitTimeout_sec  |  プロセス終了を待機する最大秒数、-1で無期限     |
+|  項目              |  説明                                          |
+|:-------------------|:-----------------------------------------------|
+|  Enable            |  有効、無効                                    |
+|  Delay_sec         |  実行前に待機する秒数                          |
+|  BasePath          |  実行ファイルのパス、前後の空白は削除される。  |
+|  BaseArgs          |  実行ファイルの引数、前後の空白は削除される。  |
+|  NoWindow          |  コンソールウィンドウを非表示にする。          |
+|  WaitForExit       |  プロセス終了まで待機する。                    |
+|  WaitTimeout_sec   |  プロセス終了を待機する最大秒数、-1で無期限    |
 
 
 
 ---------------------------------------
 ##### BasePath、BaseArgsで使えるマクロ  
 
-|  マクロ            |  説明                        |  例              |
-|:-------------------|:-----------------------------|:-----------------|
-|  $fPath$           |  入力ファイルパス            |  C:\rec\news.ts  |
-|  $fDir$            |  ディレクトリ名              |  C:\rec          |
-|  $fName$           |  ファイル名                  |  news.ts         |
-|  $fNameWithoutExt$ |  拡張子なしファイル名        |  news            |
-|  $fPathWithoutExt$ |  拡張子なしファイルパス      |  C:\rec\news     |
-|  $PID$             |  pfAdapterのプロセスＩＤ     |                  |
-|  $MidPrcCnt$       |  MidProcessListの実行回数    |                  |
-|  $UniqueKey$       |  ユニークキー                |                  |
-|  $EncProfile$      |  引数で受け取った値          |                  |
+|  マクロ            |  説明                      |  例               |
+|:-------------------|:---------------------------|:----------------- |
+|  $fPath$           |  入力ファイルパス          |  C:\rec\news.ts   |
+|  $fDir$            |  ディレクトリ名            |  C:\rec           |
+|  $fName$           |  ファイル名                |  news.ts          |
+|  $fNameWithoutExt$ |  拡張子なしファイル名      |  news             |
+|  $fPathWithoutExt$ |  拡張子なしファイルパス    |  C:\rec\news      |
+|  $PID$             |  pfAdapterのプロセスＩＤ   |                   |
+|  $MidPrcCnt$       |  MidProcessListの実行回数  |                   |
+|  $UniqueKey$       |  ユニークキー              |                   |
+|  $EncProfile$      |  引数 -EncProfile の値     |                   |
 
 
 
@@ -246,11 +246,11 @@ PostProcess内では（MidProcessListの実行回数＋１）に置換されま�
 
  .ts.program.txtが.tsと同じ場所にあれば次のマクロが使えます。  
 
-|  マクロ            |  説明                        |
-|:-------------------|:-----------------------------|
-|  $Ch$              |  チャンネル名                |
-|  $Channel$         |  チャンネル名                |
-|  $Program$         |  番組名                      |
+|  マクロ            |  説明                      |
+|:-------------------|:---------------------------|
+|  $Ch$              |  チャンネル名              |
+|  $Channel$         |  チャンネル名              |
+|  $Program$         |  番組名                    |
 
 
 
