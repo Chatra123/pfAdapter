@@ -200,6 +200,13 @@ namespace pfAdapter.pfSetting
            BasePath = @"   PostProcess_Rename.bat   ",
            BaseArgs =  "  \"$fPath$\"  ",
          },
+         new Client()
+         {
+           memo = "  last bat sample  ",
+           Enable = 0,
+           BasePath = @"   .\foo\bar.bat   ",
+           BaseArgs =  "    ",
+         },
       };
 
       return setting;
