@@ -9,12 +9,15 @@ using System.Threading.Tasks;
 
 namespace pfAdapter
 {
-
   /// <summary>
   /// バッファ付きパイプクライアント
   /// </summary>
-  internal class BufferedPipeClient : NamedPipeClient
+  internal class BufferedPipeClient //: NamedPipeClient
   {
+    NamedPipeClient pipeClient;
+    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
+
+
     private Task taskPipeReader;                                   //パイプ読込タスク
     private CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
     private readonly object sync = new object();
@@ -33,8 +36,11 @@ namespace pfAdapter
     /// </summary>
     /// <param name="pipename">名前付きパイプ</param>
     public BufferedPipeClient(string pipeName)
-      : base(pipeName)
+      //: base(pipeName)
     {
+      pipeClient = new NamedPipeClient();
+      pipeClient.Initialize(pipeName);
+
       //参考
       //  地上波：　16 Mbps    2.0 MiB/sec    11,000 packet/sec
       //  ＢＳ　：　24 Mbps    3.0 MiB/sec    17,000 packet/sec
@@ -58,16 +64,18 @@ namespace pfAdapter
         Log.PipeBuff.AutoFlush = false;
 #pragma warning restore 0162
       }
+
     }
 
     /// <summary>
     /// パイプ接続
     /// </summary>
-    public new void Connect(int timeout = 1000)
+    public void Connect(int timeout = 1000)
     {
       lock (sync)
       {
-        base.Connect(timeout);
+        pipeClient.Connect(timeout);
+        //base.Connect(timeout);
       }
     }
 
@@ -89,11 +97,13 @@ namespace pfAdapter
     /// <summary>
     /// 終了処理
     /// </summary>
-    public new void Close()
+    public void Close()
     {
       lock (sync)
       {
-        base.Close();
+        pipeClient.Close();
+        // base.Close();
+
         //通常、taskPipeReaderは終了済み。パイプサーバーが閉じた後にtaskReaderはすぐに終了している。
         //待機状態の場合はこのキャンセル要求で終了する。
         try
@@ -259,7 +269,8 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //接続
-        if (IsConnected) break;
+        if (pipeClient.IsConnected) break;
+       // if (IsConnected) break;
         else Thread.Sleep(30);
       }
 
@@ -271,7 +282,8 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //接続
-        if (IsConnected == false)
+       // if (IsConnected == false)
+        if (pipeClient.IsConnected == false)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");
           break;                     //ループ終了
@@ -287,8 +299,8 @@ namespace pfAdapter
         byte[] readData = null;
         //                                   pipe server の書込みは１回あたり 770 KB
         //                                   Write_Default のバッファ量と同じ
-        readData = ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
-
+        readData = pipeClient.ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
+        //readData = ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
 
         //読込データがある？
         if (readData != null)
@@ -407,6 +419,18 @@ namespace pfAdapter
   }//end class
 
 
+  /// <summary>
+  /// AbstructPipeClientBase
+  /// </summary>
+  internal abstract class AbstructPipeClientBase
+  {
+    protected abstract void Initialize(string pipename);
+    protected abstract bool IsConnected { get; }
+    protected abstract void Connect(int timeout);
+    protected abstract void Close();
+    protected abstract byte[] ReadPipe(int requestSize);
+  }
+
 
 
   /// <summary>
@@ -416,11 +440,25 @@ namespace pfAdapter
   {
     protected NamedPipeClientStream pipeClient;
 
-    public NamedPipeClient(string pipeName)
+    //public NamedPipeClient(string pipeName)
+    //{
+    //  //pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
+    //  //                                       PipeOptions.None, TokenImpersonationLevel.None);
+    //}
+
+    /// <summary>
+    /// Initialize
+    /// </summary>
+    public void Initialize(string pipeName)
     {
       pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
                                              PipeOptions.None, TokenImpersonationLevel.None);
     }
+
+    /// <summary>
+    /// IsConnected
+    /// </summary>
+    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
 
     /// <summary>
     /// Connect  sync
@@ -447,11 +485,6 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// IsConnected
-    /// </summary>
-    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
-
-    /// <summary>
     /// Close
     /// </summary>
     public void Close()
@@ -467,7 +500,7 @@ namespace pfAdapter
     /// </summary>
     /// <param name="requestSize">要求データサイズ</param>
     /// <returns>読込んだデータ</returns>
-    protected byte[] ReadPipe(int requestSize)
+    public byte[] ReadPipe(int requestSize)
     {
       if (IsConnected == false) return null;
 
@@ -484,13 +517,7 @@ namespace pfAdapter
 
       return readBuffer;
     }
-
-
-
   }
-
-
-
 
 
 }

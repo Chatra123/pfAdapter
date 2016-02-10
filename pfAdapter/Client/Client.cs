@@ -143,7 +143,7 @@ namespace pfAdapter
 
       //Path
       BasePath = BasePath ?? "";
-      sessionPath = sessionPath ?? BasePath;              //sessionPathがなければsBasePathを使用
+      sessionPath = sessionPath ?? BasePath;               //sessionPathがなければsBasePathを使用
       sessionPath = ReplaceMacro(sessionPath);             //マクロ置換
       sessionPath = sessionPath.Trim();
       if (string.IsNullOrWhiteSpace(sessionPath))
@@ -151,7 +151,7 @@ namespace pfAdapter
 
       //Arguments
       BaseArgs = BaseArgs ?? "";
-      sessionArgs = sessionArgs ?? BaseArgs;              //sessionArgsがなければsBaseArgsを使用
+      sessionArgs = sessionArgs ?? BaseArgs;               //sessionArgsがなければsBaseArgsを使用
       sessionArgs = ReplaceMacro(sessionArgs);             //マクロ置換
       sessionArgs = sessionArgs.Trim();
 
@@ -185,7 +185,6 @@ namespace pfAdapter
       //ファイルパス
       {
         Macro_SrcPath = Macro_SrcPath ?? "";
-
         string fPath = Macro_SrcPath;
         string fDir = Path.GetDirectoryName(fPath);
         string fName = Path.GetFileName(fPath);
@@ -204,7 +203,6 @@ namespace pfAdapter
       {
         Macro_Channel = Macro_Channel ?? "";
         Macro_Program = Macro_Program ?? "";
-
         after = Regex.Replace(after, @"\$Ch\$", Macro_Channel, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$Channel\$", Macro_Channel, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$Program\$", Macro_Program, RegexOptions.IgnoreCase);
@@ -329,7 +327,6 @@ namespace pfAdapter
       }
 
       return result;
-
     }
   }
 
@@ -341,7 +338,6 @@ namespace pfAdapter
   [Serializable]
   public class Client_WriteStdin : Client
   {
-
     /// <summary>
     /// プロセス実行  標準入力に書き込む
     /// </summary>
