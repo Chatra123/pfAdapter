@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Client\ProhibitFileMove_pfA.cs" />
     <Compile Include="Exception\ExceptionInfo.cs" />
+    <Compile Include="InputOutput\PipeClient\PipeClientBase.cs" />
     <Compile Include="Setting\Mono.Options\Options.cs" />
     <Compile Include="Setting\Mono.Options\Options_icase.cs" />
     <Compile Include="Setting\AppSetting.cs" />
@@ -59,7 +60,7 @@
     <Compile Include="Text\Log.cs" />
     <Compile Include="Text\ProgramInfo.cs" />
     <Compile Include="InputOutput\InputReader.cs" />
-    <Compile Include="InputOutput\PipeClient\PipeClient.cs" />
+    <Compile Include="InputOutput\PipeClient\BufferedPipeClient.cs" />
     <Compile Include="InputOutput\OutputWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
