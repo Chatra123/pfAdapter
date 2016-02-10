@@ -121,23 +121,25 @@ namespace pfAdapter
     private BinaryReader reader;
     private bool isConnected;
 
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    public StdinPipeClient(string pipeName)
-    {
-      if (Console.IsInputRedirected)
-        reader = new BinaryReader(Console.OpenStandardInput());
+    ///// <summary>
+    ///// Constructor
+    ///// </summary>
+    //public StdinPipeClient(string pipeName)
+    //{
+    //  if (Console.IsInputRedirected)
+    //    reader = new BinaryReader(Console.OpenStandardInput());
 
-      isConnected = Console.IsInputRedirected;
-    }
+    //  isConnected = Console.IsInputRedirected;
+    //}
 
     /// <summary>
     /// Initialize
     /// </summary>
-    public  void Initialize(string pipeName)
+    public void Initialize(string pipeName)
     {
-      /*do nothing*/
+      isConnected = Console.IsInputRedirected;
+      if (isConnected)
+        reader = new BinaryReader(Console.OpenStandardInput());
     }
 
     /// <summary>
@@ -148,7 +150,7 @@ namespace pfAdapter
     /// <summary>
     /// Connect  sync
     /// </summary>
-    public  void Connect(int timeout = 1000)
+    public void Connect(int timeout = 1000)
     {
       /*do nothing*/
     }
@@ -156,9 +158,10 @@ namespace pfAdapter
     /// <summary>
     /// Close
     /// </summary>
-    public  void Close()
+    public void Close()
     {
-      /*do nothing*/
+      if (reader != null)
+        reader.Close();
     }
 
     /// <summary>
@@ -190,5 +193,5 @@ namespace pfAdapter
 
 
 
-  
+
 }
