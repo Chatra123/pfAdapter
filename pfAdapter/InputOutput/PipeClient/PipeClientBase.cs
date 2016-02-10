@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Pipes;
+using System.IO;
 using System.Linq;
 using System.Security.Principal;
 using System.Threading;
@@ -110,4 +111,84 @@ namespace pfAdapter
   }
 
 
+
+
+  /// <summary>
+  /// StdinPipeClient
+  /// </summary>
+  internal class StdinPipeClient
+  {
+    private BinaryReader reader;
+    private bool isConnected;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public StdinPipeClient(string pipeName)
+    {
+      if (Console.IsInputRedirected)
+        reader = new BinaryReader(Console.OpenStandardInput());
+
+      isConnected = Console.IsInputRedirected;
+    }
+
+    /// <summary>
+    /// Initialize
+    /// </summary>
+    public  void Initialize(string pipeName)
+    {
+      /*do nothing*/
+    }
+
+    /// <summary>
+    /// IsConnected
+    /// </summary>
+    public bool IsConnected { get { return isConnected; } }
+
+    /// <summary>
+    /// Connect  sync
+    /// </summary>
+    public  void Connect(int timeout = 1000)
+    {
+      /*do nothing*/
+    }
+
+    /// <summary>
+    /// Close
+    /// </summary>
+    public  void Close()
+    {
+      /*do nothing*/
+    }
+
+    /// <summary>
+    /// Read  sync
+    /// </summary>
+    /// <param name="requestSize">要求データサイズ</param>
+    /// <returns>読込んだデータ</returns>
+    public byte[] ReadPipe(int requestSize)
+    {
+      if (IsConnected == false) return null;
+
+      byte[] readBuffer = new byte[requestSize];
+      int readSize = reader.Read(readBuffer, 0, requestSize);
+
+      //server close the pipe
+      if (readSize == 0) isConnected = false;
+
+      //要求サイズより小さければトリム
+      if (readSize != requestSize)
+      {
+        var trimBuffer = new byte[readSize];
+        Buffer.BlockCopy(readBuffer, 0, trimBuffer, 0, readSize);
+        return trimBuffer;
+      }
+
+      return readBuffer;
+    }
+  }
+
+
+
+  
 }
