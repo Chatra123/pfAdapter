@@ -44,9 +44,9 @@ namespace pfAdapter
 
     //FileStreamとReadSpeedLimitはインスタンスごとに作成する。
     //staticにして lock(sync){}で制御はしない。
-    //(10MB/sec)で読込みをしたとき、ProcessのI/Oはlimitの倍の値だが、
-    //Diskアクセスはlimitのままだった。ＯＳ、ＨＤＤのバッファで十分対処できている。
-    //limitがうまく機能しないことがあればstaticにする。
+    // limit = 10MB/secで読込みをしたとき、ProcessのI/Oは 20MB/secだが、
+    //Diskアクセスは 10MB/secのままだった。ＯＳ、ＨＤＤのバッファで十分対処できている。
+    //バッファがうまく機能しないことがあればstaticにする。
 
     //file
     private FileInfo fileInfo;
@@ -54,7 +54,7 @@ namespace pfAdapter
     private BinaryReader fileReader;
     private long filePositon;                              //次に読み込むバイトの位置
 
-    //書込みが停止していないかの判定用
+    //”TSへの書込みが停止していないか”の判定用
     private int lastTimeReadPacket = int.MaxValue;         //最後に値パケットを読み込んだ時間
     private long lastPosReadPacket;                        //最後に値パケット読み込んだ位置
 
@@ -145,7 +145,7 @@ namespace pfAdapter
         if (SuspendLog == false)
         {
           if (PipeIsConnected)
-            Log.System.WriteLine("  Connect pipe");
+            Log.System.WriteLine("  Connect named pipe");
           else
             Log.System.WriteLine("  pipe does not connected");
 
@@ -262,7 +262,6 @@ namespace pfAdapter
       if (pipeReader == null) return new byte[] { };
 
       LogInput.WriteLine("ReadBytes_Pipe()");
-
 
       //パイプ読込                                Packet.Size * 2048 = 376 KiB
       RequestRefPos reqPos;

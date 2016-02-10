@@ -58,9 +58,9 @@
     <Compile Include="Text\StrConverter.cs" />
     <Compile Include="Text\Log.cs" />
     <Compile Include="Text\ProgramInfo.cs" />
-    <Compile Include="ReaderWriter\InputReader.cs" />
-    <Compile Include="ReaderWriter\PipeClient.cs" />
-    <Compile Include="ReaderWriter\OutputWriter.cs" />
+    <Compile Include="InputOutput\InputReader.cs" />
+    <Compile Include="InputOutput\PipeClient\PipeClient.cs" />
+    <Compile Include="InputOutput\OutputWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

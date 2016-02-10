@@ -13,7 +13,7 @@ namespace pfAdapter
   /// <summary>
   /// バッファ付きパイプクライアント
   /// </summary>
-  internal class BufferedPipeClient : PipeClient
+  internal class BufferedPipeClient : NamedPipeClient
   {
     private Task taskPipeReader;                                   //パイプ読込タスク
     private CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
@@ -26,7 +26,6 @@ namespace pfAdapter
 
     private long BuffBottomPos { get { lock (sync) { return BuffTopPos + Buff.Count() - 1; } } }
     private long BuffTopPos = 0;                                   //Buff先頭バイトのファイルにおける位置
-
 
 
     /// <summary>
@@ -76,7 +75,7 @@ namespace pfAdapter
     /// <summary>
     /// バッファサイズ変更、拡張のみ
     /// </summary>
-    /// <param name="newSize_MiB">新しいバッファサイズ　 MiB</param>
+    /// <param name="newSize_MiB">新しいバッファサイズ　MiB</param>
     public void ExpandBuffSize(double newSize_MiB)
     {
       lock (sync)
@@ -119,7 +118,7 @@ namespace pfAdapter
     /// </summary>
     /// <param name="requestTopPos">要求データ先頭のファイル位置</param>
     /// <param name="requestSize">要求データのサイズ</param>
-    /// <returns>要求されたデータがバッファ内にあったか</returns>
+    /// <returns>要求されたデータがバッファ内にあるか？</returns>
     public bool HasData(long requestTopPos, int requestSize, LogWriter inputLog)
     {
       if (pipeClient == null) return false;
@@ -163,10 +162,10 @@ namespace pfAdapter
     /// <returns>バッファから読み込んだデータ</returns>
     /// <remarks>バッファ内にデータがなければnullを返す。</remarks>
     public byte[] Read(
-                      long requestTopPos,
-                      int requestSize,
-                      out RequestRefPos reqPos,
-                      LogWriter inputLog
+                        long requestTopPos,
+                        int requestSize,
+                        out RequestRefPos reqPos,
+                        LogWriter inputLog
                       )
     {
       byte[] requestData = null;                           //戻り値　バッファから取り出したデータ
@@ -222,21 +221,21 @@ namespace pfAdapter
         //要求データとバッファとの相対位置
         if (requestData != null)
         {
-          reqPos = RequestRefPos.InBuff;                   // バッファ内のデータを要求
+          reqPos = RequestRefPos.InBuff;                   //バッファ内のデータを要求
         }
         else
         {
           if (requestTopPos < BuffTopPos)
-            reqPos = RequestRefPos.FrontOfBuff;            // バッファよりファイル前方のデータを要求
+            reqPos = RequestRefPos.FrontOfBuff;            //バッファよりファイル前方のデータを要求
 
           else if (BuffBottomPos < requestTopPos)
-            reqPos = RequestRefPos.BackOfBuff;             // バッファよりファイル後方のデータを要求
+            reqPos = RequestRefPos.BackOfBuff;             //バッファよりファイル後方のデータを要求
 
           else
             reqPos = RequestRefPos.Unknown;                //問題なく動いていれば、ここに来ることない
         }
 
-        Monitor.Exit(sync);                            //ロック解除
+        Monitor.Exit(sync);                                //ロック解除
       }
       else
       {
@@ -260,10 +259,8 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //接続
-        if (IsConnected)
-          break;
-
-        Thread.Sleep(30);
+        if (IsConnected) break;
+        else Thread.Sleep(30);
       }
 
 
@@ -279,7 +276,6 @@ namespace pfAdapter
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");
           break;                     //ループ終了
         }
-
 
         //
         //パイプから読み込み
@@ -323,13 +319,11 @@ namespace pfAdapter
         }
 
 
-
         //
         //読込成功　バッファに追加
         //
         if (readData != null)
         {
-
           if (Monitor.TryEnter(sync, 150) == true)     //ロック
           {
 
@@ -418,12 +412,11 @@ namespace pfAdapter
   /// <summary>
   /// NamedPipeClient
   /// </summary>
-  internal class PipeClient
+  internal class NamedPipeClient
   {
     protected NamedPipeClientStream pipeClient;
 
-
-    public PipeClient(string pipeName)
+    public NamedPipeClient(string pipeName)
     {
       pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
                                              PipeOptions.None, TokenImpersonationLevel.None);
@@ -453,13 +446,10 @@ namespace pfAdapter
       }
     }
 
-
-
     /// <summary>
     /// IsConnected
     /// </summary>
     public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
-
 
     /// <summary>
     /// Close
@@ -471,7 +461,6 @@ namespace pfAdapter
         pipeClient.Close();
       }
     }
-
 
     /// <summary>
     /// Read  sync
