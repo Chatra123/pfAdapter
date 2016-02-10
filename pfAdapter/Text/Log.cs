@@ -151,8 +151,8 @@ namespace pfAdapter
       lock (sync)
       {
         LogText.Append(text);                              //StringBuilder
-        if (1000 * 1000 < LogText.Length)
-          LogText.Remove(0, 100 * 1000);                   //メモリ増加防止  最大１ＭＢ
+        if (100 * 1000 < LogText.Length)
+          LogText.Remove(0, 50 * 1000);                    //メモリ増加防止  １００ＫＢ
 
         //末尾の文字が改行コードか？　　　  "\r\n"   "\n"
         if (1 <= text.Length)
@@ -228,28 +228,28 @@ namespace pfAdapter
             && string.IsNullOrEmpty(splText[splText.Count - 1]))
         splText.RemoveAt(splText.Count - 1);
 
-
       var timedText = new StringBuilder();                 //戻り値　タイムコード付加後のテキスト
-
-      for (int i = 0; i < splText.Count; i++)
       {
-        string line = splText[i];
-
-        if (i == 0)
+        for (int i = 0; i < splText.Count; i++)
         {
-          //ログの先頭　or  直前のログ末尾が改行コードか？
-          if (LogText.Length == 0 || LastCharIsLineFeed)
+          string line = splText[i];
+
+          if (i == 0)
+          {
+            //ログの先頭　or  直前のログ末尾が改行コードか？
+            if (LogText.Length == 0 || LastCharIsLineFeed)
+              line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
+          }
+          else
+          {
+            //２行目以降
             line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
-        }
-        else
-        {
-          //２行目以降
-          line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
-        }
+          }
 
-        if (isMultiLine) line += Environment.NewLine;
+          if (isMultiLine) line += Environment.NewLine;
 
-        timedText.Append(line);
+          timedText.Append(line);
+        }
       }
 
       return timedText.ToString();
@@ -301,7 +301,9 @@ namespace pfAdapter
         case 5: line = string.Format(format, args[0], args[1], args[2], args[3], args[4]); break;
         case 6: line = string.Format(format, args[0], args[1], args[2], args[3], args[4], args[5]); break;
       }
-      WriteLine(line);
+
+      line = Append_Timecode(line + Environment.NewLine);
+      Write_core(line);
     }
 
 
@@ -312,16 +314,13 @@ namespace pfAdapter
     /// ログに１６進数表示のバイト列をを追加
     /// </summary>
     /// <param name="comment">先頭に表示するコメント</param>
-    /// <param name="byteSet">ログに表示したいバイト列</param>
-    /// <remarks>バイト列の大きさが２０以上なら前後６ずつに省略されます。</remarks>
+    /// <param name="byteSet">バイト列</param>
     public void WriteByte(string comment, IEnumerable<Byte> byteSet)
     {
       if (Enable == false) return;
 
       string line = comment;
       int len = byteSet.Count();
-
-      //Byteを表示
       if (len < 20)
       {
         foreach (var b in byteSet)
@@ -333,7 +332,8 @@ namespace pfAdapter
         line += " ......";
       }
 
-      WriteLine(line);
+      line = Append_Timecode(line + Environment.NewLine);
+      Write_core(line);
     }
 
     #endregion 書込

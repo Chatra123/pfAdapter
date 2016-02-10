@@ -14,9 +14,6 @@ using System.Text.RegularExpressions;
 
 namespace pfAdapter
 {
-  using OctNov.Excp;
-
-
   internal class Program
   {
     private static void Main(string[] AppArgs)
@@ -29,9 +26,8 @@ namespace pfAdapter
 
 
 
-
       //例外を捕捉する
-      AppDomain.CurrentDomain.UnhandledException += ExceptionInfo.OnUnhandledException;
+      AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
       //
       //ログ有効化
@@ -52,7 +48,9 @@ namespace pfAdapter
       //
       //パイプ接続、ファイル確認
       //
-      //　パイプ接続は最優先で行うこと。３秒以内
+      //　パイプ接続は最優先で行う。
+      //　Write_PFのバッファが１０ＭＢなので３秒以内に接続すること。
+      //　通常は30msかからない。
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
       {
@@ -152,7 +150,7 @@ namespace pfAdapter
 
         //  xml引数
         Log.System.WriteLine("  [ Setting.sCommandLine ]");
-        Log.System.WriteLine("    " + AppSetting.sCommandLine);
+        Log.System.WriteLine("    " + AppSetting.CommandLine);
         Log.System.WriteLine();
         Log.System.WriteLine();
         Log.System.WriteLine();
@@ -190,9 +188,9 @@ namespace pfAdapter
 
             //空白で分ける。　　”があれば除去
             extra_cmdline = line.Split()
-                             .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
-                             .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
-                             .ToArray();
+                                .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
+                                .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
+                                .ToArray();
           }
         }
 
@@ -247,7 +245,7 @@ namespace pfAdapter
         midPrcManager = new MidProcessManager();
         midPrcManager.Initialize(                          //初期設定のみ、タイマーは停止
                         AppSetting.MidProcess__MainA,
-                        AppSetting.dMidPrcInterval_min);
+                        AppSetting.MidPrcInterval_min);
       }
 
       //  PostPrcess
@@ -261,19 +259,19 @@ namespace pfAdapter
       //
       //FileLocker 初期化
       //
-      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.sLockFile);
+      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.LockFile);
 
 
       //
-      //InputReaderの設定
+      //InputReader設定
       //
       Log.System.WriteLine("  [ Reader Param ]");
-      readerA.SetParam(AppSetting.dBuffSize_MiB, AppSetting.dReadLimit_MiBsec);
-      readerB.SetParam(-1, AppSetting.dReadLimit_MiBsec, true);
+      readerA.SetParam(AppSetting.BuffSize_MiB, AppSetting.ReadLimit_MiBsec);
+      readerB.SetParam(-1, AppSetting.ReadLimit_MiBsec, true);
 
 
       //
-      //出力ライター登録
+      //OutputWriter登録
       //
       Log.System.WriteLine("[ Register Writer ]");
       OutputWriter writerA, writerB;
@@ -296,7 +294,8 @@ namespace pfAdapter
 
         }
         /*
-         * 　□　タイムアウトについて
+         * 16/02/10  .net 4.5.2
+         * □　タイムアウトについて
          * task  MainA,  Enc_Bの両方が動いているときに、
          * writerB.Timeout_msec = -1;  だと
          * MainAの標準入力への書込みが短時間 or 完全に止まることがあり、
@@ -310,7 +309,6 @@ namespace pfAdapter
          * 
          * 原因は不明
          * Task.WaitAll();の仕様？
-         * 
          */
 
         //デバッグ用　ファイル出力を登録

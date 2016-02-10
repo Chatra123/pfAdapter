@@ -5,20 +5,16 @@ using System.Threading.Tasks;
 
 namespace pfAdapter
 {
-
+  /// <summary>
+  /// 出力先のプロセスの標準出力に書き込む
+  /// </summary>
   internal class OutputWriter
   {
-
-    /// <summary>
-    /// Task間の同期
-    /// </summary>
-
     private List<Client_WriteStdin> WriterList;
+
     public TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
-
     public bool HasWriter { get { return WriterList != null && 0 < WriterList.Count; } }
-
 
     /// <summary>
     /// ライターを閉じる
@@ -70,7 +66,7 @@ namespace pfAdapter
         var writer = WriterList[i];
 
         //有効？
-        if (writer.Enable <= 0) { WriterList.Remove(writer); continue; }
+        if (writer.IsEnable) { WriterList.Remove(writer); continue; }
 
         //実行
         Log.System.WriteLine("  " + writer.FileName);
@@ -141,7 +137,7 @@ namespace pfAdapter
       }
 
 
-      //全タスクが完了するまで待機、タイムアウトＮ ms、-1にはしないこと
+      //全タスクが完了するまで待機。タイムアウトＮ ms、Timeout = -1にはしないこと
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
 

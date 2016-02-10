@@ -173,9 +173,9 @@ namespace pfAdapter
 
 
     //設定ファイルから
-    public static double dBuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
-    public static string sCommandLine { get { return setting_file.CommandLine; } }
-    public static string sLockFile { get { return setting_file.LockMove; } }
+    public static double BuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
+    public static string CommandLine { get { return setting_file.CommandLine; } }
+    public static string LockFile { get { return setting_file.LockMove; } }
 
     public static ClientList PreProcess__App { get { return setting_file.PreProcess__App; } }
     public static ClientList MidProcess__MainA { get { return setting_file.MidProcess__MainA; } }
@@ -221,7 +221,7 @@ namespace pfAdapter
     /// <summary>
     /// ファイル読込み速度
     /// </summary>
-    public static double dReadLimit_MiBsec
+    public static double ReadLimit_MiBsec
     {
       get
       {
@@ -236,7 +236,7 @@ namespace pfAdapter
     /// <summary>
     /// MidPrcの実行間隔
     /// </summary>
-    public static double dMidPrcInterval_min
+    public static double MidPrcInterval_min
     {
       get
       {
@@ -252,7 +252,6 @@ namespace pfAdapter
 
     /// <summary>
     /// PrcListの有効、無効
-    ///     ExCmd  PrePrc_App  MidPrc_MainA  PostPrc_MainA  PostPrc_App
     /// </summary>
     private static bool EnableRun_PrcList(bool? cmdline_PrcList, int setting_file_PrcList_bEnable)
     {

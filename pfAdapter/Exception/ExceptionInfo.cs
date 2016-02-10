@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/01/09
+ * 最終更新日　16/02/10
  * 
  * □概要
  * 
@@ -10,7 +10,7 @@
  *    Program Main(string[] args)の先頭に
  * 
  *    //例外を捕捉する
- *    AppDomain.CurrentDomain.UnhandledException += ExceptionInfo.OnUnhandledException;
+ *    AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
  * 
  *    を追加する。
  * 

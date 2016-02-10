@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　15/12/04
+ * 最終更新日　16/02/10
  * 
  * 概要
  *   テキストファイルの読み書きにファイル共有設定をつける。
@@ -30,7 +30,7 @@ namespace OctNov.IO
     public static readonly
       Encoding Ascii = Encoding.ASCII,
                Shift_JIS = Encoding.GetEncoding("Shift_JIS"),
-               UTF8 = new UTF8Encoding(false),
+               UTF8_nobom = new UTF8Encoding(false),
                UTF8_bom = Encoding.UTF8
                ;
   }
