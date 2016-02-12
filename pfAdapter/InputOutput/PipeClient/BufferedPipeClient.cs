@@ -10,13 +10,16 @@ using System.Threading.Tasks;
 namespace pfAdapter
 {
   /// <summary>
-  /// バッファ付きパイプクライアント
+  /// バッファ付きパイプクライアント  Async pipe reader
   /// </summary>
   internal class BufferedPipeClient //: NamedPipeClient
   {
-    NamedPipeClient pipeClient;
-    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
+    //NamedPipeClient pipeClient;
+    //  StdinPipeClient pipeClient;
+    AbstructPipeClientBase pipeClient;
 
+    public string PipeName { get { return pipeClient != null ? pipeClient.PipeName : "pipe is null"; } }
+    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
 
     private Task taskPipeReader;                                   //パイプ読込タスク
     private CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
@@ -36,10 +39,16 @@ namespace pfAdapter
     /// </summary>
     /// <param name="pipename">名前付きパイプ</param>
     public BufferedPipeClient(string pipeName)
-      //: base(pipeName)
+    //: base(pipeName)
     {
-      pipeClient = new NamedPipeClient();
+      //pipeClient = new NamedPipeClient();
+      //pipeClient = new StdinPipeClient();
+      //pipeClient.Initialize(pipeName);
+      pipeClient = String.IsNullOrEmpty(pipeName)
+        ? new StdinPipeClient() as AbstructPipeClientBase
+        : new NamedPipeClient() as AbstructPipeClientBase;
       pipeClient.Initialize(pipeName);
+
 
       //参考
       //  地上波：　16 Mbps    2.0 MiB/sec    11,000 packet/sec
@@ -270,7 +279,7 @@ namespace pfAdapter
 
         //接続
         if (pipeClient.IsConnected) break;
-       // if (IsConnected) break;
+        // if (IsConnected) break;
         else Thread.Sleep(30);
       }
 
@@ -282,7 +291,7 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //接続
-       // if (IsConnected == false)
+        // if (IsConnected == false)
         if (pipeClient.IsConnected == false)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");

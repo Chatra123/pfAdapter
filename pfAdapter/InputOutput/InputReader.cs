@@ -37,7 +37,6 @@ namespace pfAdapter
     //　パイプが切断されたらpipeReader = nullにしてからファイル読込みに移行する。
     //　common_pipeReaderを直接 nullにしない。
     private BufferedPipeClient pipeReader;
-
     private int PipeBuffSize { get { return pipeReader.BuffSize; } }
     private bool PipeIsConnected { get { return pipeReader != null && pipeReader.IsConnected; } }
 
@@ -111,7 +110,7 @@ namespace pfAdapter
     public bool Connect(string ipipe, string ifile, bool SuspendLog = false)
     {
       //パイプ
-      if (string.IsNullOrWhiteSpace(ipipe) == false)
+      //if (string.IsNullOrWhiteSpace(ipipe) == false)
       {
         if (common_pipeReader == null)
         {
@@ -121,7 +120,6 @@ namespace pfAdapter
 
         //インスタンスからのアクセス用  pipeReader
         pipeReader = common_pipeReader;
-
         if (PipeIsConnected == false)
           pipeReader = null;
       }
@@ -145,7 +143,7 @@ namespace pfAdapter
         if (SuspendLog == false)
         {
           if (PipeIsConnected)
-            Log.System.WriteLine("  Connect named pipe");
+             Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
           else
             Log.System.WriteLine("  pipe does not connected");
 
