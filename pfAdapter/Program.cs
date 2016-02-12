@@ -38,7 +38,6 @@ namespace pfAdapter
       //Log.System.AutoFlush = false;     //通常時はfalse    // true false
 
 
-
       //
       //App引数解析    パイプ名、ファイルパス取得
       //
@@ -48,7 +47,7 @@ namespace pfAdapter
       //
       //パイプ接続、ファイル確認
       //
-      //　パイプ接続は最優先で行う。
+      //　名前付きパイプの接続は最優先で行う。
       //　Write_PFのバッファが１０ＭＢなので３秒以内に接続すること。
       //　通常は30msかからない。
       Log.System.WriteLine("[ Connect Reader ]");
@@ -57,7 +56,6 @@ namespace pfAdapter
         //InputReader
         readerA = new InputReader("MainA");
         readerB = new InputReader("Enc_B");
-
         var isConnectedA = readerA.Connect(AppSetting.Pipe, AppSetting.File);
         var isConnectedB = readerB.Connect(AppSetting.Pipe, AppSetting.File, true);
 
@@ -74,7 +72,6 @@ namespace pfAdapter
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
-
           Thread.Sleep(2 * 1000);
           return;                                            //アプリ終了
         }
@@ -131,7 +128,6 @@ namespace pfAdapter
         Log.System.WriteLine("exit");
         Log.System.WriteLine();
         Log.Close();
-
         Thread.Sleep(2 * 1000);
         return;                                            //アプリ終了
       }
@@ -149,7 +145,7 @@ namespace pfAdapter
         Log.System.WriteLine();
 
         //  xml引数
-        Log.System.WriteLine("  [ Setting.sCommandLine ]");
+        Log.System.WriteLine("  [ Setting.CommandLine ]");
         Log.System.WriteLine("    " + AppSetting.CommandLine);
         Log.System.WriteLine();
         Log.System.WriteLine();
@@ -322,7 +318,6 @@ namespace pfAdapter
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
-
           Thread.Sleep(2 * 1000);
           return;                                            //アプリ終了
         }
@@ -375,12 +370,12 @@ namespace pfAdapter
       {
         Log.System.WriteLine("[ PostProcess_App ]");
         AppSetting.PostProcess_App.Wait();
-        ProhibitFileMove_pfA.Unlock();                           //移動禁止は待機中だけ
+        ProhibitFileMove_pfA.Unlock();                             //移動禁止は待機中だけ
         AppSetting.PostProcess_App.Run();
         Log.System.WriteLine();
       }
 
-      // Closing log
+      //Closing log
       {
         Log.System.WriteLine();
         Log.System.WriteLine("elapse   {0,3:f0} min", App.ElapseTime.TotalMinutes);
@@ -400,7 +395,7 @@ namespace pfAdapter
     static class MainSession
     {
       /// <summary>
-      /// Task間の同期
+      /// Task間のLog同期
       /// 　Taskごとのログを混ぜないための lock
       /// 　Log側では１行分のロックしかできない。
       /// </summary>

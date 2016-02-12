@@ -11,9 +11,7 @@ namespace pfAdapter
   internal class OutputWriter
   {
     private List<Client_WriteStdin> WriterList;
-
     public TimeSpan Timeout = TimeSpan.FromSeconds(20);
-
     public bool HasWriter { get { return WriterList != null && 0 < WriterList.Count; } }
 
     /// <summary>
@@ -29,6 +27,7 @@ namespace pfAdapter
       if (HasWriter)
         foreach (var one in WriterList)
         {
+          System.Threading.Thread.Sleep(300);
           if (one != null && one.StdinWriter != null)
             one.StdinWriter.Close();
         }
@@ -66,7 +65,7 @@ namespace pfAdapter
         var writer = WriterList[i];
 
         //有効？
-        if (writer.IsEnable) { WriterList.Remove(writer); continue; }
+        if (writer.IsEnable == false) { WriterList.Remove(writer); continue; }
 
         //実行
         Log.System.WriteLine("  " + writer.FileName);
@@ -137,7 +136,7 @@ namespace pfAdapter
       }
 
 
-      //全タスクが完了するまで待機。タイムアウトＮ ms、Timeout = -1にはしないこと
+      //全タスクが完了するまで待機。Timeout = -1にはしないこと
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
 
