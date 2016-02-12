@@ -396,7 +396,7 @@ namespace pfAdapter
         //　読込量が制限をこえていたらsleep()
         if (0 < tickReadSpeedLimit)
         {
-          //読込みサイズに直して比較。
+          //読込みサイズに直して比較
           if (tickReadSpeedLimit * (200.0 / 1000.0) < tickReadSize)
           {
             LogInput.WriteLine("△sleep 30  over read speed limit. ");
@@ -544,12 +544,7 @@ namespace pfAdapter
       }//for  retry
 
       throw new Exception("FileReadBytes(): unknown file read");
-
     }//func
-
-
-
-
 
     /// <summary>
     /// ゼロパケットを含んでいるか？

@@ -26,12 +26,12 @@ namespace pfAdapter
     private readonly object sync = new object();
 
     private List<byte> Buff;
-    private bool ClearBuff_Flag = false;                           //バッファ追加失敗時にBuffをクリアする
+    private bool ClearBuff_Flag = false;                           //ロック失敗時にBuffをクリアする
     private long ClearBuff_AdvancePos = 0;                         //バッファクリア時に進めるファイルポジション
     public int BuffSize { get; private set; }
 
     private long BuffBottomPos { get { lock (sync) { return BuffTopPos + Buff.Count() - 1; } } }
-    private long BuffTopPos = 0;                                   //Buff先頭バイトのファイルにおける位置
+    private long BuffTopPos = 0;                                   //Buff先頭バイトのファイル上の位置
 
 
     /// <summary>
@@ -44,6 +44,7 @@ namespace pfAdapter
       //pipeClient = new NamedPipeClient();
       //pipeClient = new StdinPipeClient();
       //pipeClient.Initialize(pipeName);
+      //BasePipe初期化
       pipeClient = String.IsNullOrEmpty(pipeName)
         ? new StdinPipeClient() as AbstructPipeClientBase
         : new NamedPipeClient() as AbstructPipeClientBase;
@@ -228,16 +229,14 @@ namespace pfAdapter
         //　要求の先頭位置がバッファ内にあれば取り出せる。
         if (HasData(requestTopPos, requestSize, inputLog))
         {
-          //データ取り出し
           requestData = new byte[requestSize];
           long reqTopPos_InBuff = requestTopPos - BuffTopPos;                            //バッファ内での位置
 
-          List<Byte> reqData_List = Buff.GetRange((int)reqTopPos_InBuff, requestSize);   //データ取り出し
-          Buffer.BlockCopy(reqData_List.ToArray(), 0, requestData, 0, requestSize);      //コピー
-
+          List<Byte> reqData_List = Buff.GetRange((int)reqTopPos_InBuff, requestSize);
+          Buffer.BlockCopy(reqData_List.ToArray(), 0, requestData, 0, requestSize);
         }
 
-        //要求データとバッファとの相対位置
+        //set requestData
         if (requestData != null)
         {
           reqPos = RequestRefPos.InBuff;                   //バッファ内のデータを要求
@@ -246,10 +245,8 @@ namespace pfAdapter
         {
           if (requestTopPos < BuffTopPos)
             reqPos = RequestRefPos.FrontOfBuff;            //バッファよりファイル前方のデータを要求
-
           else if (BuffBottomPos < requestTopPos)
             reqPos = RequestRefPos.BackOfBuff;             //バッファよりファイル後方のデータを要求
-
           else
             reqPos = RequestRefPos.Unknown;                //問題なく動いていれば、ここに来ることない
         }
