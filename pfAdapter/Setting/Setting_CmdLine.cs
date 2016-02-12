@@ -81,13 +81,19 @@ namespace pfAdapter.pfSetting
         .Add("midint=", "MidProcess interval", (double v) => this.MidInterval = v)
         .Add("midinv=", "MidProcess interval", (double v) => this.MidInterval = v)
 
-        //process
+        //process list
         .Add("extcmd=", "switch Get_External_Command ", (int v) => this.ExtCmd = 0 < v)
         .Add("preprc_app=", "switch PreProcessList   ", (int v) => this.PrePrc_App = 0 < v)
         .Add("midprc_main=", "switch MidProcessList  ", (int v) => this.MidPrc_Main = 0 < v)
         .Add("postprc_main=", "switch PostProcessList", (int v) => this.PostPrc_Main = 0 < v)
         .Add("postprc_enc=", "switch PostProcessList", (int v) => this.PostPrc_Enc = 0 < v)
         .Add("postprc_app=", "switch PostProcessList ", (int v) => this.PostPrc_App = 0 < v)
+
+        .Add("preprc=", "switch PreProcessList   ", (int v) => this.PrePrc_App = 0 < v)
+        .Add("midprcn=", "switch MidProcessList  ", (int v) => this.MidPrc_Main = 0 < v)
+        .Add("postprc=", "switch PostProcessList", 
+             (int v) => { this.PostPrc_Main = this.PostPrc_Enc = this.PostPrc_App = 0 < v; })
+
 
         //for Encoder
         .Add("profile=", (v) => this.EncProfile = v)

@@ -55,7 +55,6 @@ namespace pfAdapter
     /// </summary>
     private static int StartTime_tick = Environment.TickCount;
 
-
     /// <summary>
     /// 起動からの経過時間
     /// </summary>
@@ -64,7 +63,6 @@ namespace pfAdapter
       get { return DateTime.Now - StartTime; }
     }
 
-
     /// <summary>
     /// 起動からの経過時間
     /// </summary>
@@ -72,7 +70,6 @@ namespace pfAdapter
     {
       get { return Environment.TickCount - StartTime_tick; }
     }
-
 
     /// <summary>
     /// ユニークキー
@@ -87,11 +84,7 @@ namespace pfAdapter
       }
     }
 
-
-
   }
-
-
 
 
 
@@ -163,14 +156,12 @@ namespace pfAdapter
     }
 
 
-
     //コマンドラインから
     public static String Pipe { get { return cmdline.Pipe; } }
     public static String File { get { return cmdline.File; } }
     private static String XmlPath { get { return cmdline.XmlPath; } }
     public static String EncProfile { get { return cmdline.EncProfile; } }
     public static bool Abort { get { return cmdline.Abort_pfAdapter; } }
-
 
     //設定ファイルから
     public static double BuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
@@ -188,7 +179,6 @@ namespace pfAdapter
     public static List<Client_WriteStdin> Client_MainA { get { return setting_file.Client_MainA; } }
 
     public static List<Client_WriteStdin> Client_Enc_B { get { return setting_file.Client_Enc_B; } }
-
 
 
     /// <summary>
