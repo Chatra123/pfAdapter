@@ -27,7 +27,7 @@ namespace pfAdapter
       if (HasWriter)
         foreach (var one in WriterList)
         {
-          System.Threading.Thread.Sleep(300);
+          System.Threading.Thread.Sleep(500);
           if (one != null && one.StdinWriter != null)
             one.StdinWriter.Close();
         }
@@ -50,7 +50,7 @@ namespace pfAdapter
     /// <summary>
     /// ライター登録、実行
     /// </summary>
-    /// <param name="newWriterList">実行するクライアント</param>
+    /// <param name="srcList">実行するクライアント</param>
     /// <returns>ライターが１つ以上起動したか</returns>
     public bool RegisterWriter(List<Client_WriteStdin> srcList)
     {
@@ -98,7 +98,6 @@ namespace pfAdapter
     public bool WriteData(byte[] writeData)
     {
       var tasklist = new List<Task<bool>>();
-
 
       //タスク作成、各プロセスに書込み
       foreach (var oneWriter in WriterList)
@@ -153,7 +152,6 @@ namespace pfAdapter
           {
             succeedWriting = false;
             var writer = (Client_WriteStdin)task.AsyncState;
-
             WriterList.Remove(writer);                     //WriterListから登録解除
           }
         }
@@ -162,9 +160,7 @@ namespace pfAdapter
           //task未完了、クライアントがフリーズor処理が長い
           succeedWriting = false;
           var writer = (Client_WriteStdin)task.AsyncState;
-
           WriterList.Remove(writer);                       //WriterListから登録解除
-
           Log.System.WriteLine("  /▽  Task Timeout :  {0}  ▽/", writer.FileName);
           Log.System.WriteLine();
         }

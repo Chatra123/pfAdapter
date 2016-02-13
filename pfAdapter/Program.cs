@@ -48,7 +48,7 @@ namespace pfAdapter
       //パイプ接続、ファイル確認
       //
       //　名前付きパイプの接続は最優先で行う。
-      //　Write_PFのバッファが１０ＭＢなので３秒以内に接続すること。
+      //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
       //　通常は30msかからない。
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
@@ -308,8 +308,8 @@ namespace pfAdapter
          */
 
         //デバッグ用　ファイル出力を登録
-        //writerA.RegisterOutFileWriter(AppSetting.File + ".pfOutfile_A.ts");
-        //writerB.RegisterOutFileWriter(AppSetting.File + ".pfOutfile_B.ts");
+        //writerA.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_A.ts");
+        //writerB.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_B.ts");
 
         // no writer?
         if (writerA.HasWriter == false && writerB.HasWriter == false)
@@ -426,11 +426,9 @@ namespace pfAdapter
             if (readData == null) continue;                  //値を取得できない。（Buffロック失敗、未書込エリアの読込み）
             else if (readData.Length == 0) break;            //パイプ切断 ＆ ファイル終端
 
-
             //書
             writer.WriteData(readData);
             if (writer.HasWriter == false) break;
-
 
             //コンソール、ログ更新
             if (enable_UpdateLog)
@@ -443,12 +441,9 @@ namespace pfAdapter
 
 
           //終了処理
-          if (postPrcList_MainA != null)
-            ProhibitFileMove_pfA.Lock();             //ファイルの移動禁止
-
+          if (postPrcList_MainA != null)  ProhibitFileMove_pfA.Lock();
           reader.Close();
           writer.Close();
-
 
           lock (syncLog)
           {
@@ -457,9 +452,8 @@ namespace pfAdapter
             Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
             Log.System.WriteLine(reader.LogStatus.OutText_Status());
           }
-
-          // 同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
-          Thread.Sleep(4 * 1000);
+          //  同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
+          Thread.Sleep(500);
 
           lock (syncLog)
           {
@@ -471,7 +465,6 @@ namespace pfAdapter
               Log.System.WriteLine("  MidProcess is canceled");
               Log.System.WriteLine();
             }
-
             //PostProcess
             if (postPrcList_MainA != null)
             {
@@ -483,8 +476,8 @@ namespace pfAdapter
               Log.System.WriteLine();
             }
           }
-
         });
+
         return task;
       }
 
@@ -507,7 +500,6 @@ namespace pfAdapter
                             (int)(totalPipeRead / 1024 / 1024),        //総読込み量　ファイル
                             (int)(totalFileRead / 1024 / 1024)         //総読込み量　パイプ
                             );
-
           //コンソールタイトル
           //１秒毎
           Console.Title = "  " + DateTime.Now.ToString("HH:mm:ss") + ":    " + status;
