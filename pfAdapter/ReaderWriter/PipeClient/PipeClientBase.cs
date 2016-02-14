@@ -32,12 +32,6 @@ namespace pfAdapter
   {
     protected NamedPipeClientStream pipeClient;
 
-    //public NamedPipeClient(string pipeName)
-    //{
-    //  //pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
-    //  //                                       PipeOptions.None, TokenImpersonationLevel.None);
-    //}
-
     /// <summary>
     /// PipeName
     /// </summary>
@@ -126,17 +120,6 @@ namespace pfAdapter
   {
     private BinaryReader reader;
     private bool isConnected;
-
-    ///// <summary>
-    ///// Constructor
-    ///// </summary>
-    //public StdinPipeClient(string pipeName)
-    //{
-    //  if (Console.IsInputRedirected)
-    //    reader = new BinaryReader(Console.OpenStandardInput());
-
-    //  isConnected = Console.IsInputRedirected;
-    //}
 
     /// <summary>
     /// Initialize

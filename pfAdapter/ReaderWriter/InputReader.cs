@@ -572,10 +572,9 @@ namespace pfAdapter
 
 
       int numPacket100 = (int)Math.Floor((double)readData.Length / Packet.Size);  //総パケット数 　１００％
-
-      //総パケット数が２０未満なら処理できない。
       if (numPacket100 < 20)
       {
+        //１０パケット分を検査するので必ず２０パケット必要
         throw new Exception("HasZeroPacket():  numPacket100 < 20 packet");
       }
 

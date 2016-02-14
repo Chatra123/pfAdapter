@@ -12,10 +12,8 @@ namespace pfAdapter
   /// <summary>
   /// バッファ付きパイプクライアント  Async pipe reader
   /// </summary>
-  internal class BufferedPipeClient //: NamedPipeClient
+  internal class BufferedPipeClient
   {
-    //NamedPipeClient pipeClient;
-    //  StdinPipeClient pipeClient;
     AbstructPipeClientBase pipeClient;
 
     public string PipeName { get { return pipeClient != null ? pipeClient.PipeName : "pipe is null"; } }
@@ -39,11 +37,7 @@ namespace pfAdapter
     /// </summary>
     /// <param name="pipename">名前付きパイプ</param>
     public BufferedPipeClient(string pipeName)
-    //: base(pipeName)
     {
-      //pipeClient = new NamedPipeClient();
-      //pipeClient = new StdinPipeClient();
-      //pipeClient.Initialize(pipeName);
       //BasePipe初期化
       pipeClient = String.IsNullOrEmpty(pipeName)
         ? new StdinPipeClient() as AbstructPipeClientBase
@@ -85,7 +79,6 @@ namespace pfAdapter
       lock (sync)
       {
         pipeClient.Connect(timeout);
-        //base.Connect(timeout);
       }
     }
 
@@ -112,7 +105,6 @@ namespace pfAdapter
       lock (sync)
       {
         pipeClient.Close();
-        // base.Close();
 
         //通常、taskPipeReaderは終了済み。パイプサーバーが閉じた後にtaskReaderはすぐに終了している。
         //待機状態の場合はこのキャンセル要求で終了する。
@@ -276,7 +268,6 @@ namespace pfAdapter
 
         //接続
         if (pipeClient.IsConnected) break;
-        // if (IsConnected) break;
         else Thread.Sleep(30);
       }
 
@@ -288,7 +279,6 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //接続
-        // if (IsConnected == false)
         if (pipeClient.IsConnected == false)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");
@@ -306,7 +296,6 @@ namespace pfAdapter
         //                                   pipe server の書込みは１回あたり 770 KB
         //                                   Write_Default のバッファ量と同じ
         readData = pipeClient.ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
-        //readData = ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
 
         //読込データがある？
         if (readData != null)
