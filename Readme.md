@@ -1,5 +1,5 @@
 ﻿
-### pfAdapter
+## pfAdapter
 
 ファイルを読み込み、外部プロセスのパイプへ送信します。
 
@@ -7,7 +7,7 @@
 ------------------------------------------------------------------
 ### 使い方
 
-Run_pfAdapter.batにTSファイルをドロップ
+Run_pfAdapter.batのショートカットを作成し、TSファイルをドロップ
 
 
 ### 使い方　　コマンドライン
@@ -52,6 +52,9 @@ MidProcessの実行間隔、min
     -PostPrc_Main  1
     -PostPrc_Enc   1
     -PostPrc_App   1
+    -PrePrc        1
+    -MidPrc        1
+    -PostPrc       1
 プロセスリストの有効、無効。設定ファイルのEnableは無視される。
 
 
@@ -111,16 +114,16 @@ PostProcess実行前の待機期間にはd2vファイルをロックするプロ
 ### 設定　プロセスリスト
 
     Client_MainA
-データ送信先のプロセス。標準入力へリダイレクトします。
+データ送信先のプロセス。標準入力をリダイレクトします。
 
     Client_Enc_B  
-データ送信先のプロセス。標準入力へリダイレクトします。  
-引数 -EncProfile があるときのみ実行します。
+データ送信先のプロセス。標準入力をリダイレクトします。  
+引数 -EncProfile があるときのみ実行  
 
 
     Client_GetExternalCommand  
 入力、-Xml 以外のコマンドライン引数を受け取り、処理を変更します。  
--Suspend_pfMain  があればメイン処理を中止し、  
+-Suspend_pfAMain があればメイン処理を中止し、  
 -Abort_pfAdapter があればプロセスを終了します。  
 
 
@@ -201,7 +204,7 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 |:-------------------|:-----------------------------------------------|
 |  Enable            |  リスト全体の有効、無効                        |
 |  Delay_sec         |  リスト実行前に待機する秒数                    |
-|  RandDelay_sec     |  dDelay_secの後に追加で待機するランダム秒数。  |
+|  RandDelay_sec     |  Delay_secの後に追加で待機するランダム秒数     |
 
 
 
@@ -238,9 +241,9 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 
     $MidPrcCnt$
 MidProcessの実行回数に置換されます。  
-1回目の実行で１、実行されるごとに＋１されます。  
+1回目の実行で１、実行されるごとに増えます。  
 PreProcess内では０、  
-PostProcess内では（MidProcessListの実行回数＋１）に置換されます。  
+PostProcess内では（MidProcessListでの実行回数＋１）に置換されます。  
 
 
 
@@ -259,14 +262,23 @@ PostProcess内では（MidProcessListの実行回数＋１）に置換されま�
 
   チャンネル名がテキストで指定されていると各処理を中止します。
 
+  
+------------------------------------------------------------------
+##### Write_Default.dllのパイプ出力
 
+  Write_PF.dllの代わりにパイプ出力対応のWrite_Default.dllが利用できます。  
+  基本的な動作はWrite_PF.dllと同じです。
+  
+  Write_Default.dllの設定でTeeコマンドをチェックし、テキストボックスに  
+  .\Write\Write_PF\pfAdapter\pfAdapter.exe  -file "$FilePath$"  
+  と入力する。  
+  録画を開始するとpfAdapterが起動します。
+  
   
 ------------------------------------------------------------------
 ### その他
 
-* 起動直後の３０秒間と終了直前にファイル読込みが発生するのは仕様です。
-
-* １２８ＫＢ以上のログファイルは上書きされます。  
+* １２８ＫＢ以上のログファイルは上書きされ、  
   ４日以上使用していないログファイルは削除されます。
 
   
