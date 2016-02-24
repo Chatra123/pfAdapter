@@ -88,13 +88,13 @@ namespace pfAdapter
 
       //大文字全角ひらがなに変換
       string shortCh, nonNumCh;
-
-      targetCh = StrConverter.ToUWH(targetCh);
-      shortCh = (4 < targetCh.Length) ? targetCh.Substring(0, 4) : targetCh;   //前４文字
-      nonNumCh = targetCh;
-      nonNumCh = StrConverter.RemoveNumber(nonNumCh);                       //数字除去
-      nonNumCh = StrConverter.RemoveSymbol(nonNumCh);                       //記号除去
-
+      {
+        targetCh = StrConverter.ToUWH(targetCh);
+        shortCh = (4 < targetCh.Length) ? targetCh.Substring(0, 4) : targetCh;   //前４文字
+        nonNumCh = targetCh;
+        nonNumCh = StrConverter.RemoveNumber(nonNumCh);                       //数字除去
+        nonNumCh = StrConverter.RemoveSymbol(nonNumCh);                       //記号除去
+      }
       blackList = blackList.Select((line) => StrConverter.ToUWH(line));
 
 
@@ -104,7 +104,7 @@ namespace pfAdapter
       bool isContains_NonNumCh = blackList.Any((blackword) => nonNumCh.Contains(blackword));
 
 
-      //Search Option 
+      //Has search option ?
       bool AppendSearch_ShortCh = blackList.Any(
         (line) => Regex.Match(line, @"^AppendSearch_ShortCh$", RegexOptions.IgnoreCase).Success);
 

@@ -18,7 +18,7 @@ namespace pfAdapter.pfSetting
   public class Setting_File
   {
 
-    public string CommandLine = "        ";               //XMLコマンドライン
+    public string CommandLine = "        ";               //コマンドライン
     public double BuffSize_MiB = 3.0;                     //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;                  //ファイル読込速度制限
     public double MidPrcInterval_min = 10;                //中間プロセスの実行間隔

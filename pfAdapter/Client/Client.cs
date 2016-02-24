@@ -38,7 +38,7 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// 待機、実行
+    /// 待機＆実行
     /// </summary>
     public void Wait_and_Run()
     {
@@ -144,19 +144,19 @@ namespace pfAdapter
       //Path
       BasePath = BasePath ?? "";
       sessionPath = sessionPath ?? BasePath;               //sessionPathがなければsBasePathを使用
-      sessionPath = ReplaceMacro(sessionPath);             //マクロ置換
+      sessionPath = ReplaceMacro(sessionPath);
       sessionPath = sessionPath.Trim();
       if (string.IsNullOrWhiteSpace(sessionPath))
         return null;                                       //パスが無効
 
       //Arguments
       BaseArgs = BaseArgs ?? "";
-      sessionArgs = sessionArgs ?? BaseArgs;               //sessionArgsがなければsBaseArgsを使用
-      sessionArgs = ReplaceMacro(sessionArgs);             //マクロ置換
+      sessionArgs = sessionArgs ?? BaseArgs;               //sessionArgsがなければBaseArgsを使用
+      sessionArgs = ReplaceMacro(sessionArgs);
       sessionArgs = sessionArgs.Trim();
 
 
-      SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeから呼び出すようにする。
+      SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeから呼び出す
       prc.StartInfo.FileName = sessionPath;
       prc.StartInfo.Arguments = sessionArgs;
 
@@ -227,7 +227,7 @@ namespace pfAdapter
 
     /// <summary>
     /// vbsがセットされていたらcscript.exeに変更。
-    /// batは変更しなくても処理できた。
+    /// batは変更しなくても処理できる。
     /// </summary>
     protected static void SetScriptLoader(ref string exepath, ref string args)
     {
@@ -246,8 +246,8 @@ namespace pfAdapter
     /// <summary>
     /// プロセス実行  通常実行
     /// </summary>
-    /// <param name="sessionPath">今回のみ使用するファイルパス。指定がなければsBasePathを使う。</param>
-    /// <param name="sessionArgs">今回のみ使用する引数。指定がなければsBaseArgsを使う。</param>
+    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
+    /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
     public bool Start(string sessionPath = null, string sessionArgs = null)
     {

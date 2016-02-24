@@ -30,7 +30,7 @@ namespace pfAdapter
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
       //
-      //ログ有効化
+      //ログ
       //
       Log.System.Enable = true;
       Log.System.OutConsole = true;
@@ -39,7 +39,7 @@ namespace pfAdapter
 
 
       //
-      //App引数解析    パイプ名、ファイルパス取得
+      //App引数解析 
       //
       AppSetting.ParseCmdLine(AppArgs);
 
@@ -49,7 +49,7 @@ namespace pfAdapter
       //
       //　名前付きパイプの接続は最優先で行う。
       //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
-      //　通常は30msかからない。
+      //　通常は30msもかからない。
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
       {
@@ -112,7 +112,7 @@ namespace pfAdapter
       }
 
 
-      //カレントディレクトリ設定
+      //カレントディレクトリ
       string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
       string AppDir = System.IO.Path.GetDirectoryName(AppPath);
       Directory.SetCurrentDirectory(AppDir);
@@ -216,7 +216,7 @@ namespace pfAdapter
       Log.System.WriteLine(AppSetting.Cmdline_ToString());
 
       //Clientのマクロを設定２
-      //　コマンドラインが確定した後に再び設定する。
+      //　コマンドラインが確定した後に再設定
       {
         Client.Macro_EncProfile = AppSetting.EncProfile;
       }
@@ -253,7 +253,7 @@ namespace pfAdapter
 
 
       //
-      //FileLocker 初期化
+      //FileLocker初期化
       //
       ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.LockFile);
 

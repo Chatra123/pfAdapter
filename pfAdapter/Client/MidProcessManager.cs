@@ -15,7 +15,7 @@ namespace pfAdapter
 
 
   /// <summary>
-  /// 定期的にMidProcessListを実行する。
+  /// 定期的にMidProcessListを実行
   /// </summary>
   internal class MidProcessManager
   {
@@ -40,7 +40,7 @@ namespace pfAdapter
     /// 初期化
     /// </summary>
     /// <param name="midPrcList">実行するプロセスリスト</param>
-    /// <param name="newInterval_min">実行間隔。分</param>
+    /// <param name="interval_min">実行間隔。分</param>
     public void Initialize(ClientList midPrcList, double interval_min)
     {
       MidProcessList = new ClientList(midPrcList);
@@ -108,10 +108,10 @@ namespace pfAdapter
       }
     }
     /// <summary>
-    /// OnTimedEvent_enque
+    /// OnTimedEvent_enque_withMacro
     /// </summary>
     /// 　MidPrcCnt置換をPre、PostProcessからアクセスさせないときを想定
-    /// 　MidProcessでのみ置換する
+    /// 　MidProcessでのみ置換する。使用していない
     private void OnTimedEvent_enque_withMacro(object source, System.Timers.ElapsedEventArgs e)
     {
       if (Enable == false) return;
@@ -184,7 +184,7 @@ namespace pfAdapter
     public void CancelTask()
     {
       tickCounter = (tickCounter == 0)
-                              ? 1 : tickCounter;       //Timerを動かしていない場合、taskTickCounter = 1
+                              ? 1 : tickCounter;           //Timerを動かしていない場合、taskTickCounter = 1
       TickCounter = tickCounter;
       if (Enable == false) return;
 

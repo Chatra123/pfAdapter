@@ -9,7 +9,7 @@ namespace pfAdapter
   using OctNov.IO;
 
   /// <summary>
-  /// 番組情報を取得する。  *.ts.program.txt   shift-jis
+  /// 番組情報を取得  *.ts.program.txt   shift-jis
   /// </summary>
   internal static class ProgramInfo
   {
@@ -44,7 +44,6 @@ namespace pfAdapter
         Thread.Sleep(250);
       }
 
-      //ファイルがない
       if (File.Exists(infoPath) == false)
       {
         Log.System.WriteLine("    Fail to get  *.ts.program.txt");
@@ -62,14 +61,14 @@ namespace pfAdapter
             4 <= infotext.Count) break;
         Thread.Sleep(500);
       }
-      //テキスト取得失敗
+      //取得失敗
       if (infotext == null)
       {
         Log.System.WriteLine("    Fail to get  *.ts.program.txt");
         return;
       }
 
-      //情報取得
+      //取得成功
       Log.System.WriteLine("    Get the  *.ts.program.txt");
 
       if (2 <= infotext.Count) { Channel = infotext[1]; }

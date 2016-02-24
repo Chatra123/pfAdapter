@@ -139,7 +139,7 @@ namespace pfAdapter
       bool hasData = false;
       if (Monitor.TryEnter(sync, 100) == true)         //ロック
       {
-        long buffbottompos = BuffBottomPos; //log
+        long buffbottompos = BuffBottomPos;            //log用
         long reqBottomPos = requestTopPos + requestSize - 1;
         if (BuffTopPos <= requestTopPos && reqBottomPos <= BuffBottomPos)
         {

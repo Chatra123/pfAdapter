@@ -110,7 +110,6 @@ namespace pfAdapter
     public bool Connect(string ipipe, string ifile, bool SuspendLog = false)
     {
       //パイプ
-      //if (string.IsNullOrWhiteSpace(ipipe) == false)
       {
         if (common_pipeReader == null)
         {
@@ -292,12 +291,6 @@ namespace pfAdapter
       }
       else if (pipeReader.IsConnected)
       {
-        //Read失敗
-
-        //通常、ReqPos_Unknownにはならない
-        if (reqPos == RequestRefPos.Unknown)
-          LogStatus.ReqPos_Unknown++;
-
         //Read失敗　＆　パイプ接続中
         switch (reqPos)
         {
@@ -318,7 +311,10 @@ namespace pfAdapter
             return null;               //リトライ
 
           case RequestRefPos.FailToLock:
+          case RequestRefPos.Unknown:
           default:
+            if (reqPos == RequestRefPos.Unknown) LogStatus.ReqPos_Unknown++;
+
             //ロック失敗 or バッファクリア待ち
             LogStatus.FailToLockBuff__Read++;
             LogInput.WriteLine("    FailToLock");
@@ -350,7 +346,6 @@ namespace pfAdapter
       }
       else
       {
-        //読込み失敗
         //　パイプが閉じた　＆　バッファロック失敗
         //　次のループで残りのバッファを読込む。
         Thread.Sleep(10);
@@ -390,10 +385,10 @@ namespace pfAdapter
         {
           if (pipeReader != null && pipeReader.IsConnected)
             if (ReadSpeedLimit <= 0 || 6 * 1024 * 1024 < ReadSpeedLimit)
-              tickReadSpeedLimit = 6 * 1024 * 1024;                            //6 MiB/secに制限
+              tickReadSpeedLimit = 6 * 1024 * 1024;
         }
 
-        //　読込量が制限をこえていたらsleep()
+        //　制限をこえていたらsleep()
         if (0 < tickReadSpeedLimit)
         {
           //読込みサイズに直して比較
@@ -426,7 +421,6 @@ namespace pfAdapter
           //作成直後のファイル？
           if (fileStream.Length == 0)
           {
-            //待機して書込みを待つ。
             if (retry < 2)
             {
               if (retry == 0)
@@ -439,7 +433,7 @@ namespace pfAdapter
           //パイプ接続中？
           if (pipeReader != null)
           {
-            //パイプ接続中なら待機。サーバープロセスの終了を待つ。
+            //パイプ接続中ならサーバープロセスの終了を待つ。
             if (retry == 0)
               Log.System.WriteLine("  Reach EOF with pipe connection. sleep()");
             Thread.Sleep(3 * 1000);
@@ -474,7 +468,7 @@ namespace pfAdapter
         //
         //未書込みエリアを読み込んだか？
         //
-        if (Packet.Size * 20 <= fileData.Length)            //パケット*２０　以上のサイズが必須
+        if (Packet.Size * 20 <= fileData.Length)            //パケット*２０以上のサイズが必須
         {
           byte[] valueData;                                 //ゼロパケット ＆ 最後尾の値パケットは必ず破棄される
           bool hasZeroPacket = HasZeroPacket(fileData, out valueData);

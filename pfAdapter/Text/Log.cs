@@ -92,8 +92,7 @@ namespace pfAdapter
         {
           var path = Path.Combine(App.Dir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
-          bool overwrite = logfile.Exists
-                                     && 128 * 1024 <= logfile.Length;
+          bool overwrite = logfile.Exists && 128 * 1024 <= logfile.Length;
 
           //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
           if (overwrite)

@@ -61,7 +61,7 @@ namespace pfAdapter.pfSetting
             File = args[0];
 
       //    /*  Mono.Options  */
-      //オプションと説明、そのオプションの引数に対するアクションを定義する
+      //”オプション”　”説明”　”オプションの引数に対するアクション”を定義する
       //OptionSet_icaseに渡すオプションは小文字にすること。
       //オプションの最後に=をつける。 bool型ならつけない。
       //判定は case insensitive
@@ -152,7 +152,6 @@ namespace pfAdapter.pfSetting
     /// <summary>
     /// コマンドライン一覧を出力する。
     /// </summary>
-    // public new string ToString()
     public override string ToString()
     {
       var sb = new StringBuilder();

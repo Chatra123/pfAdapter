@@ -152,7 +152,7 @@ namespace pfAdapter
           {
             succeedWriting = false;
             var writer = (Client_WriteStdin)task.AsyncState;
-            WriterList.Remove(writer);                     //WriterListから登録解除
+            WriterList.Remove(writer);
           }
         }
         else
@@ -160,7 +160,7 @@ namespace pfAdapter
           //task未完了、クライアントがフリーズor処理が長い
           succeedWriting = false;
           var writer = (Client_WriteStdin)task.AsyncState;
-          WriterList.Remove(writer);                       //WriterListから登録解除
+          WriterList.Remove(writer);
           Log.System.WriteLine("  /▽  Task Timeout :  {0}  ▽/", writer.FileName);
           Log.System.WriteLine();
         }
