@@ -13,7 +13,7 @@ namespace pfAdapter
   /// <summary>
   /// 要求データとバッファとの相対位置を示す。データ取得失敗時の動作を決定する。
   /// </summary>
-  enum RequestRefPos
+  enum ReqRelativePos//request data relative position
   {
     Unknown,       // Unknown
     FrontOfBuff,   // バッファよりファイル前方のデータを要求した。
@@ -69,9 +69,9 @@ namespace pfAdapter
     /// <summary>
     /// InputReader
     /// </summary>
-    public InputReader(string _name = "")
+    public InputReader(string name = "")
     {
-      Name = _name;
+      Name = name;
       LogInput = new LogWriter("");    //null reference回避用
       LogStatus = new LogStatus_Input();
     }
@@ -138,20 +138,18 @@ namespace pfAdapter
         }
 
       //log
+      if (SuspendLog == false)
       {
-        if (SuspendLog == false)
-        {
-          if (PipeIsConnected)
-             Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
-          else
-            Log.System.WriteLine("  pipe does not connected");
+        if (PipeIsConnected)
+          Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
+        else
+          Log.System.WriteLine("  pipe does not connected");
 
-          if (fileReader != null)
-            Log.System.WriteLine("  Create  filereader");
-          else
-            Log.System.WriteLine("  file does not exist");
-          Log.System.WriteLine();
-        }
+        if (fileReader != null)
+          Log.System.WriteLine("  Create  filereader");
+        else
+          Log.System.WriteLine("  file does not exist");
+        Log.System.WriteLine();
       }
 
       return pipeReader != null || fileReader != null;
@@ -174,15 +172,14 @@ namespace pfAdapter
       ReadSpeedLimit = newLimit_MiBsec * 1024 * 1024;
 
       //log
+      if (SuspendLog == false)
       {
-        if (SuspendLog == false)
-        {
-          if (PipeIsConnected)
-            Log.System.WriteLine("      pipe          BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
-          Log.System.WriteLine("      fileReader       Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
-          Log.System.WriteLine();
-        }
+        if (PipeIsConnected)
+          Log.System.WriteLine("      pipe          BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
+        Log.System.WriteLine("      fileReader       Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
+        Log.System.WriteLine();
       }
+
     }
 
 
@@ -192,9 +189,9 @@ namespace pfAdapter
     /// </summary>
     /// <returns>読込んだデータ</returns>
     /// <remarks>
-    /// return Data;　          成功
-    /// return null;            失敗、待機してリトライ
-    /// return new byte[] { };  ＥＯＦ
+    ///   return Data;　            成功
+    ///   return null;              失敗、待機してリトライ
+    ///   return new byte[] { };    ＥＯＦ
     /// </remarks>
     public byte[] ReadBytes()
     {
@@ -250,9 +247,9 @@ namespace pfAdapter
     /// </summary>
     /// <returns>読込んだデータ</returns>
     /// <remarks>
-    /// return pipeData;　      成功
-    /// return null;            失敗、待機してリトライ
-    /// return new byte[] { };  パイプバッファ内に要求したデータがない
+    ///   return pipeData;　        成功
+    ///   return null;              失敗、待機してリトライ
+    ///   return new byte[] { };    パイプバッファ内に要求したデータがない
     /// </remarks>
     private byte[] ReadBytes_Pipe()
     {
@@ -261,7 +258,7 @@ namespace pfAdapter
       LogInput.WriteLine("ReadBytes_Pipe()");
 
       //パイプ読込                                Packet.Size * 2048 = 376 KiB
-      RequestRefPos reqPos;
+      ReqRelativePos reqPos;
       var pipeData = pipeReader.Read(filePositon, Packet.Size * 2000, out reqPos, LogInput);
 
 
@@ -294,14 +291,14 @@ namespace pfAdapter
         //Read失敗　＆　パイプ接続中
         switch (reqPos)
         {
-          case RequestRefPos.FrontOfBuff:
+          case ReqRelativePos.FrontOfBuff:
             //バッファよりファイル前方のデータを要求
             //  ファイル読込みをしてバッファ位置までを追いかける。
             LogInput.WriteLine("    Request FrontOfBuff");
             LogInput.WriteLine("    Not contain in the buff. read the file");
             return new byte[] { };     //ファイル読込みへ
 
-          case RequestRefPos.BackOfBuff:
+          case ReqRelativePos.BackOfBuff:
             //バッファよりファイル後方のデータを要求
             //　・順調に消化していてバッファにデータがまだ来ていない。
             //　・ファイル読込みによりすでにバッファを追い抜いていた。
@@ -310,10 +307,10 @@ namespace pfAdapter
             Thread.Sleep(30);
             return null;               //リトライ
 
-          case RequestRefPos.FailToLock:
-          case RequestRefPos.Unknown:
+          case ReqRelativePos.FailToLock:
+          case ReqRelativePos.Unknown:
           default:
-            if (reqPos == RequestRefPos.Unknown) LogStatus.ReqPos_Unknown++;
+            if (reqPos == ReqRelativePos.Unknown) LogStatus.ReqPos_Unknown++;
 
             //ロック失敗 or バッファクリア待ち
             LogStatus.FailToLockBuff__Read++;
@@ -360,9 +357,9 @@ namespace pfAdapter
     /// </summary>
     /// <returns>読込んだデータ</returns>
     /// <remarks>
-    /// return fileData;　      成功
-    /// return null;            失敗、待機してリトライ
-    /// return new byte[]{ };   ＥＯＦ
+    ///   return fileData;　        成功
+    ///   return null;              失敗、待機してリトライ
+    ///   return new byte[]{ };     ＥＯＦ
     /// </remarks>
     private byte[] ReadBytes_File()
     {
@@ -411,7 +408,6 @@ namespace pfAdapter
         fileStream.Position = filePositon;
         var fileData = fileReader.ReadBytes(Packet.Size * 1000);     //Packet.Size * 1024 = 188 KiB
         tickReadSize += fileData.Length;                             //読込量記録  速度制限用
-
 
         //
         //ファイル終端に到達？
@@ -497,7 +493,6 @@ namespace pfAdapter
               else
                 return null;                               //リトライ ReadBytes()
             }
-
             lastTimeReadPacket = Environment.TickCount;
             lastPosReadPacket = filePositon;
           }

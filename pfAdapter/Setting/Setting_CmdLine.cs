@@ -60,12 +60,11 @@ namespace pfAdapter.pfSetting
           if (System.IO.File.Exists(args[0]))
             File = args[0];
 
-      //    /*  Mono.Options  */
-      //”オプション”　”説明”　”オプションの引数に対するアクション”を定義する
-      //OptionSet_icaseに渡すオプションは小文字にすること。
+      //    /*Mono.Options*/
+      //case insensitive
+      //”オプション”　”説明”　”オプションの引数に対するアクション”を定義する。
+      //OptionSet_icaseに渡すオプションは小文字で記述し、
       //オプションの最後に=をつける。 bool型ならつけない。
-      //判定は case insensitive
-
       var optionset = new OptionSet_icase();
 
       //input
@@ -94,8 +93,7 @@ namespace pfAdapter.pfSetting
         .Add("postprc=", "switch PostProcessList", 
              (int v) => { this.PostPrc_Main = this.PostPrc_Enc = this.PostPrc_App = 0 < v; })
 
-
-        //for Encoder
+        //Encoder
         .Add("profile=", (v) => this.EncProfile = v)
         .Add("encprofile=", (v) => this.EncProfile = v)
 
@@ -109,8 +107,7 @@ namespace pfAdapter.pfSetting
         .Add("abort_pfa", (v) => this.Abort_pfAdapter = v != null)
         .Add("abort_pfadapter", (v) => this.Abort_pfAdapter = v != null)
 
-        .Add("and_more", "help mes", (v) => { });
-
+        .Add("and_more", "help mes", (v) => { /*action*/ });
 
       try
       {

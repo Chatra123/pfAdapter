@@ -17,8 +17,10 @@ namespace pfAdapter.pfSetting
   [Serializable]
   public class Setting_File
   {
+    const double CurrentVer = 2.0;
 
-    public string CommandLine = "        ";               //コマンドライン
+    public double Ver = 0.0;                              //保存用 Version
+    public string CommandLine = "        ";               //追加コマンドライン
     public double BuffSize_MiB = 3.0;                     //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;                  //ファイル読込速度制限
     public double MidPrcInterval_min = 10;                //中間プロセスの実行間隔
@@ -27,9 +29,9 @@ namespace pfAdapter.pfSetting
     public string LockMove = " .ts  .pp.d2v  .pp.lwi .pp.lwifooter  .srt .ass .noncap  .avi .mp4 ";
 
     //プロセスリスト
+    public Client Client_GetExternalCommand = new Client();
     public List<Client_WriteStdin> Client_MainA = new List<Client_WriteStdin>();
     public List<Client_WriteStdin> Client_Enc_B = new List<Client_WriteStdin>();
-    public Client Client_GetExternalCommand = new Client();
     public ClientList PreProcess__App = new ClientList();
     public ClientList MidProcess__MainA = new ClientList();
     public ClientList PostProcess_MainA = new ClientList();
@@ -42,7 +44,7 @@ namespace pfAdapter.pfSetting
             AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location,
             AppDir = Path.GetDirectoryName(AppPath),
             AppName = Path.GetFileNameWithoutExtension(AppPath),
-            Default_XmlName = AppName + ".xml",            
+            Default_XmlName = AppName + ".xml",
             Default_XmlPath = Path.Combine(AppDir, Default_XmlName);
 
     /// <summary>
@@ -59,19 +61,22 @@ namespace pfAdapter.pfSetting
         if (File.Exists(xmlpath) == false)
         {
           //設定ファイル作成
-          var def_Setting = Sample_A();               //  Sample_A  Sample_RunTest  new Setting_File(); 
+          var def_Setting = Sample_A();    //  Sample_A  Sample_RunTest  new Setting_File(); 
           XmlRW.Save(xmlpath, def_Setting);
         }
       }
 
       var file = XmlRW.Load<Setting_File>(xmlpath);
 
-      XmlRW.Save(xmlpath, file);                //古いバージョンのファイルなら新たに追加された項目がxmlに加わる。
+      //新たに追加された項目、削除された項目を書き換え。
+      if (file.Ver != CurrentVer)
+      {
+        file.Ver = CurrentVer;
+        XmlRW.Save(xmlpath, file);
+      }
 
       return file;
     }
-
-
 
 
     /// <summary>
@@ -137,7 +142,6 @@ namespace pfAdapter.pfSetting
       {
         new Client_WriteStdin()
         {
-          Name = @"   Valve2Pipe   ",
           BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
           BaseArgs =  "  -pipe \"$fPath$\"  -profile  $EncProfile$   ",
           Delay_sec = 1,
@@ -153,7 +157,7 @@ namespace pfAdapter.pfSetting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -AutoNo         -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
+          BaseArgs = "          -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
         },
       };
 
@@ -167,13 +171,13 @@ namespace pfAdapter.pfSetting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -AutoNo  -last  -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
+          BaseArgs = "   -last  -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
         },
         new Client()
         {
           Enable = 0,
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -No  -1         -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
+          BaseArgs = "   -all   -ts \"$fPath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $UniqueKey$   ",
         },
       };
 
@@ -195,7 +199,7 @@ namespace pfAdapter.pfSetting
       {
          new Client()
          {
-           memo = "  Rename  ",
+           memo = "  rename  ",
            Enable = 1,
            BasePath = @"   PostProcess_Rename.bat   ",
            BaseArgs =  "  \"$fPath$\"  ",
@@ -216,7 +220,7 @@ namespace pfAdapter.pfSetting
 
 
     /// <summary>
-    /// 設定　　pfAdapterの動作テスト用
+    /// 設定　　動作テスト用
     /// </summary>
     public static Setting_File Sample_RunTest()
     {

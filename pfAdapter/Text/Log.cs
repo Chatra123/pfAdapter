@@ -7,6 +7,9 @@ using System.Text;
 
 namespace pfAdapter
 {
+  /// <summary>
+  /// アクセス用のLog
+  /// </summary>
   internal class Log
   {
     public static LogWriter System, PipeBuff;
@@ -38,7 +41,9 @@ namespace pfAdapter
   }
 
 
-
+  /// <summary>
+  /// Log
+  /// </summary>
   internal class LogWriter
   {
     private readonly object sync = new object();
@@ -82,7 +87,7 @@ namespace pfAdapter
     /// <summary>
     /// 書込み用ライター、ログファイル作成
     /// </summary>
-    /// <remarks>ファイル名は  *.1.log ～ *.8.log  になる。</remarks>
+    /// <remarks>ファイル名は  *.1.log ～ *.8.log  </remarks>
     private static StreamWriter CreateWriter(string filename)
     {
       StreamWriter writer = null;
@@ -153,7 +158,7 @@ namespace pfAdapter
         if (100 * 1000 < LogText.Length)
           LogText.Remove(0, 50 * 1000);                    //メモリ増加防止  １００ＫＢ
 
-        //末尾の文字が改行コードか？　　　  "\r\n"   "\n"
+        //末尾の文字が改行コードか？　　　  \r\n   \n
         if (1 <= text.Length)
         {
           string lastString = text.Substring(text.Length - 1, 1);
@@ -209,16 +214,13 @@ namespace pfAdapter
     }
 
 
-
     /// <summary>
     /// 各行の先頭にタイムコードを付加する。
     /// </summary>
-    /// <param name="text">タイムコードを付加するテキスト</param>
     private string Append_Timecode(string basetext)
     {
       //行ごとに分離
       var splText = basetext.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
-
       bool isMultiLine = (2 <= splText.Count);
 
       //Splitで末尾に追加される空文字を除去
@@ -246,7 +248,6 @@ namespace pfAdapter
           }
 
           if (isMultiLine) line += Environment.NewLine;
-
           timedText.Append(line);
         }
       }
@@ -254,11 +255,9 @@ namespace pfAdapter
       return timedText.ToString();
     }
 
-    //======================================
-    //文字列
-    //======================================
+
     /// <summary>
-    /// 文字を追加
+    /// テキスト追加
     /// </summary>
     public void Write(string text = "")
     {
@@ -306,9 +305,6 @@ namespace pfAdapter
     }
 
 
-    //======================================
-    //バイト配列
-    //======================================
     /// <summary>
     /// ログに１６進数表示のバイト列をを追加
     /// </summary>
@@ -338,8 +334,6 @@ namespace pfAdapter
     #endregion 書込
 
   }
-
-
 
 
 

@@ -51,11 +51,9 @@ namespace pfAdapter
     /// </summary>
     public void Wait()
     {
-      //有効？
       if (IsEnable == false) return;
       if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
-      //待機
       Thread.Sleep((int)(Delay_sec * 1000));
       int seed = Process.GetCurrentProcess().Id + DateTime.Now.Millisecond;
       var rand = new Random(seed);
@@ -67,11 +65,9 @@ namespace pfAdapter
     /// </summary>
     public void Run()
     {
-      //有効？
       if (IsEnable == false) return;
       if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
-      //実行
       for (int i = 0; i < List.Count; i++)
       {
         var client = List[i];
@@ -84,7 +80,6 @@ namespace pfAdapter
         sessionArgs = MidProcessManager.ReplaceMacro_MidCnt(sessionArgs);
 
         client.Start(sessionPath, sessionArgs);
-
       }
     }
   }
@@ -112,9 +107,7 @@ namespace pfAdapter
     public double WaitTimeout_sec = -1;
 
     public bool IsEnable { get { return 0 < Enable; } }
-
     public string FileName { get { return Path.GetFileName(BasePath).Trim(); } }
-
     public override string ToString()
     {
       return (string.IsNullOrWhiteSpace(Name) == false) ? Name : FileName;
@@ -135,7 +128,6 @@ namespace pfAdapter
     /// <returns>作成したプロセス</returns>
     protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
     {
-      //チェック
       if (IsEnable == false) return null;
       if (BasePath == null) return null;
 
@@ -143,7 +135,7 @@ namespace pfAdapter
 
       //Path
       BasePath = BasePath ?? "";
-      sessionPath = sessionPath ?? BasePath;               //sessionPathがなければsBasePathを使用
+      sessionPath = sessionPath ?? BasePath;               //sessionPathがなければBasePathを使用
       sessionPath = ReplaceMacro(sessionPath);
       sessionPath = sessionPath.Trim();
       if (string.IsNullOrWhiteSpace(sessionPath))
@@ -154,7 +146,6 @@ namespace pfAdapter
       sessionArgs = sessionArgs ?? BaseArgs;               //sessionArgsがなければBaseArgsを使用
       sessionArgs = ReplaceMacro(sessionArgs);
       sessionArgs = sessionArgs.Trim();
-
 
       SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeから呼び出す
       prc.StartInfo.FileName = sessionPath;
@@ -174,8 +165,6 @@ namespace pfAdapter
     /// <summary>
     /// パス、引数のマクロを置換
     /// </summary>
-    /// <param name="before">置換前の値</param>
-    /// <returns>置換後の値</returns>
     protected string ReplaceMacro(string before)
     {
       if (string.IsNullOrEmpty(before)) return before;
@@ -196,7 +185,6 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$fName\$", fName, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$fNameWithoutExt\$", fNameWithoutExt, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$fPathWithoutExt\$", fPathWithoutExt, RegexOptions.IgnoreCase);
-
       }
 
       //Program.txt
@@ -219,10 +207,8 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$UniqueKey\$", App.UniqueKey, RegexOptions.IgnoreCase);
       }
-
       return after;
     }
-
 
 
     /// <summary>
@@ -242,7 +228,6 @@ namespace pfAdapter
     }
 
 
-
     /// <summary>
     /// プロセス実行  通常実行
     /// </summary>
@@ -255,8 +240,6 @@ namespace pfAdapter
       if (Process == null) return false;
 
       Thread.Sleep((int)(Delay_sec * 1000));
-
-      //コンソールウィンドウ非表示
       Process.StartInfo.CreateNoWindow = 0 < NoWindow;
       Process.StartInfo.UseShellExecute = !(0 < NoWindow);
 
@@ -301,7 +284,6 @@ namespace pfAdapter
       if (Process == null) return null;
 
       Thread.Sleep((int)(Delay_sec * 1000));
-
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
       //入出力のリダイレクト
@@ -349,7 +331,7 @@ namespace pfAdapter
       //Client_OutStdoutは既にダミープロセスを割り当て済み。
       //this.Processに直接いれず、prcを経由する。
       var prc = CreateProcess(null, sessionArgs);
-      if (prc == null) return false;               //Process起動失敗
+      if (prc == null) return false;
 
       Process = prc;
       Thread.Sleep((int)(Delay_sec * 1000));
@@ -372,12 +354,11 @@ namespace pfAdapter
       //標準エラーを取り出す。
       Process.ErrorDataReceived += (o, e) =>
       {
-        //do nothing
-
-        //  if (e.Data != null)                //エラー表示　デバッグ用
+        /*do nothing*/
+        //エラー表示　デバッグ用
+        //  if (e.Data != null) 
         //    Console.Error.WriteLine(e.Data);
       };
-
 
       //プロセス実行
       bool launch;
@@ -412,7 +393,6 @@ namespace pfAdapter
     public Client_OutStdout()
     {
       Enable = 1;
-
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避
       //if (client.Process.HasExited==false)を回避する。
       Process = Process.GetCurrentProcess();
@@ -430,7 +410,6 @@ namespace pfAdapter
     public Client_OutFile(string filepath)
     {
       Enable = 1;
-
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避
       //if (client.Process.HasExited==false)を回避する。
       Process = Process.GetCurrentProcess();

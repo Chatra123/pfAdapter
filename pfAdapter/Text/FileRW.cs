@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/02/10
+ * 最終更新日　16/03/05
  * 
  * 概要
  *   テキストファイルの読み書きにファイル共有設定をつける。
@@ -57,7 +57,7 @@ namespace OctNov.IO
     public static FileStream CreateStream(string path, bool LargeSwitch = false)
     {
       //１０ＭＢ以上なら、メモリーに読み込む前に例外をスロー
-      //    d2v、srt、txtファイルなら１０ＭＢ以上になることはない
+      //    d2v、srt、txtなら１０ＭＢ以上になることはない
       //    lwi だけ１０ＭＢを超える。
       try
       {
@@ -69,7 +69,6 @@ namespace OctNov.IO
       }
       catch
       {
-        //ファイルがない
         return null;
       }
 
@@ -217,6 +216,7 @@ namespace OctNov.IO
 
   #endregion 読込み
 
+
   #region 書込み
 
   internal class FileW
@@ -301,4 +301,5 @@ namespace OctNov.IO
   }
 
   #endregion 書込み
+
 }

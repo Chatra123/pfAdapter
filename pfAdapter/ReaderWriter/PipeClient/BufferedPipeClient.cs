@@ -176,16 +176,16 @@ namespace pfAdapter
     public byte[] Read(
                         long requestTopPos,
                         int requestSize,
-                        out RequestRefPos reqPos,
+                        out ReqRelativePos reqPos,
                         LogWriter inputLog
                       )
     {
       byte[] requestData = null;                           //戻り値　バッファから取り出したデータ
-      reqPos = RequestRefPos.Unknown;                      //戻り値  要求データとバッファとの相対位置
+      reqPos = ReqRelativePos.Unknown;                      //戻り値  要求データとバッファとの相対位置
 
       if (pipeClient == null || ClearBuff_Flag)            //パイプ未作成  or バッファクリア待ち
       {
-        reqPos = RequestRefPos.FailToLock;
+        reqPos = ReqRelativePos.FailToLock;
         return null;
       }
 
@@ -231,23 +231,23 @@ namespace pfAdapter
         //set requestData
         if (requestData != null)
         {
-          reqPos = RequestRefPos.InBuff;                   //バッファ内のデータを要求
+          reqPos = ReqRelativePos.InBuff;                   //バッファ内のデータを要求
         }
         else
         {
           if (requestTopPos < BuffTopPos)
-            reqPos = RequestRefPos.FrontOfBuff;            //バッファよりファイル前方のデータを要求
+            reqPos = ReqRelativePos.FrontOfBuff;            //バッファよりファイル前方のデータを要求
           else if (BuffBottomPos < requestTopPos)
-            reqPos = RequestRefPos.BackOfBuff;             //バッファよりファイル後方のデータを要求
+            reqPos = ReqRelativePos.BackOfBuff;             //バッファよりファイル後方のデータを要求
           else
-            reqPos = RequestRefPos.Unknown;                //問題なく動いていれば、ここに来ることない
+            reqPos = ReqRelativePos.Unknown;                //問題なく動いていれば、ここに来ることない
         }
 
         Monitor.Exit(sync);                                //ロック解除
       }
       else
       {
-        reqPos = RequestRefPos.FailToLock;
+        reqPos = ReqRelativePos.FailToLock;
       }
 
       return requestData;

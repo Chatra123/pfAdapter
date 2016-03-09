@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　15/11/19
+ * 最終更新日　16/03/05
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -33,17 +33,16 @@ namespace OctNov.IO
     /// </remarks>
     public static T Load<T>(string filename) where T : new()
     {
-      //ファイルが存在しない？
       if (File.Exists(filename) == false) return default(T);
 
-      for (int i = 1; i <= 10; i++)
+      for (int i = 1; i <= 3; i++)
       {
         try
         {
-          //FileStream                                                        共有設定  FileShare.Read
+          //                                                                  共有設定  FileShare.Read
           using (var fstream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
           {
-            //StreamReader                                           UTF-8 bom
+            //                                                       UTF-8 bom
             using (var streader = new StreamReader(fstream, Encoding.UTF8))
             {
               //XmlDocument経由で変換する。
@@ -60,12 +59,12 @@ namespace OctNov.IO
         }
         catch (IOException ioexcp)
         {
-          //１０回目の失敗？
-          if (10 <= i)
+          //３回目の失敗？
+          if (3 <= i)
           {
             var error = new StringBuilder();
             error.AppendLine(ioexcp.Message);
-            error.AppendLine("別のプロセスが使用中です。タイミングをずらして実行してください。");
+            error.AppendLine("別のプロセスが使用中のためxmlファイルを読み込めません。");
             error.AppendLine("path:" + filename);
             error.AppendLine();
             throw new IOException(error.ToString());
@@ -73,16 +72,15 @@ namespace OctNov.IO
         }
         catch (Exception excp)
         {
-          //ＸＭＬ作成失敗。フォーマットを確認してください。
+          //ＸＭＬ作成失敗
+          //フォーマット、シリアル属性を確認してください。
           throw excp;
         }
-
-        System.Threading.Thread.Sleep(i * 50);
+        System.Threading.Thread.Sleep(i * 300);
       }
 
       return default(T);
     }
-
 
 
     /// <summary>
@@ -93,11 +91,11 @@ namespace OctNov.IO
     /// <returns>保存が成功したか</returns>
     public static bool Save<T>(string filename, T setting)
     {
-      for (int i = 1; i <= 10; i++)
+      for (int i = 1; i <= 3; i++)
       {
         try
         {
-          //FileStream                                                           共有設定  FileShare.None
+          //                                                                     共有設定  FileShare.None
           using (var fstream = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None))
           {
             //                                                       UTF-8 bom
@@ -111,8 +109,8 @@ namespace OctNov.IO
         }
         catch (IOException)
         {
-          //別プロセスがファイル使用中
-          System.Threading.Thread.Sleep(i * 20);
+          //別プロセスがファイルを使用中
+          System.Threading.Thread.Sleep(i * 300);
         }
         catch (Exception excp)
         {
@@ -123,9 +121,6 @@ namespace OctNov.IO
 
       return false;
     }
-
-
-
 
 
     /// <summary>
@@ -146,12 +141,9 @@ namespace OctNov.IO
         }
         catch { }
       }
-      //設定保存
+      //保存
       return Save(filename, settings);
     }
-
-
-
 
 
 

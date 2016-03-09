@@ -68,7 +68,7 @@ namespace pfAdapter
           Log.System.WriteLine("[ App CommandLine ]");
           foreach (var arg in AppArgs) Log.System.WriteLine(arg);
           Log.System.WriteLine();
-          Log.System.WriteLine("入力が確認できません。");
+          Log.System.WriteLine("入力を確認できません。");
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
@@ -83,7 +83,8 @@ namespace pfAdapter
       //
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        int rand_msec = new Random(App.PID).Next(2 * 1000, 6 * 1000);
+        //  タイミングを
+        int rand_msec = new Random(App.PID).Next(2 * 1000, 8 * 1000);
         Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();
         Thread.Sleep(rand_msec);
@@ -112,26 +113,27 @@ namespace pfAdapter
       }
 
 
-      //カレントディレクトリ
-      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-      string AppDir = System.IO.Path.GetDirectoryName(AppPath);
-      Directory.SetCurrentDirectory(AppDir);
-
       //
       ///設定ファイル
       //
-      bool loadedfile = AppSetting.LoadFile();
-
-      //コマンドライン指定のxmlファイルが存在しない？
-      if (loadedfile == false)
       {
-        Log.System.WriteLine("exit");
-        Log.System.WriteLine();
-        Log.Close();
-        Thread.Sleep(2 * 1000);
-        return;                                            //アプリ終了
-      }
+        //カレントディレクトリ
+        string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string AppDir = System.IO.Path.GetDirectoryName(AppPath);
+        Directory.SetCurrentDirectory(AppDir);
 
+        bool isLoaded = AppSetting.LoadFile();
+
+        //コマンドライン指定のxmlファイルが存在しない？
+        if (isLoaded == false)
+        {
+          Log.System.WriteLine("exit");
+          Log.System.WriteLine();
+          Log.Close();
+          Thread.Sleep(2 * 1000);
+          return;                                            //アプリ終了
+        }
+      }
 
 
       //
@@ -345,7 +347,6 @@ namespace pfAdapter
           if (enc_B.IsCompleted == false)
             Log.System.WriteLine("    wait for Enc_B exit.  wait...");
         });
-
         mainA.Start();
         enc_B.Start();
         mainA.Wait();
@@ -441,7 +442,7 @@ namespace pfAdapter
 
 
           //終了処理
-          if (postPrcList_MainA != null)  ProhibitFileMove_pfA.Lock();
+          if (postPrcList_MainA != null) ProhibitFileMove_pfA.Lock();
           reader.Close();
           writer.Close();
 
@@ -450,7 +451,6 @@ namespace pfAdapter
             Log.System.WriteLine();
             Log.System.WriteLine(reader.Name + ":");
             Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
-            Log.System.WriteLine(reader.LogStatus.OutText_Status());
           }
           //  同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
           Thread.Sleep(500);
@@ -481,7 +481,7 @@ namespace pfAdapter
         return task;
       }
 
-    
+
       /// <summary>
       /// コンソールタイトル更新時間
       /// </summary>
