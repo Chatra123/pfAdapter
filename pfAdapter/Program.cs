@@ -49,7 +49,7 @@ namespace pfAdapter
       //
       //　名前付きパイプの接続は最優先で行う。
       //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
-      //　通常は30msもかからない。
+      //　通常は10msもかからない。
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
       {
@@ -83,7 +83,6 @@ namespace pfAdapter
       //
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        //  タイミングを
         int rand_msec = new Random(App.PID).Next(2 * 1000, 8 * 1000);
         Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();

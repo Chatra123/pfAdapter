@@ -503,7 +503,7 @@ namespace pfAdapter
           if (retry < 2)
           {
             //ファイルが拡張されるかも ＆　末尾の１９.９パケットが確実に書き込まれるように待機
-            Thread.Sleep(1 * 1000);
+            Thread.Sleep(2 * 1000);
             continue;                                      //retry for
           }
         }
@@ -522,7 +522,6 @@ namespace pfAdapter
             LogStatus.FileReadWithPipe += fileData.Length;
           else
             LogStatus.FileReadWithoutPipe += fileData.Length;
-
           LogInput.WriteLine("□get from file:  len = {0,8:N0}    next fpos = {1,12:N0}",
                                     fileData.Length, filePositon);
         }
@@ -559,7 +558,6 @@ namespace pfAdapter
           return false;
         };
 
-
       int numPacket100 = (int)Math.Floor((double)readData.Length / Packet.Size);  //総パケット数 　１００％
       if (numPacket100 < 20)
       {
@@ -567,22 +565,17 @@ namespace pfAdapter
         throw new Exception("HasZeroPacket():  numPacket100 < 20 packet");
       }
 
-
       int numPacket005;                                      //総パケット数の５％  or １０パケット以上
       numPacket005 = (int)(0.05 * numPacket100);
       numPacket005 = 10 < numPacket005 ? numPacket005 : 10;
-
       var sample_packet = new byte[Packet.Size * 10];        //検査用パケット領域
-
       bool hasZeroPacket = false;                            //戻り値  bool
       valueData = new byte[] { };                            //戻り値  値パケット
 
-      //
       for (int i = numPacket100 - 10; 0 < i; i -= numPacket005)
       {
         //最後尾の１０パケット →　sample_packet
         Buffer.BlockCopy(readData, Packet.Size * i, sample_packet, 0, Packet.Size * 10);
-
         //値がある？
         if (HasValue(sample_packet))
         {
@@ -594,13 +587,11 @@ namespace pfAdapter
         }
         else
           hasZeroPacket = true;
-
         //ゼロパケットなら　５％戻り、再検査　
       }
 
       //値が取得できない、return null
       if (valueData.Length == 0) valueData = null;
-
       return hasZeroPacket;
     }
     /*
