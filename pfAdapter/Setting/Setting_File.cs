@@ -19,7 +19,7 @@ namespace pfAdapter.pfSetting
   {
     const double CurrentVer = 2.0;
 
-    public double Ver = 0.0;                              //保存用 Version
+    public double Ver = 0.0;
     public string CommandLine = "        ";               //追加コマンドライン
     public double BuffSize_MiB = 3.0;                     //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;                  //ファイル読込速度制限
@@ -86,7 +86,7 @@ namespace pfAdapter.pfSetting
     {
       var setting = new Setting_File();
 
-      //Client_GetExternalCommand
+      //GetExternalCommand
       setting.Client_GetExternalCommand = new Client()
       {
         BasePath = @"   ..\LGLauncher\LSystem\LogoSelector.exe   ",
@@ -150,6 +150,7 @@ namespace pfAdapter.pfSetting
 
 
       //MidProcess__MainA
+      setting.MidProcess__MainA.Delay_sec = 10;
       setting.MidProcess__MainA.RandDelay_sec = 20;
       setting.MidProcess__MainA.List = new List<Client>()
       {
