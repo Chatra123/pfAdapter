@@ -5,15 +5,11 @@ using System.Threading.Tasks;
 
 namespace pfAdapter
 {
-
   /*
-   * ・enqueTimerが１０分ごとにロックを取得し、Queueに<Task>を入れる。
-   * ・dequeTimerが１０秒ごとにロックを取得し、<Task>があれば実行する。
-   * ・<Task>はロックしてからMidProcessListを実行する。
-   * 
+   * ・enqueTimerが１０分ごとにロックを取得し、QueueにTaskを入れる。
+   * ・dequeTimerが１０秒ごとにロックを取得し、QueueにTaskがあれば実行する。
+   * ・TaskはロックしてからMidProcessListを実行する。
    */
-
-
   /// <summary>
   /// 定期的にMidProcessListを実行
   /// </summary>
@@ -110,8 +106,9 @@ namespace pfAdapter
     /// <summary>
     /// OnTimedEvent_enque_withMacro
     /// </summary>
+    ///  ◇　この関数は使用していない　◇
     /// 　MidPrcCnt置換をPre、PostProcessからアクセスさせないときを想定
-    /// 　MidProcessでのみ置換する。使用していない
+    /// 　MidProcessでのみ置換する。
     private void OnTimedEvent_enque_withMacro(object source, System.Timers.ElapsedEventArgs e)
     {
       if (Enable == false) return;
@@ -154,6 +151,7 @@ namespace pfAdapter
     /// パス、引数用の置換
     /// </summary>
     /// <remarks>Pre, PostProcessからもアクセスされる</remarks>
+    /// $MidCnt$は使用しなくても処理できるようになったので、マクロ$MidCnt$を廃止するかもしれない。
     public static string ReplaceMacro_MidCnt(string before)
     {
       string after = before;
@@ -204,7 +202,7 @@ namespace pfAdapter
         if (activeTask != null && activeTask.IsCompleted == false)
           activeTask.Wait();
 
-        Thread.Sleep(100);                                 //ロック取得待機中のスレッドにロックを取得してもらう。
+        Thread.Sleep(100);                                 //ロック取得待機中のイベントにロックを取得してもらう。
         if (Monitor.TryEnter(syncTask, 0) == true)         //ロック
         {
           Queue.Clear();
@@ -213,5 +211,8 @@ namespace pfAdapter
         }
       }
     }
-  }
+
+
+
+  }//class
 }

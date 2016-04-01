@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 
 
-namespace pfAdapter.pfSetting
+namespace pfAdapter.Setting
 {
   using Mono.Options;
 
@@ -143,7 +143,13 @@ namespace pfAdapter.pfSetting
       }
 
     }
-
+    /// <summary>
+    ///コマンドライン上書き　（入力、ＸＭＬは上書きしない。）
+    /// </summary>
+    public void Parse_OverWrite(string[] args)
+    {
+      Parse(args, true);
+    }
 
 
     /// <summary>

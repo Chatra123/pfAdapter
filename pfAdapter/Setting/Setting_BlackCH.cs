@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 
 
-namespace pfAdapter
+namespace pfAdapter.Setting
 {
   using OctNov.Text;
 

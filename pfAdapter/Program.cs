@@ -25,7 +25,6 @@ namespace pfAdapter
       //AppArgs = testArgs.ToArray();
 
 
-
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
@@ -35,8 +34,6 @@ namespace pfAdapter
       Log.System.Enable = true;
       Log.System.OutConsole = true;
       Log.System.OutFile = true;
-      //Log.System.AutoFlush = false;     //通常時はfalse    // true false
-
 
       //
       //App引数解析 
@@ -58,12 +55,15 @@ namespace pfAdapter
         readerB = new InputReader("Enc_B");
         var isConnectedA = readerA.Connect(AppSetting.Pipe, AppSetting.File);
         var isConnectedB = readerB.Connect(AppSetting.Pipe, AppSetting.File, true);
+        //デバッグ用  入力ストリームのログ
+        //readerA.Enable_LogInput(Log.InputA);
+        //readerB.Enable_LogInput(Log.InputB);
 
         // no reader?
         if (isConnectedA == false)
         {
-          //設定ファイルが無ければ作成
-          var setting = AppSetting.LoadFile();
+          //設定ファイルが無ければ新規作成してから終了
+          AppSetting.LoadFile();
 
           Log.System.WriteLine("[ App CommandLine ]");
           foreach (var arg in AppArgs) Log.System.WriteLine(arg);
@@ -77,194 +77,56 @@ namespace pfAdapter
         }
       }
 
-
       //
-      //多重起動の負荷分散
-      //
-      {
-        //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        int rand_msec = new Random(App.PID).Next(2 * 1000, 8 * 1000);
-        Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
-        Log.System.WriteLine();
-        Thread.Sleep(rand_msec);
-      }
-
-
-      //
-      //番組情報取得
-      //
-      Log.System.WriteLine("  [ program.txt ]");
-      {
-        ProgramInfo.TryToGetInfo(AppSetting.File);
-        AppSetting.Check_IsBlackCH(ProgramInfo.Channel);
-
-        Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
-        Log.System.WriteLine("      IsNonCMCutCH  = " + AppSetting.IsNonCMCutCH);
-        Log.System.WriteLine("      IsNonEnc__CH  = " + AppSetting.IsNonEnc__CH);
-        Log.System.WriteLine();
-      }
-      //Clientのマクロを設定１
-      {
-        Client.Macro_SrcPath = AppSetting.File;
-        Client.Macro_Channel = ProgramInfo.Channel;
-        Client.Macro_Program = ProgramInfo.Program;
-        Client.Macro_EncProfile = AppSetting.EncProfile;
-      }
-
-
-      //
-      ///設定ファイル
+      //AppSetting設定、各種ファイル読込
       //
       {
-        //カレントディレクトリ
-        string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string AppDir = System.IO.Path.GetDirectoryName(AppPath);
-        Directory.SetCurrentDirectory(AppDir);
-
-        bool isLoaded = AppSetting.LoadFile();
-
-        //コマンドライン指定のxmlファイルが存在しない？
-        if (isLoaded == false)
+        bool initialized = Initialize(AppArgs);
+        if (initialized == false)
         {
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
-          Thread.Sleep(2 * 1000);
-          return;                                            //アプリ終了
+          return;                //アプリ終了
         }
       }
-
-
-      //
-      //ログ
-      //
-      {
-        //  App引数
-        Log.System.WriteLine("[ App CommandLine ]");
-        foreach (var arg in AppArgs)
-          Log.System.WriteLine(arg);
-        Log.System.WriteLine();
-
-        //  xml引数
-        Log.System.WriteLine("  [ Setting.CommandLine ]");
-        Log.System.WriteLine("    " + AppSetting.CommandLine);
-        Log.System.WriteLine();
-        Log.System.WriteLine();
-        Log.System.WriteLine();
-
-        //デバッグ用  入力ログ
-        if (true)                      //  true  false
-        {
-#pragma warning disable 0162           //警告0162：到達できないコード
-          //readerA.Enable_LogInput(Log.InputA);
-          //readerB.Enable_LogInput(Log.InputB);
-#pragma warning restore 0162
-        }
-      }
-
-
-      //
-      //外部プロセスからコマンドライン取得
-      //
-      if (AppSetting.EnableRun_ExtCmd)
-      {
-        #region Client_GetExternalCommand
-
-        string[] extra_cmdline = null;
-        {
-          Log.System.WriteLine("[ Client_GetExternalCommand ]");
-
-          //プロセスを実行できていなかったら reutrn nullされる
-          var clinet = AppSetting.Client_GetExternalCommand;
-          string line = clinet.Start_GetStdout();
-
-          if (line != null)
-          {
-            Log.System.WriteLine("      return =");
-            Log.System.Write(line);
-
-            //空白で分ける。　　”があれば除去
-            extra_cmdline = line.Split()
-                                .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
-                                .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
-                                .ToArray();
-          }
-        }
-
-        if (extra_cmdline != null)
-          AppSetting.ParseCmdline_OverWrite(extra_cmdline);
-
-        //終了要求がある？
-        if (AppSetting.Abort == true)
-        {
-          Log.System.WriteLine("  accept request  -Abort");
-          if (File.Exists(AppSetting.File + ".program.txt") == false)
-            Log.System.WriteLine("    Check the  *.ts.program.txt  existance if inadvertent exit.");
-
-          Log.System.WriteLine("exit");
-          Log.System.WriteLine();
-          Log.Close();
-          return;                                          //アプリ終了
-        }
-        #endregion
-      }
-
-
-      //
-      //コマンドライン引数表示
-      //
-      Log.System.WriteLine("[ CommandLine ]");
-      Log.System.WriteLine(AppSetting.Cmdline_ToString());
-
-      //Clientのマクロを設定２
-      //　コマンドラインが確定した後に再設定
-      {
-        Client.Macro_EncProfile = AppSetting.EncProfile;
-      }
-
 
       //
       //PrcessList
       //
-      //  PreProcess
-      if (AppSetting.EnableRun_PrePrc_App)
-      {
-
-        Log.System.WriteLine("[ PreProcess__App ]");
-        AppSetting.PreProcess__App.Wait_and_Run();                //実行
-        Log.System.WriteLine();
-      }
-
-      //  MidProcess
       MidProcessManager midPrcManager = null;
-      if (AppSetting.EnableRun_MidPrc_MainA)
+      ClientList postProcess_MainA = null;
       {
-        midPrcManager = new MidProcessManager();
-        midPrcManager.Initialize(                          //初期設定のみ、タイマーは停止
-                        AppSetting.MidProcess__MainA,
-                        AppSetting.MidPrcInterval_min);
+        //  PreProcess
+        if (AppSetting.EnableRun_PrePrc_App)
+        {
+
+          Log.System.WriteLine("[ PreProcess__App ]");
+          AppSetting.PreProcess__App.Wait_and_Run();         //実行
+          Log.System.WriteLine();
+        }
+        //  MidProcess
+        if (AppSetting.EnableRun_MidPrc_MainA)
+        {
+          midPrcManager = new MidProcessManager();
+          midPrcManager.Initialize(                          //初期設定のみ、タイマーは停止
+                          AppSetting.MidProcess__MainA,
+                          AppSetting.MidPrcInterval_min);
+        }
+        //  PostPrcess
+        if (AppSetting.EnableRun_PostPrc_MainA)
+          postProcess_MainA = AppSetting.PostProcess_MainA;
       }
-
-      //  PostPrcess
-      ClientList PostPrcess = null;
-      if (AppSetting.EnableRun_PostPrc_MainA)
-      {
-        PostPrcess = AppSetting.PostProcess_MainA;
-      }
-
-
-      //
-      //FileLocker初期化
-      //
-      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.LockFile);
 
 
       //
       //InputReader設定
       //
       Log.System.WriteLine("  [ Reader Param ]");
-      readerA.SetParam(AppSetting.BuffSize_MiB, AppSetting.ReadLimit_MiBsec);
-      readerB.SetParam(-1, AppSetting.ReadLimit_MiBsec, true);
+      {
+        readerA.SetParam(AppSetting.BuffSize_MiB, AppSetting.ReadLimit_MiBsec);
+        readerB.SetParam(-1, AppSetting.ReadLimit_MiBsec, true);
+      }
 
 
       //
@@ -288,7 +150,6 @@ namespace pfAdapter
           Log.System.WriteLine("  Enc__B:");
           writerB.RegisterWriter(AppSetting.Client_Enc_B);
           writerB.Timeout = TimeSpan.FromHours(24);        // 24 hour      無期限( -1 )にはしないこと。
-
         }
         /*
          * 16/02/10  .net 4.5.2
@@ -297,7 +158,7 @@ namespace pfAdapter
          * writerB.Timeout_msec = -1;  だと
          * MainAの標準入力への書込みが短時間 or 完全に止まることがあり、
          * 書き込み処理がタイムアウトする。
-         * task  MainAだけが動いているなら止まることはない。
+         * task MainAだけが動いているなら止まることはない。
          * 
          * writerA.Timeout_msec = -1;  writerB.Timeout_msec = -1;  のように、
          * 両方のタイムアウトを無期限にすると、録画終了後にwriterAの書込み処理が再開され、
@@ -307,7 +168,6 @@ namespace pfAdapter
          * 原因は不明
          * Task.WaitAll();の仕様？
          */
-
         //デバッグ用　ファイル出力を登録
         //writerA.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_A.ts");
         //writerB.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_B.ts");
@@ -325,7 +185,6 @@ namespace pfAdapter
       }
 
 
-
       //MainSession
       {
         Log.System.WriteLine();
@@ -339,7 +198,7 @@ namespace pfAdapter
 
         var mainA = MainSession.GetTask(
                                     readerA, writerA,
-                                    midPrcManager, PostPrcess,
+                                    midPrcManager, postProcess_MainA,
                                     true);
         mainA.ContinueWith(t =>
         {
@@ -352,7 +211,7 @@ namespace pfAdapter
         enc_B.Wait();
       }
 
-
+      //後処理
       //PostProcess_Enc
       if (AppSetting.EnableRun_Enc_B)
         if (AppSetting.EnableRun_PostPrc_Enc)
@@ -388,6 +247,95 @@ namespace pfAdapter
     }//func
 
 
+    #region Initialize
+    /// <summary>
+    /// AppSetting設定、各種ファイル読込
+    /// </summary>
+    static bool Initialize(string[] appArgs)
+    {
+      //多重起動の負荷分散
+      {
+        //  他のpfAdapterのパイプ接続を優先するためにSleep()
+        int rand_msec = new Random(App.PID).Next(2 * 1000, 8 * 1000);
+        Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
+        Log.System.WriteLine();
+        Thread.Sleep(rand_msec);
+      }
+
+      //番組情報取得
+      Log.System.WriteLine("  [ program.txt ]");
+      {
+        ProgramInfo.TryToGetInfo(AppSetting.File);
+        AppSetting.Check_IsBlackCH(ProgramInfo.Channel);
+
+        Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
+        Log.System.WriteLine("      IsNonCMCutCH  = " + AppSetting.IsNonCMCutCH);
+        Log.System.WriteLine("      IsNonEnc__CH  = " + AppSetting.IsNonEnc__CH);
+        Log.System.WriteLine();
+      }
+      //Clientのマクロを設定１
+      //Macro_EncProfileはExternalCommandで変更される可能性がある
+      {
+        Client.Macro_SrcPath = AppSetting.File;
+        Client.Macro_Channel = ProgramInfo.Channel;
+        Client.Macro_Program = ProgramInfo.Program;
+        Client.Macro_EncProfile = AppSetting.EncProfile;
+      }
+
+      //設定ファイル
+      {
+        bool isLoaded = AppSetting.LoadFile();
+
+        //コマンドライン指定のxmlファイルが存在しない？
+        if (isLoaded == false)
+          return false;                //アプリ終了
+      }
+
+      //ログ
+      {
+        //  App
+        Log.System.WriteLine("[ App CommandLine ]");
+        foreach (var arg in appArgs)
+          Log.System.WriteLine(arg);
+        Log.System.WriteLine();
+
+        //  xml
+        Log.System.WriteLine("  [ XmlFile.CommandLine ]");
+        Log.System.WriteLine("    " + AppSetting.File_CommandLine);
+        Log.System.WriteLine();
+        Log.System.WriteLine();
+        Log.System.WriteLine();
+      }
+
+
+      //外部プロセスからコマンドライン取得
+      {
+        //実行前に設定ファイル、ProgramInfo読込を実行しておくこと
+        AppSetting.Get_ExternalCommand();
+
+        //終了要求がある？
+        if (AppSetting.Abort == true)
+          return false;                //アプリ終了
+      }
+
+      //コマンドライン表示
+      Log.System.WriteLine("[ CommandLine ]");
+      Log.System.WriteLine(AppSetting.Cmdline_ToString());
+      //Clientのマクロを設定２
+      //　コマンドラインが確定したので再設定
+      Client.Macro_EncProfile = AppSetting.EncProfile;
+
+
+      //ProhibitFileMove初期化
+      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.LockFile);
+
+      return true;
+    }
+    #endregion
+
+
+
+    #region MainSession
 
     /// <summary>
     /// MainSession [main loop]
@@ -540,26 +488,8 @@ namespace pfAdapter
 
     }//class MainSession
 
+    #endregion
+
+
   }//class Program
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }//namespace

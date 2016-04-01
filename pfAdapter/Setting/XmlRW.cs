@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/03/05
+ * 最終更新日　16/03/29
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -57,24 +57,24 @@ namespace OctNov.IO
             }
           }
         }
-        catch (IOException ioexcp)
+        catch (IOException ioexc)
         {
           //３回目の失敗？
           if (3 <= i)
           {
-            var error = new StringBuilder();
-            error.AppendLine(ioexcp.Message);
-            error.AppendLine("別のプロセスが使用中のためxmlファイルを読み込めません。");
-            error.AppendLine("path:" + filename);
-            error.AppendLine();
-            throw new IOException(error.ToString());
+            var msg = new StringBuilder();
+            msg.AppendLine(ioexc.Message);
+            msg.AppendLine("別のプロセスが使用中のためxmlファイルを読み込めません。");
+            msg.AppendLine("path:" + filename);
+            msg.AppendLine();
+            throw new IOException(msg.ToString());
           }
         }
-        catch (Exception excp)
+        catch (Exception exc)
         {
           //ＸＭＬ作成失敗
           //フォーマット、シリアル属性を確認してください。
-          throw excp;
+          throw exc;
         }
         System.Threading.Thread.Sleep(i * 300);
       }
@@ -124,7 +124,7 @@ namespace OctNov.IO
 
 
     /// <summary>
-    /// 保存  T object  →  XmlFile    ＆　　バックアップ
+    /// 保存  T object  →  XmlFile　＆　バックアップ
     /// </summary>
     /// <typeparam name="T">保存するクラス</typeparam>
     /// <param name="filename">XMLファイル名</param>
@@ -136,10 +136,11 @@ namespace OctNov.IO
       {
         try
         {
-          if (File.Exists(filename + ".sysbak")) File.Delete(filename + ".sysbak");
+          if (File.Exists(filename + ".sysbak"))
+            File.Delete(filename + ".sysbak");
           File.Move(filename, filename + ".sysbak");
         }
-        catch { }
+        catch { /* do nothing */ }
       }
       //保存
       return Save(filename, settings);

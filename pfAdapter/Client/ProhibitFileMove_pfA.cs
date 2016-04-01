@@ -48,7 +48,7 @@ namespace pfAdapter
     /// </remarks>
     public static void Lock()
     {
-      //拡張子をpathtypeに当てはめてチェック
+      //extをbasepathに当てはめてチェック
       foreach (var basepath in BasePathPattern)
       {
         foreach (var ext in ExtList)

@@ -100,10 +100,9 @@ namespace pfAdapter
           bool overwrite = logfile.Exists && 128 * 1024 <= logfile.Length;
 
           //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
-          if (overwrite)
-            writer = new StreamWriter(path, false, Encoding.UTF8);    //上書き、    UTF-8 bom
-          else
-            writer = new StreamWriter(path, true, Encoding.UTF8);     //新規or追記、UTF-8 bom
+          writer = (overwrite)
+           ? new StreamWriter(path, false, Encoding.UTF8)  //上書き、    UTF-8 bom
+           : new StreamWriter(path, true, Encoding.UTF8);  //新規or追記、UTF-8 bom
           break;
         }
         catch { /*ファイル使用中*/ }
@@ -144,6 +143,7 @@ namespace pfAdapter
     }
     #endregion
 
+
     #region 書込
 
     /// <summary>
@@ -175,7 +175,7 @@ namespace pfAdapter
           if (Writer == null)
           {
             Writer = CreateWriter(LogFileName);
-            if (Writer == null) OutFile = false;
+            if (Writer == null) OutFile = false;  //作成失敗、ファイル出力off
           }
 
           //ファイル書込み
@@ -183,7 +183,6 @@ namespace pfAdapter
           {
             Writer.Write(text);
 
-            //Flush
             if (AutoFlush)
             {
               Writer.Flush();
@@ -315,8 +314,7 @@ namespace pfAdapter
       if (Enable == false) return;
 
       string line = comment;
-      int len = byteSet.Count();
-      if (len < 20)
+      if (byteSet.Count() < 20)
       {
         foreach (var b in byteSet)
           line += string.Format("{0:X2} ", b);

@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 using System.IO;
 
 
-namespace pfAdapter.pfSetting
+namespace pfAdapter.Setting
 {
   using OctNov.IO;
-
 
   /// <summary>
   /// 設定ＸＭＬファイル

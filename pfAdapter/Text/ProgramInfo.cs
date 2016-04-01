@@ -32,34 +32,30 @@ namespace pfAdapter
     public static void TryToGetInfo(string tspath)
     {
       if (HasInfo) return;
-
       string infoPath = tspath + ".program.txt";
 
-
-      //ファイルチェック
+      //チェック
       for (int i = 0; i < 4 * 6; i++)
       {
         if (File.Exists(infoPath)) break;
-
         Thread.Sleep(250);
       }
-
       if (File.Exists(infoPath) == false)
       {
         Log.System.WriteLine("    Fail to get  *.ts.program.txt");
         return;
       }
 
-      //テキスト読込み
+      //読
       List<string> infotext = null;
-      for (int i = 0; i < 6; i++)
+      for (int i = 0; i < 4 * 3; i++)
       {
         //４行以上取得できるまで繰り返す。タイムアウトＮ秒
         //４行取得できたなら３行目は確実にある。
         infotext = FileR.ReadAllLines(infoPath);
         if (infotext != null &&
             4 <= infotext.Count) break;
-        Thread.Sleep(500);
+        Thread.Sleep(250);
       }
       //取得失敗
       if (infotext == null)
@@ -70,9 +66,8 @@ namespace pfAdapter
 
       //取得成功
       Log.System.WriteLine("    Get the  *.ts.program.txt");
-
-      if (2 <= infotext.Count) { Channel = infotext[1]; }
-      if (3 <= infotext.Count) { Program = infotext[2]; }
+      Channel = infotext[1];
+      Program = infotext[2];
 
       HasInfo = true;
     }
