@@ -33,42 +33,24 @@ namespace pfAdapter
     public static int PID { get { return Process.GetCurrentProcess().Id; } }
 
     /// <summary>
-    /// コマンドライン引数
-    /// </summary>
-    public static string[] CommandLine
-    {
-      get
-      {
-        var args = Environment.GetCommandLineArgs().ToList();
-        args.RemoveAt(0);              //最初は必ずアプリパスがなので削除
-        return args.ToArray();
-      }
-    }
-
-    /// <summary>
     /// アプリ起動時間　 （class Appが作成された時間）
     /// </summary>
     private static DateTime StartTime = DateTime.Now;
 
     /// <summary>
-    /// アプリ起動時間 tick
-    /// </summary>
-    private static int StartTime_tick = Environment.TickCount;
-
-    /// <summary>
     /// 起動からの経過時間
     /// </summary>
-    public static TimeSpan ElapseTime
+    public static TimeSpan Elapse
     {
       get { return DateTime.Now - StartTime; }
     }
 
     /// <summary>
-    /// 起動からの経過時間
+    /// 起動からの経過時間  Milliseconds
     /// </summary>
-    public static int ElapseTime_tick
+    public static long Elapse_ms
     {
-      get { return Environment.TickCount - StartTime_tick; }
+      get { return Elapse.Milliseconds; }
     }
 
     /// <summary>
@@ -92,13 +74,13 @@ namespace pfAdapter
   /// アプリ設定
   ///   コマンドライン、ファイル設定、BlackCHテキストを内包
   /// </summary>
-  static class AppSetting
+  class AppSetting
   {
-    private static Setting_CmdLine setting_cmdline;
-    private static Setting_File setting_file;
-    private static Setting_BlackCH setting_blackCH;
+    private Setting_CmdLine setting_cmdline;
+    private Setting_File setting_file;
+    private Setting_BlackCH setting_blackCH;
 
-    static AppSetting()
+    public AppSetting()
     {
       setting_cmdline = new Setting_CmdLine();
       setting_file = new Setting_File();
@@ -109,11 +91,11 @@ namespace pfAdapter
     /// <summary>
     /// コマンドライン解析
     /// </summary>
-    public static void ParseCmdLine(string[] args)
+    public void ParseCmdLine(string[] args)
     {
       setting_cmdline.Parse(args);
     }
-    public static void ParseCmdline_OverWrite(string[] args)
+    public void ParseCmdline_OverWrite(string[] args)
     {
       setting_cmdline.Parse_OverWrite(args);         //コマンドライン上書き　（入力、ＸＭＬは上書きしない。）
     }
@@ -122,7 +104,7 @@ namespace pfAdapter
     /// <summary>
     /// コマンドライン　パース結果
     /// </summary>
-    public static String Cmdline_ToString()
+    public String Cmdline_ToString()
     {
       return setting_cmdline.ToString();
     }
@@ -131,7 +113,7 @@ namespace pfAdapter
     /// <summary>
     /// コマンドラインをログ出力
     /// </summary>
-    public static void Log_CmdLine(string[] appArgs)
+    public void Log_CmdLine(string[] appArgs)
     {
       //  App
       Log.System.WriteLine("[ App CommandLine ]");
@@ -151,7 +133,7 @@ namespace pfAdapter
     /// <summary>
     /// 設定ファイル読込み
     /// </summary>
-    public static bool LoadFile()
+    public bool LoadFile()
     {
       //カレントディレクトリ
       string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -188,7 +170,7 @@ namespace pfAdapter
     /// <summary>
     /// テキストファイルからBlackCHを取得、判定。
     /// </summary>
-    public static void Check_IsBlackCH(string ch)
+    public void Check_IsBlackCH(string ch)
     {
       setting_blackCH.Check_IsBlackCH(ch);
     }
@@ -200,7 +182,7 @@ namespace pfAdapter
     /// 外部プロセスからコマンドライン取得
     /// 事前にProgramInfoでチャンネル名を取得しておくこと。
     /// </summary>
-    public static void Get_ExternalCommand()
+    public void Get_ExternalCommand()
     {
       if (EnableRun_ExtCmd == false) return;
 
@@ -229,10 +211,10 @@ namespace pfAdapter
         ParseCmdline_OverWrite(extra_cmdline);
 
       //終了要求がある？
-      if (AppSetting.Abort)
+      if (Abort)
       {
         Log.System.WriteLine("  accept request  -Abort");
-        if (System.IO.File.Exists(AppSetting.File + ".program.txt") == false)
+        if (System.IO.File.Exists(File + ".program.txt") == false)
           Log.System.WriteLine("    Check the  *.ts.program.txt  existance if inadvertent exit.");
       }
     }
@@ -243,36 +225,36 @@ namespace pfAdapter
     // AppSetteing value
     //
     //コマンドラインから
-    public static String Pipe { get { return setting_cmdline.Pipe; } }
-    public static String File { get { return setting_cmdline.File; } }
-    private static String XmlPath { get { return setting_cmdline.XmlPath; } }
-    public static String EncProfile { get { return setting_cmdline.EncProfile; } }
-    public static bool Abort { get { return setting_cmdline.Abort_pfAdapter; } }
+    public String Pipe { get { return setting_cmdline.Pipe; } }
+    public String File { get { return setting_cmdline.File; } }
+    private String XmlPath { get { return setting_cmdline.XmlPath; } }
+    public String EncProfile { get { return setting_cmdline.EncProfile; } }
+    public bool Abort { get { return setting_cmdline.Abort_pfAdapter; } }
 
     //設定ファイルから
-    public static double BuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
-    public static string File_CommandLine { get { return setting_file.CommandLine; } }
-    public static string LockFile { get { return setting_file.LockMove; } }
+    public double BuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
+    public string File_CommandLine { get { return setting_file.CommandLine; } }
+    public string LockFile { get { return setting_file.LockMove; } }
 
-    public static ClientList PreProcess__App { get { return setting_file.PreProcess__App; } }
-    public static ClientList MidProcess__MainA { get { return setting_file.MidProcess__MainA; } }
-    public static ClientList PostProcess_MainA { get { return setting_file.PostProcess_MainA; } }
-    public static ClientList PostProcess_Enc_B { get { return setting_file.PostProcess_Enc_B; } }
-    public static ClientList PostProcess_App { get { return setting_file.PostProcess_App; } }
+    public ClientList PreProcess__App { get { return setting_file.PreProcess__App; } }
+    public ClientList MidProcess__MainA { get { return setting_file.MidProcess__MainA; } }
+    public ClientList PostProcess_MainA { get { return setting_file.PostProcess_MainA; } }
+    public ClientList PostProcess_Enc_B { get { return setting_file.PostProcess_Enc_B; } }
+    public ClientList PostProcess_App { get { return setting_file.PostProcess_App; } }
 
-    public static Client Client_GetExternalCommand { get { return setting_file.Client_GetExternalCommand; } }
+    public Client Client_GetExternalCommand { get { return setting_file.Client_GetExternalCommand; } }
 
-    public static List<Client_WriteStdin> Client_MainA { get { return setting_file.Client_MainA; } }
-    public static List<Client_WriteStdin> Client_Enc_B { get { return setting_file.Client_Enc_B; } }
+    public List<Client_WriteStdin> Client_MainA { get { return setting_file.Client_MainA; } }
+    public List<Client_WriteStdin> Client_Enc_B { get { return setting_file.Client_Enc_B; } }
 
 
     //BlackCHから
-    public static bool IsNonCMCutCH { get { return setting_blackCH.IsNonCMCutCH; } }
-    public static bool IsNonEnc__CH { get { return setting_blackCH.IsNonEnc__CH; } }
-    public static bool Suspend_MainA { get { return setting_cmdline.Suspend_pfMainA || setting_blackCH.IsNonCMCutCH; } }
-    public static bool Suspend_Enc_B { get { return setting_cmdline.Suspend_pfEnc_B || setting_blackCH.IsNonEnc__CH; } }
-    public static bool EnableRun_MainA { get { return Suspend_MainA == false; } }
-    public static bool EnableRun_Enc_B
+    public bool IsNonCMCutCH { get { return setting_blackCH.IsNonCMCutCH; } }
+    public bool IsNonEnc__CH { get { return setting_blackCH.IsNonEnc__CH; } }
+    public bool Suspend_MainA { get { return setting_cmdline.Suspend_pfMainA || setting_blackCH.IsNonCMCutCH; } }
+    public bool Suspend_Enc_B { get { return setting_cmdline.Suspend_pfEnc_B || setting_blackCH.IsNonEnc__CH; } }
+    public bool EnableRun_MainA { get { return Suspend_MainA == false; } }
+    public bool EnableRun_Enc_B
     {
       get
       {
@@ -283,7 +265,7 @@ namespace pfAdapter
 
 
     //コマンドラインと、設定ファイルから
-    public static double ReadLimit_MiBsec
+    public double ReadLimit_MiBsec
     {
       get
       {
@@ -295,7 +277,7 @@ namespace pfAdapter
       }
     }
 
-    public static double MidPrcInterval_min
+    public double MidPrcInterval_min
     {
       get
       {
@@ -332,39 +314,39 @@ namespace pfAdapter
     /// <summary>
     /// ExtCmd           Enable
     /// </summary>
-    public static bool EnableRun_ExtCmd
+    public bool EnableRun_ExtCmd
     { get { return EnableRun_PrcList(setting_cmdline.ExtCmd, setting_file.Client_GetExternalCommand.Enable); } }
 
     /// <summary>
     /// PrePrc_App       Enable
     /// </summary>
-    public static bool EnableRun_PrePrc_App
+    public bool EnableRun_PrePrc_App
     { get { return EnableRun_PrcList(setting_cmdline.PrePrc_App, setting_file.PreProcess__App.Enable); } }
 
 
     /// <summary>
     /// MidPrc_MainA     Enable
     /// </summary>
-    public static bool EnableRun_MidPrc_MainA
+    public bool EnableRun_MidPrc_MainA
     { get { return EnableRun_PrcList(setting_cmdline.MidPrc_Main, setting_file.MidProcess__MainA.Enable); } }
 
 
     /// <summary>
     /// PostPrc_MainA    Enable
     /// </summary>
-    public static bool EnableRun_PostPrc_MainA
+    public bool EnableRun_PostPrc_MainA
     { get { return EnableRun_PrcList(setting_cmdline.PostPrc_Main, setting_file.PostProcess_MainA.Enable); } }
 
     /// <summary>
     /// PostPrc_Enc      Enable
     /// </summary>
-    public static bool EnableRun_PostPrc_Enc
+    public bool EnableRun_PostPrc_Enc
     { get { return EnableRun_PrcList(setting_cmdline.PostPrc_Enc, setting_file.PostProcess_Enc_B.Enable); } }
 
     /// <summary>
     /// PostPrc_App      Enable
     /// </summary>
-    public static bool EnableRun_PostPrc_App
+    public bool EnableRun_PostPrc_App
     { get { return EnableRun_PrcList(setting_cmdline.PostPrc_App, setting_file.PostProcess_App.Enable); } }
 
 

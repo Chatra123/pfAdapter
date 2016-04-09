@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 namespace pfAdapter
 {
   /// <summary>
-  /// 出力先のプロセスの標準出力に書き込む
+  /// クライアントの標準入力に書き込む
   /// </summary>
   internal class OutputWriter
   {
     private List<Client_WriteStdin> WriterList;
-    public TimeSpan Timeout = TimeSpan.FromSeconds(20);
+    public TimeSpan Timeout = TimeSpan.FromSeconds(10);
     public bool HasWriter { get { return WriterList != null && 0 < WriterList.Count; } }
 
     /// <summary>
@@ -63,14 +63,11 @@ namespace pfAdapter
       for (int i = WriterList.Count - 1; 0 <= i; i--)
       {
         var writer = WriterList[i];
-
         //有効？
         if (writer.IsEnable == false) { WriterList.Remove(writer); continue; }
-
         //実行
         Log.System.WriteLine("  " + writer.FileName);
         writer.Start_WriteStdin();
-
         //実行失敗
         if (writer.StdinWriter == null) { WriterList.Remove(writer); continue; }
       }
@@ -110,26 +107,29 @@ namespace pfAdapter
           {
             if (writer.Process.HasExited == false)
             {
-              writer.StdinWriter.Write(writeData);         //書込み
+              //書
+              writer.StdinWriter.Write(writeData); 
               return true;
             }
             else
             {
-              //writerが終了している
-              Log.System.WriteLine("  /▽  Writer HasExited :  {0}  ▽/", writer.FileName);
+              //writerが終了している。
+              //　Caption2Ass_PCR_pfは自動終了している可能性が高い
+              Log.System.WriteLine("  /▽ Writer HasExited :  {0} ▽/", writer.FileName);
               Log.System.WriteLine();
               return false;
             }
 
           }
-          catch (IOException)
+          catch (IOException exc)
           {
-            Log.System.WriteLine("  /▽  Pipe Closed :  {0}  ▽/", writer.FileName);
+            Log.System.WriteLine("  /▽ IOException :  {0} ▽/", writer.FileName);
+            Log.System.WriteLine("         "+exc.ToString());
             Log.System.WriteLine();
             return false;
           }
 
-        }, oneWriter);       //引数oneWriterはtask.AsyncState経由で参照される。
+        }, oneWriter);       //引数 oneWriterはtask.AsyncState経由で参照される。
 
         tasklist.Add(writeTask);
       }
@@ -139,9 +139,8 @@ namespace pfAdapter
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
 
-
       //結果の確認
-      bool succeedWriting = true;
+      bool success = true;
       foreach (var task in tasklist)
       {
         //タスク処理が完了？
@@ -150,23 +149,25 @@ namespace pfAdapter
           //task完了、書込み失敗
           if (task.Result == false)
           {
-            succeedWriting = false;
+            success = false;
             var writer = (Client_WriteStdin)task.AsyncState;
+            writer.StdinWriter.Close();
             WriterList.Remove(writer);
           }
         }
         else
         {
           //task未完了、クライアントがフリーズor処理が長い
-          succeedWriting = false;
+          success = false;
           var writer = (Client_WriteStdin)task.AsyncState;
+          writer.StdinWriter.Close();
           WriterList.Remove(writer);
-          Log.System.WriteLine("  /▽  Task Timeout :  {0}  ▽/", writer.FileName);
+          Log.System.WriteLine("  /▽ Task Timeout :  {0} ▽/", writer.FileName);
           Log.System.WriteLine();
         }
       }
 
-      return succeedWriting;
+      return success;
 
     }//func
   }//class

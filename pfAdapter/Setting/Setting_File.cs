@@ -16,9 +16,9 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentVer = 2.0;
+    const double CurrentRev = 11.2;
 
-    public double Ver = 0.0;
+    public double Rev = 0.0;
     public string CommandLine = "        ";               //追加コマンドライン
     public double BuffSize_MiB = 3.0;                     //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;                  //ファイル読込速度制限
@@ -68,9 +68,9 @@ namespace pfAdapter.Setting
       var file = XmlRW.Load<Setting_File>(xmlpath);
 
       //新たに追加された項目、削除された項目を書き換え。
-      if (file.Ver != CurrentVer)
+      if (file.Rev != CurrentRev)
       {
-        file.Ver = CurrentVer;
+        file.Rev = CurrentRev;
         XmlRW.Save(xmlpath, file);
       }
 
@@ -183,6 +183,8 @@ namespace pfAdapter.Setting
 
 
       //PostProcess_Enc_B
+      setting.PostProcess_Enc_B.Delay_sec = 10;
+      setting.PostProcess_Enc_B.RandDelay_sec = 20;
       setting.PostProcess_Enc_B.List = new List<Client>()
       {
         new Client()
@@ -195,6 +197,8 @@ namespace pfAdapter.Setting
 
 
       //PostProcess_App
+      setting.PostProcess_App.Delay_sec = 4;
+      setting.PostProcess_App.RandDelay_sec = 4;
       setting.PostProcess_App.List = new List<Client>()
       {
          new Client()

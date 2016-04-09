@@ -38,7 +38,8 @@ namespace pfAdapter
       //
       //App引数解析 
       //
-      AppSetting.ParseCmdLine(AppArgs);
+      var setting = new AppSetting();
+      setting.ParseCmdLine(AppArgs);
 
 
       //
@@ -53,8 +54,8 @@ namespace pfAdapter
         //InputReader
         readerA = new InputReader("MainA");
         readerB = new InputReader("Enc_B");
-        var isConnectedA = readerA.Connect(AppSetting.Pipe, AppSetting.File);
-        var isConnectedB = readerB.Connect(AppSetting.Pipe, AppSetting.File, true);
+        var isConnectedA = readerA.Connect(setting.Pipe, setting.File);
+        var isConnectedB = readerB.Connect(setting.Pipe, setting.File, true);
         //デバッグ用  入力ストリームのログ
         //readerA.Enable_LogInput(Log.InputA);
         //readerB.Enable_LogInput(Log.InputB);
@@ -63,7 +64,7 @@ namespace pfAdapter
         if (isConnectedA == false)
         {
           //設定ファイルが無ければ新規作成してから終了
-          AppSetting.LoadFile();
+          setting.LoadFile();
 
           Log.System.WriteLine("[ App CommandLine ]");
           foreach (var arg in AppArgs) Log.System.WriteLine(arg);
@@ -78,54 +79,53 @@ namespace pfAdapter
       }
 
       //
-      //AppSetting設定、各種ファイル読込
+      //setting設定、各種ファイル読込
       //
+      bool initialized = Initialize(setting, AppArgs);
+      if (initialized == false)
       {
-        bool initialized = Initialize(AppArgs);
-        if (initialized == false)
-        {
-          Log.System.WriteLine("exit");
-          Log.System.WriteLine();
-          Log.Close();
-          return;                //アプリ終了
-        }
+        Log.System.WriteLine("exit");
+        Log.System.WriteLine();
+        Log.Close();
+        return;                //アプリ終了
       }
+
 
       //
       //PrcessList
       //
-      MidProcessManager midPrcManager = null;
+      MidProcessTimer midPrcTimer = null;
       ClientList postProcess_MainA = null;
       {
         //  PreProcess
-        if (AppSetting.EnableRun_PrePrc_App)
+        if (setting.EnableRun_PrePrc_App)
         {
 
           Log.System.WriteLine("[ PreProcess__App ]");
-          AppSetting.PreProcess__App.Wait_and_Run();         //実行
+          setting.PreProcess__App.Wait_and_Run();          //実行
           Log.System.WriteLine();
         }
         //  MidProcess
-        if (AppSetting.EnableRun_MidPrc_MainA)
+        if (setting.EnableRun_MidPrc_MainA)
         {
-          midPrcManager = new MidProcessManager();
-          midPrcManager.Initialize(                          //初期設定のみ、タイマーは停止
-                          AppSetting.MidProcess__MainA,
-                          AppSetting.MidPrcInterval_min);
+          //初期設定のみ、タイマーは停止
+          midPrcTimer = new MidProcessTimer(
+                                            setting.MidProcess__MainA,
+                                            setting.MidPrcInterval_min);
         }
         //  PostPrcess
-        if (AppSetting.EnableRun_PostPrc_MainA)
-          postProcess_MainA = AppSetting.PostProcess_MainA;
+        if (setting.EnableRun_PostPrc_MainA)
+          postProcess_MainA = setting.PostProcess_MainA;
       }
 
 
       //
       //InputReader設定
       //
-      Log.System.WriteLine("  [ Reader Param ]");
+      Log.System.WriteLine("[ Reader Param ]");
       {
-        readerA.SetParam(AppSetting.BuffSize_MiB, AppSetting.ReadLimit_MiBsec);
-        readerB.SetParam(-1, AppSetting.ReadLimit_MiBsec, true);
+        readerA.SetParam(setting.BuffSize_MiB, setting.ReadLimit_MiBsec);
+        readerB.SetParam(-1, setting.ReadLimit_MiBsec, true);
       }
 
 
@@ -138,17 +138,17 @@ namespace pfAdapter
         writerA = new OutputWriter();
         writerB = new OutputWriter();
 
-        if (AppSetting.EnableRun_MainA)
+        if (setting.EnableRun_MainA)
         {
           Log.System.WriteLine("  Main_A:");
-          writerA.RegisterWriter(AppSetting.Client_MainA);
-          writerA.Timeout = TimeSpan.FromSeconds(20);      // 20 sec
+          writerA.RegisterWriter(setting.Client_MainA);
+          writerA.Timeout = TimeSpan.FromSeconds(10);      // 10 sec
         }
 
-        if (AppSetting.EnableRun_Enc_B)
+        if (setting.EnableRun_Enc_B)
         {
           Log.System.WriteLine("  Enc__B:");
-          writerB.RegisterWriter(AppSetting.Client_Enc_B);
+          writerB.RegisterWriter(setting.Client_Enc_B);
           writerB.Timeout = TimeSpan.FromHours(24);        // 24 hour      無期限( -1 )にはしないこと。
         }
         /*
@@ -169,8 +169,8 @@ namespace pfAdapter
          * Task.WaitAll();の仕様？
          */
         //デバッグ用　ファイル出力を登録
-        //writerA.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_A.ts");
-        //writerB.RegisterOutFileWriter(AppSetting.File + ".pfAOutfile_B.ts");
+        //writerA.RegisterOutFileWriter(setting.File + ".pfAOutfile_A.ts");
+        //writerB.RegisterOutFileWriter(setting.File + ".pfAOutfile_B.ts");
 
         // no writer?
         if (writerA.HasWriter == false && writerB.HasWriter == false)
@@ -187,7 +187,6 @@ namespace pfAdapter
 
       //MainSession
       {
-        Log.System.WriteLine();
         Log.System.WriteLine("[ Main Session ]");
         Log.Flush();
 
@@ -198,12 +197,12 @@ namespace pfAdapter
 
         var mainA = MainSession.GetTask(
                                     readerA, writerA,
-                                    midPrcManager, postProcess_MainA,
+                                    midPrcTimer, postProcess_MainA,
                                     true);
         mainA.ContinueWith(t =>
         {
           if (enc_B.IsCompleted == false)
-            Log.System.WriteLine("    wait for Enc_B exit.  wait...");
+            Log.System.WriteLine("    wait for Enc_B to exit.  wait...");
         });
         mainA.Start();
         enc_B.Start();
@@ -213,31 +212,29 @@ namespace pfAdapter
 
       //後処理
       //PostProcess_Enc
-      if (AppSetting.EnableRun_Enc_B)
-        if (AppSetting.EnableRun_PostPrc_Enc)
+      if (setting.EnableRun_Enc_B)
+        if (setting.EnableRun_PostPrc_Enc)
         {
           Log.System.WriteLine("[ PostProcess_Enc_B ]");
-          AppSetting.PostProcess_Enc_B.Wait();
+          setting.PostProcess_Enc_B.Wait();
           ProhibitFileMove_pfA.Unlock();                           //移動禁止は待機中だけ
-          AppSetting.PostProcess_Enc_B.Run();
+          setting.PostProcess_Enc_B.Run();
           ProhibitFileMove_pfA.Lock();                             //移動禁止　　再
-          Log.System.WriteLine();
         }
 
       //PostProcess_App
-      if (AppSetting.EnableRun_PostPrc_App)
+      if (setting.EnableRun_PostPrc_App)
       {
         Log.System.WriteLine("[ PostProcess_App ]");
-        AppSetting.PostProcess_App.Wait();
+        setting.PostProcess_App.Wait();
         ProhibitFileMove_pfA.Unlock();                             //移動禁止は待機中だけ
-        AppSetting.PostProcess_App.Run();
-        Log.System.WriteLine();
+        setting.PostProcess_App.Run();
       }
 
-      //Closing log
+      //Close log
       {
         Log.System.WriteLine();
-        Log.System.WriteLine("elapse   {0,3:f0} min", App.ElapseTime.TotalMinutes);
+        Log.System.WriteLine("elapse  {0,3:f0} min", App.Elapse.TotalMinutes);
         Log.System.WriteLine("exit");
         Log.System.WriteLine();
         Log.System.WriteLine();
@@ -249,9 +246,9 @@ namespace pfAdapter
 
     #region Initialize
     /// <summary>
-    /// AppSetting設定、各種ファイル読込
+    /// setting用の各種ファイル読込
     /// </summary>
-    static bool Initialize(string[] appArgs)
+    static bool Initialize(AppSetting setting, string[] appArgs)
     {
       //多重起動の負荷分散
       {
@@ -265,29 +262,28 @@ namespace pfAdapter
       //番組情報取得
       Log.System.WriteLine("  [ program.txt ]");
       {
-        ProgramInfo.TryToGetInfo(AppSetting.File);
-        AppSetting.Check_IsBlackCH(ProgramInfo.Channel);
+        ProgramInfo.TryToGetInfo(setting.File);
+        setting.Check_IsBlackCH(ProgramInfo.Channel);
 
         Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
-        Log.System.WriteLine("      IsNonCMCutCH  = " + AppSetting.IsNonCMCutCH);
-        Log.System.WriteLine("      IsNonEnc__CH  = " + AppSetting.IsNonEnc__CH);
+        Log.System.WriteLine("      IsNonCMCutCH  = " + setting.IsNonCMCutCH);
+        Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
         Log.System.WriteLine();
       }
       //Clientのマクロを設定１
       //Macro_EncProfileはExternalCommandで変更される可能性がある
       {
-        Client.Macro_SrcPath = AppSetting.File;
+        Client.Macro_SrcPath = setting.File;
         Client.Macro_Channel = ProgramInfo.Channel;
         Client.Macro_Program = ProgramInfo.Program;
-        Client.Macro_EncProfile = AppSetting.EncProfile;
+        Client.Macro_EncProfile = setting.EncProfile;
       }
 
-      //設定ファイル
+      //ＸＭＬ設定ファイル
       {
-        bool isLoaded = AppSetting.LoadFile();
-
+        bool loadXml = setting.LoadFile();
         //コマンドライン指定のxmlファイルが存在しない？
-        if (isLoaded == false)
+        if (loadXml == false)
           return false;                //アプリ終了
       }
 
@@ -301,33 +297,31 @@ namespace pfAdapter
 
         //  xml
         Log.System.WriteLine("  [ XmlFile.CommandLine ]");
-        Log.System.WriteLine("    " + AppSetting.File_CommandLine);
-        Log.System.WriteLine();
-        Log.System.WriteLine();
+        Log.System.WriteLine("    " + setting.File_CommandLine);
         Log.System.WriteLine();
       }
 
 
-      //外部プロセスからコマンドライン取得
+      //コマンドライン
       {
-        //実行前に設定ファイル、ProgramInfo読込を実行しておくこと
-        AppSetting.Get_ExternalCommand();
-
-        //終了要求がある？
-        if (AppSetting.Abort == true)
+        //外部プロセスからコマンドライン取得
+        //  実行前に*.program.txt読込を実行しておくこと
+        setting.Get_ExternalCommand();
+        //終了要求があった？
+        if (setting.Abort == true)
           return false;                //アプリ終了
+
+        //ログ
+        Log.System.WriteLine("[ CommandLine ]");
+        Log.System.WriteLine(setting.Cmdline_ToString());
+
+        //Clientのマクロを設定２
+        //　コマンドラインが確定したので再設定
+        Client.Macro_EncProfile = setting.EncProfile;
       }
-
-      //コマンドライン表示
-      Log.System.WriteLine("[ CommandLine ]");
-      Log.System.WriteLine(AppSetting.Cmdline_ToString());
-      //Clientのマクロを設定２
-      //　コマンドラインが確定したので再設定
-      Client.Macro_EncProfile = AppSetting.EncProfile;
-
 
       //ProhibitFileMove初期化
-      ProhibitFileMove_pfA.Initialize(AppSetting.File, AppSetting.LockFile);
+      ProhibitFileMove_pfA.Initialize(setting.File, setting.LockFile);
 
       return true;
     }
@@ -355,7 +349,7 @@ namespace pfAdapter
       public static Task GetTask(
                                  InputReader reader,
                                  OutputWriter writer,
-                                 MidProcessManager midPrcManager_MainA,
+                                 MidProcessTimer midPrcTimer_MainA,
                                  ClientList postPrcList_MainA,
                                  bool enable_UpdateLog
                                 )
@@ -364,8 +358,8 @@ namespace pfAdapter
         {
           if (writer.HasWriter == false) return;
 
-          if (midPrcManager_MainA != null)
-            midPrcManager_MainA.StartTimer();
+          if (midPrcTimer_MainA != null)
+            midPrcTimer_MainA.Start();
 
           while (true)
           {
@@ -389,9 +383,10 @@ namespace pfAdapter
 
 
           //終了処理
-          if (postPrcList_MainA != null) ProhibitFileMove_pfA.Lock();
+          ProhibitFileMove_pfA.Lock();
           reader.Close();
           writer.Close();
+          ProhibitFileMove_pfA.Lock();  //.noncapはwriter.Close()時に作成されるため
 
           lock (syncLog)
           {
@@ -400,21 +395,19 @@ namespace pfAdapter
             Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
           }
           //  同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
-          Thread.Sleep(500);
+          Thread.Sleep(100);
 
           lock (syncLog)
           {
-            //MidProcessManager
-            if (midPrcManager_MainA != null)
+            //MidProcessTimer
+            if (midPrcTimer_MainA != null)
             {
-              Log.System.WriteLine("  MidProcessManager CancelTask()  wait...");
-              midPrcManager_MainA.CancelTask();
-              Log.System.WriteLine("  MidProcess is canceled");
-              Log.System.WriteLine();
+              midPrcTimer_MainA.Stop_and_Wait();
             }
             //PostProcess
             if (postPrcList_MainA != null)
             {
+              Log.System.WriteLine();
               Log.System.WriteLine("[ PostProcess_MainA ]");
               postPrcList_MainA.Wait();
               ProhibitFileMove_pfA.Unlock();           //移動禁止は待機中だけ
@@ -432,7 +425,7 @@ namespace pfAdapter
       /// <summary>
       /// コンソールタイトル更新時間
       /// </summary>
-      private static int timeUpdateTitle = 0;
+      private static DateTime timeUpdateTitle;
 
       /// <summary>
       /// コンソールタイトル更新
@@ -440,13 +433,15 @@ namespace pfAdapter
       private static void UpdateLogStatus(long totalPipeRead, long totalFileRead)
       {
         //１秒毎
-        if (0.950 * 1000 < Environment.TickCount - timeUpdateTitle)
+        if (0.950 * 1000 < (DateTime.Now - timeUpdateTitle).TotalMilliseconds)
         {
+          timeUpdateTitle = DateTime.Now;
           string status = string.Format(
-                            "[pipe,file] {0,6},{1,6} MiB",
-                            (int)(totalPipeRead / 1024 / 1024),        //総読込み量　ファイル
-                            (int)(totalFileRead / 1024 / 1024)         //総読込み量　パイプ
-                            );
+                              "    (pipe, file) = {0,6},{1,6} MiB",
+                              (int)(totalPipeRead / 1024 / 1024),        //総読込み量　ファイル
+                              (int)(totalFileRead / 1024 / 1024)         //総読込み量　パイプ
+                              );
+
           //コンソールタイトル
           //１秒毎
           Console.Title = "  " + DateTime.Now.ToString("HH:mm:ss") + ":    " + status;
@@ -462,8 +457,6 @@ namespace pfAdapter
           if (DateTime.Now.Minute % 5 == 0
                 && DateTime.Now.Second % 60 == 0)
             Log.System.WriteLine("  " + status);
-
-          timeUpdateTitle = Environment.TickCount;
         }
       }
 
@@ -474,16 +467,17 @@ namespace pfAdapter
       static class TimedGC
       {
         const int CollectSpan = 345;
+        static DateTime timeGCCollect;
 
-        static int timeGCCollect = 0;
         public static void Collect()
         {
-          if (CollectSpan < Environment.TickCount - timeGCCollect)
+          if (CollectSpan < (DateTime.Now - timeGCCollect).TotalMilliseconds)
           {
+            timeGCCollect = DateTime.Now;          
             GC.Collect();
-            timeGCCollect = Environment.TickCount;
           }
         }
+
       }
 
     }//class MainSession

@@ -1,6 +1,6 @@
 ﻿/*
  * 最終更新日
- *   16/03/29
+ *   16/04/06
  *  
  * 概要
  *   テキストファイルの読み書きにファイル共有設定をつける。
@@ -18,7 +18,7 @@ using System.Text;
 namespace OctNov.IO
 {
   /// <summary>
-  /// 文字エンコード一覧
+  /// 文字エンコード
   /// </summary>
   /// <remarks>
   ///  *.ts.program.txt        Shift-JIS
@@ -39,7 +39,7 @@ namespace OctNov.IO
 
 
 
-  #region 読込み
+  #region FileR
 
   /// <summary>
   /// FileShare.ReadWriteを設定して読み込む。
@@ -195,19 +195,20 @@ namespace OctNov.IO
     /// <remarks>
     /// リソースが存在しないとnew StreamReader(null,enc)で例外
     /// bat, avs        Shift-JIS
+    /// vpy             UTF8_nobom
     /// </remarks>
     public static List<string> ReadFromResource(string name, Encoding enc = null)
     {
       enc = enc ?? TextEnc.Shift_JIS;
-      var text = new List<string>();
 
-      //指定されたマニフェストリソースを読み込む
+      //マニフェストリソースからファイルオープン
       var assembly = Assembly.GetExecutingAssembly();
       var reader = new StreamReader(
                         assembly.GetManifestResourceStream(name),
                         enc);
 
-      //テキスト読込み
+      //読
+      var text = new List<string>();
       while (!reader.EndOfStream)
         text.Add(reader.ReadLine());
       reader.Close();
@@ -216,10 +217,11 @@ namespace OctNov.IO
     }
   }
 
-  #endregion 読込み
+  #endregion FileR
 
 
-  #region 書込み
+
+  #region FileW
 
   internal class FileW
   {
@@ -256,7 +258,7 @@ namespace OctNov.IO
     private StreamWriter writer;
 
     /// <summary>
-    /// コンストラクター    FileShare.Read
+    /// Constructor   FileShare.Read
     /// </summary>
     /// <param name="path">書込み対象のファイルパス</param>
     /// <param name="enc">文字エンコードの指定。デフォルトShift-JIS</param>
@@ -302,6 +304,6 @@ namespace OctNov.IO
     }
   }
 
-  #endregion 書込み
+  #endregion FileW
 
 }

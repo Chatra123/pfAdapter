@@ -72,7 +72,7 @@ namespace pfAdapter
             var fstream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             LockedItems.Add(fstream);
           }
-          catch { }
+          catch { /* do nothing */}
         }
       }
 

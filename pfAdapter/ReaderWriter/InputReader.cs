@@ -33,9 +33,9 @@ namespace pfAdapter
     //pipe
     private static BufferedPipeClient common_pipeReader;   //共有のパイプクライアント
 
-    //各インスタンスからcommon_pipeReaderへの参照用
+    //各インスタンスからcommon_pipeReaderへはpipeReaderを通してアクセスする。
     //　パイプが切断されたらpipeReader = nullにしてからファイル読込みに移行する。
-    //　common_pipeReaderを直接 nullにしない。
+    //　common_pipeReaderを直接 nullにしてはいけない。
     private BufferedPipeClient pipeReader;
     private int PipeBuffSize { get { return pipeReader.BuffSize; } }
     private bool PipeIsConnected { get { return pipeReader != null && pipeReader.IsConnected; } }
@@ -54,13 +54,13 @@ namespace pfAdapter
     private long filePositon;                              //次に読み込むバイトの位置
 
     //”TSへの書込みが停止していないか”の判定用
-    private int lastTimeReadPacket = int.MaxValue;         //最後に値パケットを読み込んだ時間
+    private DateTime lastTimeReadPacket = DateTime.Now;    //最後に値パケットを読み込んだ時間
     private long lastPosReadPacket;                        //最後に値パケット読み込んだ位置
 
     //limit
     private double ReadSpeedLimit;                         //ファイル読込速度上限　 byte/sec ０以下なら制限しない
     private double tickReadSize;                           //速度計算用　　ファイル読込量
-    private int tickBeginTime;                             //速度計算用  　計測開始時間
+    private DateTime tickBeginTime;                        //速度計算用  　計測開始時間
 
     //Log
     public LogWriter LogInput { get; private set; }
@@ -125,7 +125,7 @@ namespace pfAdapter
 
       //ファイル
       if (string.IsNullOrWhiteSpace(ifile) == false)
-        for (int i = 0; i < 4 * 6; i++)
+        for (int i = 0; i < 5 * 6; i++)
         {
           if (File.Exists(ifile))
           {
@@ -134,7 +134,7 @@ namespace pfAdapter
             fileInfo = new FileInfo(ifile);
             break;
           }
-          Thread.Sleep(250);           //まだファイルが作成されていない？
+          Thread.Sleep(200);           //まだファイルが作成されていない？
         }
 
       //log
@@ -345,7 +345,7 @@ namespace pfAdapter
       {
         //　パイプが閉じた　＆　バッファロック失敗
         //　次のループで残りのバッファを読込む。
-        Thread.Sleep(10);
+        Thread.Sleep(30);
         return null;
       }
     }
@@ -367,18 +367,18 @@ namespace pfAdapter
 
       //読込速度制限
       {
-        double tickDuration = Environment.TickCount - tickBeginTime;           //計測開始からの経過時間
-        double tickReadSpeedLimit = ReadSpeedLimit;                            //制限速度  起動直後なら 6 MiB/sに強制指定
+        //long tickDuration = DateTime.Now.Ticks - tickBeginTime;         //計測開始からの経過時間
+        double tickReadSpeedLimit = ReadSpeedLimit;                       //制限速度  起動直後なら 6 MiB/sに強制指定
 
-        if (200 < tickDuration)      //Nmsごとにカウンタリセット
+        if (200 < (DateTime.Now - tickBeginTime).TotalMilliseconds)       //Nmsごとにカウンタリセット
         {
-          tickBeginTime = Environment.TickCount;
+          tickBeginTime = DateTime.Now;
           tickReadSize = 0;
         }
 
         //　アプリ起動直後＆パイプ接続中なら強制的に速度制限
         //　起動直後はファイル読込みが必ず発生するため。
-        if (App.ElapseTime_tick < 60 * 1000)
+        if (App.Elapse_ms < 60 * 1000)
         {
           if (pipeReader != null && pipeReader.IsConnected)
             if (ReadSpeedLimit <= 0 || 6 * 1024 * 1024 < ReadSpeedLimit)
@@ -442,7 +442,7 @@ namespace pfAdapter
             {
               //ファイルが拡張された
               Thread.Sleep(2 * 1000);
-              return null;               //リトライ ReadBytes()
+              return null;             //リトライ ReadBytes()
             }
 
             if (retry < 2)
@@ -483,8 +483,8 @@ namespace pfAdapter
             if (fileData == null)
             {
               //ゼロパケットを３０秒以上読み続けている？
-              if (lastPosReadPacket == filePositon
-                && 1000 * 30 < Environment.TickCount - lastTimeReadPacket)
+              if (filePositon == lastPosReadPacket
+                && 1000 * 30 < (DateTime.Now - lastTimeReadPacket).TotalMilliseconds)
               {
                 //値が書込まれてないファイル。書込み側がフリーズ or 強制終了してできたファイル
                 Log.System.WriteLine("/▽  Read zero packet for over 30secs.  fpos = {0,12:N0} ▽/", filePositon);
@@ -493,7 +493,7 @@ namespace pfAdapter
               else
                 return null;                               //リトライ ReadBytes()
             }
-            lastTimeReadPacket = Environment.TickCount;
+            lastTimeReadPacket = DateTime.Now;
             lastPosReadPacket = filePositon;
           }
         }
@@ -502,7 +502,8 @@ namespace pfAdapter
           //ファイル末尾の１９.９パケット以降が読み込まれるとここにくる
           if (retry < 2)
           {
-            //ファイルが拡張されるかも ＆　末尾の１９.９パケットが確実に書き込まれるように待機
+            //ファイルが拡張されるかも 
+            //　＆　末尾の１９.９パケットが確実に書き込まれるように待機
             Thread.Sleep(2 * 1000);
             continue;                                      //retry for
           }
@@ -513,7 +514,6 @@ namespace pfAdapter
         //読込成功
         //
         filePositon += fileData.Length;
-
 
         //log
         {
@@ -529,7 +529,7 @@ namespace pfAdapter
         //読込み成功、送信へ
         return fileData;
 
-      }//for  retry
+      }//for
 
       throw new Exception("FileReadBytes(): unknown file read");
     }//func
@@ -587,7 +587,7 @@ namespace pfAdapter
         }
         else
           hasZeroPacket = true;
-        //ゼロパケットなら　５％戻り、再検査　
+        //ゼロパケットなら５％戻り、再検査　
       }
 
       //値が取得できない、return null

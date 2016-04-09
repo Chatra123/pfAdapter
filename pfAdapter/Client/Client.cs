@@ -73,13 +73,15 @@ namespace pfAdapter
         var client = List[i];
         if (client.IsEnable == false) continue;
 
-        // $MidCnt$ 置換
-        string sessionPath = client.BasePath ?? "";
-        string sessionArgs = client.BaseArgs ?? "";
-        sessionPath = MidProcessManager.ReplaceMacro_MidCnt(sessionPath);
-        sessionArgs = MidProcessManager.ReplaceMacro_MidCnt(sessionArgs);
+        //// $MidCnt$ 置換
+        //string sessionPath = client.BasePath ?? "";
+        //string sessionArgs = client.BaseArgs ?? "";
+        //sessionPath = MidProcessManager.ReplaceMacro_MidCnt(sessionPath);
+        //sessionArgs = MidProcessManager.ReplaceMacro_MidCnt(sessionArgs);
 
-        client.Start(sessionPath, sessionArgs);
+        //client.Start(sessionPath, sessionArgs);
+
+        client.Start();
       }
     }
   }
@@ -126,7 +128,9 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>作成したプロセス</returns>
-    protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
+    //protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
+    //{
+    protected Process CreateProcess()
     {
       if (IsEnable == false) return null;
       if (BasePath == null) return null;
@@ -134,18 +138,24 @@ namespace pfAdapter
       var prc = new Process();
 
       //Path
-      BasePath = BasePath ?? "";
-      sessionPath = sessionPath ?? BasePath;               //sessionPathがなければBasePathを使用
-      sessionPath = ReplaceMacro(sessionPath);
-      sessionPath = sessionPath.Trim();
-      if (string.IsNullOrWhiteSpace(sessionPath))
-        return null;                                       //パスが無効
+      string sessionPath;
+      {
+        BasePath = BasePath ?? "";
+        sessionPath = BasePath;
+        sessionPath = ReplaceMacro(sessionPath);
+        sessionPath = sessionPath.Trim();
+        if (string.IsNullOrWhiteSpace(sessionPath))
+          return null;                                       //パスが無効
+      }
 
-      //Arguments
-      BaseArgs = BaseArgs ?? "";
-      sessionArgs = sessionArgs ?? BaseArgs;               //sessionArgsがなければBaseArgsを使用
-      sessionArgs = ReplaceMacro(sessionArgs);
-      sessionArgs = sessionArgs.Trim();
+      //Args
+      string sessionArgs;
+      {
+        BaseArgs = BaseArgs ?? "";
+        sessionArgs = BaseArgs;
+        sessionArgs = ReplaceMacro(sessionArgs);
+        sessionArgs = sessionArgs.Trim();
+      }
 
       SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeから呼び出す
       prc.StartInfo.FileName = sessionPath;
@@ -234,9 +244,18 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
-    public bool Start(string sessionPath = null, string sessionArgs = null)
+    // public bool Start(string sessionPath = null, string sessionArgs = null)
+    //    public bool Start()
+    //{
+    //  Process = CreateProcess(sessionPath, sessionArgs);
+    //  if (Process == null) return false;
+
+
+
+
+    public bool Start()
     {
-      Process = CreateProcess(sessionPath, sessionArgs);
+      Process = CreateProcess();
       if (Process == null) return false;
 
       Thread.Sleep((int)(Delay_sec * 1000));
@@ -278,9 +297,11 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
-    public string Start_GetStdout(string sessionArgs = null)
+    //public string Start_GetStdout(string sessionArgs = null)
+    public string Start_GetStdout()
     {
-      Process = CreateProcess(null, sessionArgs);
+      //Process = CreateProcess(null, sessionArgs);
+      Process = CreateProcess();
       if (Process == null) return null;
 
       Thread.Sleep((int)(Delay_sec * 1000));
@@ -326,11 +347,11 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
-    public bool Start_WriteStdin(string sessionArgs = null)
+    public bool Start_WriteStdin()
     {
       //Client_OutStdoutは既にダミープロセスを割り当て済み。
       //this.Processに直接いれず、prcを経由する。
-      var prc = CreateProcess(null, sessionArgs);
+      var prc = CreateProcess();
       if (prc == null) return false;
 
       Process = prc;

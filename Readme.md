@@ -77,7 +77,7 @@ pfAdapterを中断
 
 ------------------------------------------------------------------
 ### 設定
-実行時に設定ファイルがなければ作成されます。
+実行時に設定ファイルがなければ作成します。
 
     Argumets
 追加引数  
@@ -89,8 +89,8 @@ pfAdapterを中断
 
     BuffSize_MiB  3.0
 パイプの最大バッファサイズ  MiB  
-開始、終了時には必ずファイル読込みが発生します。  
-それ以外で断続的なファイル読込みが発生する場合のみ大きくしてください。
+基本的に変更する必要はありません。  
+
 
 
     ReadLimit_MiBsec  10.0
@@ -225,25 +225,16 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 ---------------------------------------
 ##### BasePath、BaseArgsで使えるマクロ  
 
-|  マクロ            |  説明                      |  例               |
-|:-------------------|:---------------------------|:----------------- |
-|  $fPath$           |  入力ファイルパス          |  C:\rec\news.ts   |
-|  $fDir$            |  ディレクトリ名            |  C:\rec           |
-|  $fName$           |  ファイル名                |  news.ts          |
-|  $fNameWithoutExt$ |  拡張子なしファイル名      |  news             |
-|  $fPathWithoutExt$ |  拡張子なしファイルパス    |  C:\rec\news      |
-|  $PID$             |  pfAdapterのプロセスＩＤ   |                   |
-|  $MidPrcCnt$       |  MidProcessListの実行回数  |                   |
-|  $UniqueKey$       |  ユニークキー              |                   |
-|  $EncProfile$      |  引数 -EncProfile の値     |                   |
-
-
-
-    $MidPrcCnt$
-MidProcessの実行回数に置換されます。  
-1回目の実行で１、実行されるごとに増えます。  
-PreProcess内では０、  
-PostProcess内では（MidProcessListでの実行回数＋１）に置換されます。  
+|  マクロ             |  説明                     |  例               |
+|:--------------------|:--------------------------|:----------------- |
+|  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
+|  $fDir$             |  ディレクトリ名           |  C:\rec           |
+|  $fName$            |  ファイル名               |  news.ts          |
+|  $fNameWithoutExt$  |  拡張子なしファイル名     |  news             |
+|  $fPathWithoutExt$  |  拡張子なしファイルパス   |  C:\rec\news      |
+|  $PID$              |  pfAdapterのプロセスＩＤ  |                   |
+|  $UniqueKey$        |  ユニークキー             |                   |
+|  $EncProfile$       |  引数 -EncProfile の値    |                   |
 
 
 
@@ -276,7 +267,7 @@ PostProcess内では（MidProcessListでの実行回数＋１）に置換され�
   
   
 ------------------------------------------------------------------
-### その他
+### ログ
 
 * １２８ＫＢ以上のログファイルは上書きされ、  
   ４日以上使用していないログファイルは削除されます。

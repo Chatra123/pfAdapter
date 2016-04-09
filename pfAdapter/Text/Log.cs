@@ -49,7 +49,7 @@ namespace pfAdapter
     private readonly object sync = new object();
     public bool Enable, OutConsole, OutFile;
     public bool AutoFlush;
-    private int timeLastFlush;
+    private DateTime timeLastFlush;
 
     private string LogFileName;
     private StringBuilder LogText;
@@ -187,10 +187,10 @@ namespace pfAdapter
             {
               Writer.Flush();
             }
-            else if (10 * 1000 < Environment.TickCount - timeLastFlush)
+            else if (10 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
             {
+              timeLastFlush = DateTime.Now;
               Writer.Flush();
-              timeLastFlush = Environment.TickCount;
             }
           }
         }

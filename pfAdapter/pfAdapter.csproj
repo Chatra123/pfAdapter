@@ -55,7 +55,7 @@
     <Compile Include="Setting\XmlRW.cs" />
     <Compile Include="Text\FileRW.cs" />
     <Compile Include="Client\Client.cs" />
-    <Compile Include="Client\MidProcessManager.cs" />
+    <Compile Include="Client\MidProcessTimer.cs" />
     <Compile Include="Text\StrConverter.cs" />
     <Compile Include="Text\Log.cs" />
     <Compile Include="Text\ProgramInfo.cs" />
