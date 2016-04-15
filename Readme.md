@@ -12,8 +12,11 @@ Run_pfAdapter.batのショートカットを作成し、TSファイルをドロ�
 
 ### 使い方　　コマンドライン
 
-ファイル＆パイプ  
+ファイル＆名前付きパイプ  
 pfAdapter.exe  -file "C:\video.ts"  -npipe pipename
+
+ファイル＆標準入力
+pfAdapter.exe  "C:\video.ts"
 
 ファイル   
 pfAdapter.exe  "C:\video.ts"
@@ -228,7 +231,7 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
 |  マクロ             |  説明                     |  例               |
 |:--------------------|:--------------------------|:----------------- |
 |  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
-|  $fDir$             |  ディレクトリ名           |  C:\rec           |
+|  $fDir$             |  ディレクトリパス         |  C:\rec           |
 |  $fName$            |  ファイル名               |  news.ts          |
 |  $fNameWithoutExt$  |  拡張子なしファイル名     |  news             |
 |  $fPathWithoutExt$  |  拡張子なしファイルパス   |  C:\rec\news      |

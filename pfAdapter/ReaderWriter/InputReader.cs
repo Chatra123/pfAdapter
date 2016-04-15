@@ -143,12 +143,12 @@ namespace pfAdapter
         if (PipeIsConnected)
           Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
         else
-          Log.System.WriteLine("  pipe does not connected");
+          Log.System.WriteLine("  Pipe does not connected");
 
         if (fileReader != null)
-          Log.System.WriteLine("  Create  filereader");
+          Log.System.WriteLine("  Create  FileReader");
         else
-          Log.System.WriteLine("  file does not exist");
+          Log.System.WriteLine("  File does not exist");
         Log.System.WriteLine();
       }
 
@@ -176,7 +176,7 @@ namespace pfAdapter
       {
         if (PipeIsConnected)
           Log.System.WriteLine("      pipe          BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
-        Log.System.WriteLine("      fileReader       Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
+        Log.System.WriteLine("      file reader      Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
         Log.System.WriteLine();
       }
 

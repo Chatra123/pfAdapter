@@ -433,7 +433,7 @@ namespace pfAdapter
       private static void UpdateLogStatus(long totalPipeRead, long totalFileRead)
       {
         //１秒毎
-        if (0.950 * 1000 < (DateTime.Now - timeUpdateTitle).TotalMilliseconds)
+        if (0.970 * 1000 < (DateTime.Now - timeUpdateTitle).TotalMilliseconds)
         {
           timeUpdateTitle = DateTime.Now;
           string status = string.Format(
@@ -452,7 +452,7 @@ namespace pfAdapter
                 && DateTime.Now.Second % 60 == 0)
             Console.Error.WriteLine(DateTime.Now.ToString("HH:mm:ss.fff") + ":    " + status);
 
-          //コンソール、ログファイル
+          //コンソール＆ログファイル
           //５分毎
           if (DateTime.Now.Minute % 5 == 0
                 && DateTime.Now.Second % 60 == 0)
