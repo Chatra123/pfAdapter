@@ -49,7 +49,7 @@ namespace pfAdapter.Setting
     /// <summary>
     /// 設定ファイルを読み込む
     /// </summary>
-    /// <param name="xmlpath">読込むファイルを指定</param>
+    /// <param name="xmlpath">ファイル名を指定</param>
     public static Setting_File LoadFile(string xmlpath = null)
     {
       //デフォルト名を使用
@@ -67,7 +67,7 @@ namespace pfAdapter.Setting
 
       var file = XmlRW.Load<Setting_File>(xmlpath);
 
-      //新たに追加された項目、削除された項目を書き換え。
+      //追加された項目、削除された項目を書き換え。
       if (file.Rev != CurrentRev)
       {
         file.Rev = CurrentRev;

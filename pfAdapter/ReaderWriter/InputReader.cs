@@ -175,8 +175,8 @@ namespace pfAdapter
       if (SuspendLog == false)
       {
         if (PipeIsConnected)
-          Log.System.WriteLine("      pipe          BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
-        Log.System.WriteLine("      file reader      Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
+          Log.System.WriteLine("      Pipe         BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
+        Log.System.WriteLine("      FileReader      Limit  =  {0,5:f2} MiB/sec", ReadSpeedLimit / 1024 / 1024);
         Log.System.WriteLine();
       }
 
@@ -367,7 +367,6 @@ namespace pfAdapter
 
       //読込速度制限
       {
-        //long tickDuration = DateTime.Now.Ticks - tickBeginTime;         //計測開始からの経過時間
         double tickReadSpeedLimit = ReadSpeedLimit;                       //制限速度  起動直後なら 6 MiB/sに強制指定
 
         if (200 < (DateTime.Now - tickBeginTime).TotalMilliseconds)       //Nmsごとにカウンタリセット
@@ -592,6 +591,7 @@ namespace pfAdapter
 
       //値が取得できない、return null
       if (valueData.Length == 0) valueData = null;
+
       return hasZeroPacket;
     }
     /*

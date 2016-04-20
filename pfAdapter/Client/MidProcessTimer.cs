@@ -100,7 +100,7 @@ namespace pfAdapter
     {
       if (Enable == false) return;
 
-      Log.System.WriteLine("  MidProcessTimer.Stop()  wait...");
+      Log.System.WriteLine("    MidProcessTimer.Stop()  wait...");
       lock (syncTask)                                      //ロック
       {
         Enable = false;
@@ -123,7 +123,7 @@ namespace pfAdapter
         }
       }
 
-      Log.System.WriteLine("  MidProcessTimer Stop");
+      Log.System.WriteLine("    MidProcessTimer Stop");
       Log.System.WriteLine();
     }
 

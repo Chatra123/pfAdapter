@@ -13,7 +13,7 @@ namespace pfAdapter
   /// <summary>
   /// AbstructPipeClientBase
   /// </summary>
-  internal abstract class AbstructPipeClientBase
+  internal abstract class AbstructPipeClient
   {
     public abstract string PipeName { get; }
     public abstract void Initialize(string pipename);
@@ -28,7 +28,7 @@ namespace pfAdapter
   /// <summary>
   /// NamedPipeClient
   /// </summary>
-  internal class NamedPipeClient : AbstructPipeClientBase
+  internal class NamedPipeClient : AbstructPipeClient
   {
     protected NamedPipeClientStream pipeClient;
 
@@ -116,7 +116,7 @@ namespace pfAdapter
   /// <summary>
   /// StdinPipeClient
   /// </summary>
-  internal class StdinPipeClient : AbstructPipeClientBase
+  internal class StdinPipeClient : AbstructPipeClient
   {
     private BinaryReader reader;
     private bool isConnected;

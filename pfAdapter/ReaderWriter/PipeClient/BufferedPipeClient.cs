@@ -14,7 +14,7 @@ namespace pfAdapter
   /// </summary>
   internal class BufferedPipeClient
   {
-    AbstructPipeClientBase pipeClient;
+    AbstructPipeClient pipeClient;
 
     public string PipeName { get { return pipeClient != null ? pipeClient.PipeName : "pipe is null"; } }
     public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
@@ -35,13 +35,13 @@ namespace pfAdapter
     /// <summary>
     /// コンストラクタ
     /// </summary>
-    /// <param name="pipename">名前付きパイプ</param>
+    /// <param name="pipeName">名前付きパイプ</param>
     public BufferedPipeClient(string pipeName)
     {
       //BasePipe初期化
       pipeClient = String.IsNullOrEmpty(pipeName)
-        ? new StdinPipeClient() as AbstructPipeClientBase
-        : new NamedPipeClient() as AbstructPipeClientBase;
+        ? new StdinPipeClient() as AbstructPipeClient
+        : new NamedPipeClient() as AbstructPipeClient;
       pipeClient.Initialize(pipeName);
 
 
@@ -222,30 +222,30 @@ namespace pfAdapter
         if (HasData(requestTopPos, requestSize, inputLog))
         {
           requestData = new byte[requestSize];
-          long reqTopPos_InBuff = requestTopPos - BuffTopPos;                            //バッファ内での位置
+          long reqTopPos_InBuff = requestTopPos - BuffTopPos;        //バッファ内での位置
 
           List<Byte> reqData_List = Buff.GetRange((int)reqTopPos_InBuff, requestSize);
           Buffer.BlockCopy(reqData_List.ToArray(), 0, requestData, 0, requestSize);
         }
 
-        //set requestData
+        //set ReqRelativePos
         if (requestData != null)
         {
-          reqPos = ReqRelativePos.InBuff;                   //バッファ内のデータを要求
+          reqPos = ReqRelativePos.InBuff;                  //バッファ内のデータを要求
         }
         else
         {
           if (requestTopPos < BuffTopPos)
-            reqPos = ReqRelativePos.FrontOfBuff;            //バッファよりファイル前方のデータを要求
+            reqPos = ReqRelativePos.FrontOfBuff;           //バッファよりファイル前方のデータを要求
           else if (BuffBottomPos < requestTopPos)
-            reqPos = ReqRelativePos.BackOfBuff;             //バッファよりファイル後方のデータを要求
+            reqPos = ReqRelativePos.BackOfBuff;            //バッファよりファイル後方のデータを要求
           else
-            reqPos = ReqRelativePos.Unknown;                //問題なく動いていれば、ここに来ることない
+            reqPos = ReqRelativePos.Unknown;               //問題なく動いていれば、ここに来ることない
         }
 
         Monitor.Exit(sync);                                //ロック解除
       }
-      else
+      else//ロック失敗
       {
         reqPos = ReqRelativePos.FailToLock;
       }
@@ -266,7 +266,7 @@ namespace pfAdapter
         //タスクキャンセル？
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        //接続
+        //接続？
         if (pipeClient.IsConnected) break;
         else Thread.Sleep(30);
       }
@@ -278,7 +278,7 @@ namespace pfAdapter
         //タスクキャンセル？
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        //接続
+        //切断？
         if (pipeClient.IsConnected == false)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");
@@ -337,7 +337,6 @@ namespace pfAdapter
             //前回、バッファのロックに失敗した？
             if (ClearBuff_Flag)
             {
-              //バッファクリア
               BuffTopPos += Buff.Count() + ClearBuff_AdvancePos;
               Buff.Clear();
               ClearBuff_Flag = false;
@@ -363,7 +362,6 @@ namespace pfAdapter
                 }
               }
 
-              //データ追加
               Buff.AddRange(readData);
 
               //log
@@ -379,7 +377,7 @@ namespace pfAdapter
             {
               //Buffに入らない
               //  データの連続性が途切れるので、全データ破棄。
-              //　読込サイズが大きすぎる、Buffに対して十分小さいサイズを読み込むこと。
+              //　読込サイズが大きすぎる。Buffに対して十分小さいサイズを読み込むこと。
               BuffTopPos += Buff.Count() + readData.Length;
               Buff.Clear();
               //log

@@ -45,7 +45,7 @@
   <ItemGroup>
     <Compile Include="Client\ProhibitFileMove_pfA.cs" />
     <Compile Include="Exception\ExceptionInfo.cs" />
-    <Compile Include="ReaderWriter\PipeClient\PipeClientBase.cs" />
+    <Compile Include="ReaderWriter\PipeClient\PipeClient.cs" />
     <Compile Include="Setting\Mono.Options\Options.cs" />
     <Compile Include="Setting\Mono.Options\Options_icase.cs" />
     <Compile Include="Setting\AppSetting.cs" />

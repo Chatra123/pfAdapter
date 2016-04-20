@@ -49,20 +49,8 @@ namespace OctNov.Text
     /// </summary>
     public static string RemoveSymbol(string text)
     {
-      /* 
-       * symbol_N symbol_Wは必要なくなった
-       * 動作確認後、除去
-       */
-      ////半角
-      //const string symbol_N = @" !\""#$%&'()=-~^|\\`@{[}]*:+;_?/>.<,・";
-      ////全角
-      ////  半角スラッシュ\ はStrings.StrConv()で変換できなかったのでリテラルで指定
-      //string symbol_W = @"・☆〇×￣【】＼／" + Strings.StrConv(symbol_N, VbStrConv.Wide, 0x0411);
-
       text = Regex.Replace(text, @"[\W]", "");  //文字、数字、アンダースコア以外除去
       text = Regex.Replace(text, @"[_]", "");   //アンダースコア除去
-      //text = Regex.Replace(text, @"[" + symbol_W + @"]", "");
-
       return text;
     }
 

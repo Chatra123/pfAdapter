@@ -386,7 +386,7 @@ namespace pfAdapter
           ProhibitFileMove_pfA.Lock();
           reader.Close();
           writer.Close();
-          ProhibitFileMove_pfA.Lock();  //.noncapはwriter.Close()時に作成されるため
+          ProhibitFileMove_pfA.Lock();  //.noncapがwriter.Close()時に作成されるため
 
           lock (syncLog)
           {
