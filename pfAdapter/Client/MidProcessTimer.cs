@@ -55,7 +55,7 @@ namespace pfAdapter
       {
         timer.Enabled = true;
         lastRunTime = DateTime.Now;
-        tickCounter = 1;
+        tickCounter = 0;
         Log.System.WriteLine("    MidProcessTimer.Start()    interval = {0,3:f1} min", Interval_Min);
       }
     }
@@ -80,9 +80,9 @@ namespace pfAdapter
           //Taskスレッドでロック取得、Timerスレッドとは別
           lock (syncTask)          　　　　　　　　　　　　//ロック
           {
+            tickCounter++;
             Log.System.WriteLine("    MidPrc__(  " + tickCounter + "  )");
             MidProcessList.Wait_and_Run();
-            tickCounter++;
           }
         });
         activeTask.Start();
