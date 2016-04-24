@@ -15,8 +15,8 @@ namespace pfAdapter
   static class ProhibitFileMove_pfA
   {
     static string[] BasePathPattern;
-    static List<string> ExtList;                 //ロック対象の拡張子
-    static List<FileStream> LockedItems = null;  //FileStreamを保持することでロックする
+    static List<string> ExtList;            //ロック対象の拡張子
+    static List<FileStream> LockedItems;    //FileStreamを保持することでロックする
 
     //initialize
     public static void Initialize(string filePath, string lockFileExts)
@@ -54,21 +54,20 @@ namespace pfAdapter
         foreach (var ext in ExtList)
         {
           string path = basepath + ext;
-
           if (File.Exists(path) == false) continue;
-
-          //srtファイルのみ特別扱い
-          if (ext == ".srt" || ext == ".ass")
-          {
-            //３バイト以下ならロックしない
-            //　テキストが書き込まれて無いとCaption2Ass_PCR_pfによって削除される可能性があるため。
-            var filesize = new FileInfo(path).Length;
-            if (filesize <= 3)  // -le 3byte bom
-              continue;
-          }
 
           try
           {
+            //srtファイルのみ特別扱い
+            if (ext == ".srt" || ext == ".ass")
+            {
+              //３バイト以下ならロックしない
+              //　テキストが書き込まれて無いとCaption2Ass_PCR_pfによって削除される可能性があるため。
+              var size = new FileInfo(path).Length;
+              if (size <= 3)  // -le 3byte bom
+                continue;
+            }
+
             var fstream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             LockedItems.Add(fstream);
           }

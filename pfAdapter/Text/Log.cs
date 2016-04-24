@@ -95,14 +95,12 @@ namespace pfAdapter
       {
         try
         {
+          //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
           var path = Path.Combine(App.Dir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
-          bool overwrite = logfile.Exists && 128 * 1024 <= logfile.Length;
+          bool append = logfile.Exists && 128 * 1024 <= logfile.Length;
 
-          //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
-          writer = (overwrite)
-           ? new StreamWriter(path, false, Encoding.UTF8)  //上書き、    UTF-8 bom
-           : new StreamWriter(path, true, Encoding.UTF8);  //新規or追記、UTF-8 bom
+          writer = new StreamWriter(path, append, Encoding.UTF8);  //UTF-8 bom
           break;
         }
         catch { /*ファイル使用中*/ }
