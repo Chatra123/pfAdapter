@@ -15,10 +15,13 @@ namespace pfAdapter
   static class ProhibitFileMove_pfA
   {
     static string[] BasePathPattern;
-    static List<string> ExtList;            //ロック対象の拡張子
-    static List<FileStream> LockedItems;    //FileStreamを保持することでロックする
+    static List<string> ExtList;          //ロック対象の拡張子
+    static List<FileStream> LockItems;
 
-    //initialize
+
+    /// <summary>
+    /// Initialize
+    /// </summary>
     public static void Initialize(string filePath, string lockFileExts)
     {
       // C:\video.ext
@@ -30,14 +33,12 @@ namespace pfAdapter
       var fPathWithoutExt = Path.Combine(fDir, fNameWithoutExt);
       BasePathPattern = new string[] { fPathWithoutExt, fPath };
 
-      //スペースで分割
-      ExtList = lockFileExts.Split()
-                             .Select(ext => ext.ToLower().Trim())
-                             .Where(ext => string.IsNullOrWhiteSpace(ext) == false)
-                             .Distinct()
-                             .ToList();
-
-      LockedItems = new List<FileStream>();
+      //extension list
+      ExtList = lockFileExts.Split()      //スペースで分割
+                            .Select(ext => ext.ToLower().Trim())
+                            .Where(ext => string.IsNullOrWhiteSpace(ext) == false)
+                            .Distinct()
+                            .ToList();
     }
 
     /// <summary>
@@ -48,6 +49,8 @@ namespace pfAdapter
     /// </remarks>
     public static void Lock()
     {
+      LockItems = LockItems ?? new List<FileStream>();
+
       //extをbasepathに当てはめてチェック
       foreach (var basepath in BasePathPattern)
       {
@@ -58,18 +61,17 @@ namespace pfAdapter
 
           try
           {
-            //srtファイルのみ特別扱い
+            //srtのみ特別扱い
             if (ext == ".srt" || ext == ".ass")
             {
-              //３バイト以下ならロックしない
-              //　テキストが書き込まれて無いとCaption2Ass_PCR_pfによって削除される可能性があるため。
+              // -le 3byte bom
+              //テキストが書き込まれていない場合はCaption2Ass_PCR_pfによって削除される可能性がある。
               var size = new FileInfo(path).Length;
-              if (size <= 3)  // -le 3byte bom
-                continue;
+              if (size <= 3) continue;
             }
 
             var fstream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            LockedItems.Add(fstream);
+            LockItems.Add(fstream);
           }
           catch { /* do nothing */}
         }
@@ -82,10 +84,10 @@ namespace pfAdapter
     /// </summary>
     public static void Unlock()
     {
-      foreach (var fstream in LockedItems)
-      {
+      foreach (var fstream in LockItems)
         fstream.Close();
-      }
+
+      LockItems = new List<FileStream>();
     }
 
 
