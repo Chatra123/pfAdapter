@@ -15,7 +15,7 @@ Run_pfAdapter.batのショートカットを作成し、TSファイルをドロ�
 ファイル＆名前付きパイプ  
 pfAdapter.exe  -file "C:\video.ts"  -npipe pipename
 
-ファイル＆標準入力
+ファイル＆標準入力  
 pfAdapter.exe  "C:\video.ts"
 
 ファイル   
