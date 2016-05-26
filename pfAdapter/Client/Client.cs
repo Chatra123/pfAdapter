@@ -68,21 +68,8 @@ namespace pfAdapter
       if (IsEnable == false) return;
       if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
-      for (int i = 0; i < List.Count; i++)
-      {
-        var client = List[i];
-        if (client.IsEnable == false) continue;
-
-        //// $MidCnt$ 置換
-        //string sessionPath = client.BasePath ?? "";
-        //string sessionArgs = client.BaseArgs ?? "";
-        //sessionPath = MidProcessManager.ReplaceMacro_MidCnt(sessionPath);
-        //sessionArgs = MidProcessManager.ReplaceMacro_MidCnt(sessionArgs);
-
-        //client.Start(sessionPath, sessionArgs);
-
+      foreach (var client in List)
         client.Start();
-      }
     }
   }
 
@@ -92,7 +79,7 @@ namespace pfAdapter
   [Serializable]
   public class Client
   {
-    //マクロ置換用の値
+    //マクロ置換用の値  簡単のためstaticで保持
     public static string Macro_SrcPath;
     public static string Macro_Channel, Macro_Program;
     public static string Macro_EncProfile;
@@ -128,8 +115,6 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>作成したプロセス</returns>
-    //protected Process CreateProcess(string sessionPath = null, string sessionArgs = null)
-    //{
     protected Process CreateProcess()
     {
       if (IsEnable == false) return null;
@@ -157,7 +142,7 @@ namespace pfAdapter
         sessionArgs = sessionArgs.Trim();
       }
 
-      SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeから呼び出す
+      SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeをセット
       prc.StartInfo.FileName = sessionPath;
       prc.StartInfo.Arguments = sessionArgs;
 
@@ -244,15 +229,6 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
-    // public bool Start(string sessionPath = null, string sessionArgs = null)
-    //    public bool Start()
-    //{
-    //  Process = CreateProcess(sessionPath, sessionArgs);
-    //  if (Process == null) return false;
-
-
-
-
     public bool Start()
     {
       Process = CreateProcess();
@@ -278,7 +254,6 @@ namespace pfAdapter
       }
       catch (Exception exc)
       {
-        //事前にファイルチェックはしない。
         //FileNotFoundExceptionもここでキャッチ
         launch = false;
         Log.System.WriteLine("  /☆ Exception ☆/");
@@ -297,10 +272,8 @@ namespace pfAdapter
     /// <param name="sessionPath">今回のみ使用するファイルパス</param>
     /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
-    //public string Start_GetStdout(string sessionArgs = null)
     public string Start_GetStdout()
     {
-      //Process = CreateProcess(null, sessionArgs);
       Process = CreateProcess();
       if (Process == null) return null;
 
@@ -376,7 +349,7 @@ namespace pfAdapter
       Process.ErrorDataReceived += (o, e) =>
       {
         /*do nothing*/
-        //エラー表示　デバッグ用
+        //標準エラー表示　デバッグ用
         //  if (e.Data != null) 
         //    Console.Error.WriteLine(e.Data);
       };

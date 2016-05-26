@@ -16,7 +16,7 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 11.2;
+    const double CurrentRev = 12.0;
 
     public double Rev = 0.0;
     public string CommandLine = "        ";               //追加コマンドライン
@@ -98,7 +98,7 @@ namespace pfAdapter.Setting
       { 
          new Client()
          {
-           memo = "  sample  ",
+           memo = "  preprocess sample  ",
            Enable = 0,
            BasePath = @"   .\foo\bar.exe   ",
            BaseArgs = "   -foo \"$fPath$\"   -bar   ",
@@ -120,7 +120,7 @@ namespace pfAdapter.Setting
         //DGIndex_pf
         new Client_WriteStdin()
         {
-          Enable = 1,
+          Enable = 0,
           BasePath = @"   ..\DGIndex_pf\DGIndex_pf.exe   ",
           BaseArgs = "   -pipe \"$fPath$\" -o \"$fPath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
           Delay_sec = 1,
@@ -210,9 +210,9 @@ namespace pfAdapter.Setting
          },
          new Client()
          {
-           memo = "  last bat sample  ",
+           memo = "   Post process sample  ",
            Enable = 0,
-           BasePath = @"   .\foo\bar.bat   ",
+           BasePath = @"   .\foo\bar.exe   ",
            BaseArgs =  "    ",
          },
       };

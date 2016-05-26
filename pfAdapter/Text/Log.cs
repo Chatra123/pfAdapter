@@ -128,7 +128,7 @@ namespace pfAdapter
 
         if (logfile.Exists)
         {
-          //２日以上前のファイル？
+          //古いファイル？
           bool over_creation_ = 2.0 <= (DateTime.Now - logfile.CreationTime).TotalDays;
           bool over_lastwrite = 2.0 <= (DateTime.Now - logfile.LastWriteTime).TotalDays;
           if (over_creation_ && over_lastwrite)
@@ -303,7 +303,7 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// ログに１６進数表示のバイト列をを追加
+    /// ログに１６進数のバイト列を追加
     /// </summary>
     /// <param name="comment">先頭に表示するコメント</param>
     /// <param name="byteSet">バイト列</param>
@@ -319,7 +319,7 @@ namespace pfAdapter
       }
       else
       {
-        //20以上は表示しない
+        //20文字以上は表示しない
         line += " ......";
       }
 
