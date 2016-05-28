@@ -11,7 +11,6 @@ namespace pfAdapter
   /// <summary>
   /// ファイルの移動禁止
   /// </summary>
-  /// ポストプロセスの待機中にファイルをロックする。
   static class ProhibitFileMove_pfA
   {
     static string[] BasePathPattern;
@@ -45,13 +44,13 @@ namespace pfAdapter
     /// ファイルロック
     /// </summary>
     /// <remarks>
-    /// ポストプロセス開始前の待機時間のみファイルをロックする。
+    /// 各ポストプロセス開始前の待機時間のみファイルをロックする。
     /// </remarks>
     public static void Lock()
     {
       LockItems = LockItems ?? new List<FileStream>();
 
-      //extをbasepathに当てはめてチェック
+      //チェック
       foreach (var basepath in BasePathPattern)
       {
         foreach (var ext in ExtList)
@@ -73,7 +72,7 @@ namespace pfAdapter
             var fstream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             LockItems.Add(fstream);
           }
-          catch { /* do nothing */}
+          catch { /* do nothing */ }
         }
       }
 
