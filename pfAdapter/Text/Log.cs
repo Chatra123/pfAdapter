@@ -90,16 +90,25 @@ namespace pfAdapter
     /// <remarks>ファイル名は  *.1.log ～ *.8.log  </remarks>
     private static StreamWriter CreateWriter(string filename)
     {
+      // Create directory
+      string logDir = Path.Combine(App.Dir, "Log");
+      try
+      {
+        if (Directory.Exists(logDir) == false)
+          Directory.CreateDirectory(logDir);
+      }
+      catch { return null; }
+
+      // Create writer
       StreamWriter writer = null;
       for (int i = 1; i <= 8; i++)
       {
         try
         {
           //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
-          var path = Path.Combine(App.Dir, filename + "." + i + ".log");
+          var path = Path.Combine(logDir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
           bool append = logfile.Exists && 128 * 1024 <= logfile.Length;
-
           writer = new StreamWriter(path, append, Encoding.UTF8);  //UTF-8 bom
           break;
         }
@@ -123,7 +132,8 @@ namespace pfAdapter
     {
       for (int i = 1; i <= 8; i++)
       {
-        var logpath = Path.Combine(App.Dir, filename + "." + i + ".log");
+        string logdir = Path.Combine(App.Dir, "Log");
+        string logpath = Path.Combine(logdir, filename + "." + i + ".log");
         var logfile = new FileInfo(logpath);
 
         if (logfile.Exists)
