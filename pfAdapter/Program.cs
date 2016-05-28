@@ -79,7 +79,7 @@ namespace pfAdapter
       }
 
       //
-      //setting設定、各種ファイル読込
+      //設定、各種ファイル読込
       //
       bool initialized = Initialize(setting, AppArgs);
       if (initialized == false)
@@ -102,7 +102,7 @@ namespace pfAdapter
         {
 
           Log.System.WriteLine("[ PreProcess__App ]");
-          setting.PreProcess__App.Wait_and_Run();          //実行
+          setting.PreProcess__App.Wait_and_Run();
           Log.System.WriteLine();
         }
         //  MidProcess
@@ -163,14 +163,14 @@ namespace pfAdapter
          * writerA.Timeout_msec = -1;  writerB.Timeout_msec = -1;  のように、
          * 両方のタイムアウトを無期限にすると、録画終了後にwriterAの書込み処理が再開され、
          * pfAdapterの処理は正常に終了する。
-         * 録画終了後にファイル読込みが行われて、時間がかかるだけ。
+         * 録画終了後にファイル読込みが行われて、時間がかかるだけで正常に処理はできる。
          * 
          * 原因は不明
          * Task.WaitAll();の仕様？
          */
         //デバッグ用　ファイル出力を登録
-        //writerA.RegisterOutFileWriter(setting.File + ".pfAOutfile_A.ts");
-        //writerB.RegisterOutFileWriter(setting.File + ".pfAOutfile_B.ts");
+        //writerA.RegisterOutFileWriter(setting.File + ".pfA_Outfile_A.ts");
+        //writerB.RegisterOutFileWriter(setting.File + ".pfA_Outfile_B.ts");
 
         // no writer?
         if (writerA.HasWriter == false && writerB.HasWriter == false)
@@ -253,18 +253,18 @@ namespace pfAdapter
       //多重起動の負荷分散
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        int rand_msec = new Random(App.PID).Next(2 * 1000, 8 * 1000);
+        //  Client_WriteStdinの起動タイミングも少しずらされる。
+        int rand_msec = new Random(App.PID).Next(2 * 1000, 6 * 1000);
         Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();
         Thread.Sleep(rand_msec);
       }
 
-      //番組情報取得
+      //番組情報
       Log.System.WriteLine("  [ program.txt ]");
       {
         ProgramInfo.TryToGetInfo(setting.File);
         setting.Check_IsBlackCH(ProgramInfo.Channel);
-
         Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
         Log.System.WriteLine("      IsNonCMCutCH  = " + setting.IsNonCMCutCH);
         Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
@@ -279,10 +279,9 @@ namespace pfAdapter
         Client.Macro_EncProfile = setting.EncProfile;
       }
 
-      //ＸＭＬ設定ファイル
+      //xmlファイル
       {
         bool loadXml = setting.LoadFile();
-        //コマンドライン指定のxmlファイルが存在しない？
         if (loadXml == false)
           return false;                //アプリ終了
       }
@@ -305,16 +304,14 @@ namespace pfAdapter
       //コマンドライン
       {
         //外部プロセスからコマンドライン取得
-        //  実行前に*.program.txt読込を実行しておくこと
+        //  取得前に*.program.txt読込をしておくこと
         setting.Get_ExternalCommand();
         //終了要求があった？
         if (setting.Abort == true)
           return false;                //アプリ終了
 
-        //ログ
         Log.System.WriteLine("[ CommandLine ]");
         Log.System.WriteLine(setting.Cmdline_ToString());
-
         //Clientのマクロを設定２
         //　コマンドラインが確定したので再設定
         Client.Macro_EncProfile = setting.EncProfile;
@@ -466,7 +463,7 @@ namespace pfAdapter
       /// </summary>
       static class TimedGC
       {
-        const int CollectSpan = 345;
+        const int CollectSpan = 350;
         static DateTime timeGCCollect;
 
         public static void Collect()
