@@ -155,7 +155,7 @@ namespace pfAdapter
     #region 書込
 
     /// <summary>
-    /// ログに書き込む
+    /// ログファイルに書込  実行部
     /// </summary>
     private void Write_core(string text)
     {
@@ -329,7 +329,7 @@ namespace pfAdapter
       }
       else
       {
-        //20文字以上は表示しない
+        //20文字以上なら表示できない
         line += " ......";
       }
 

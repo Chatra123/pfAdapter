@@ -16,15 +16,15 @@ namespace pfAdapter
   enum ReqRelativePos//request data relative position
   {
     Unknown,       // Unknown
-    FrontOfBuff,   // バッファよりファイル前方のデータを要求した。
+    FrontOfBuff,   // バッファよりファイル前方にあるデータを要求した。
     InBuff,        // バッファ内のデータを要求した。
-    BackOfBuff,    // バッファよりファイル後方のデータを要求した。
+    BackOfBuff,    // バッファよりファイル後方にあるデータを要求した。
     FailToLock,    // ロック失敗 or バッファクリア待ち
   }
 
 
   /// <summary>
-  /// データをパイプ、ファイル経由で取り出す
+  /// データをパイプ＆ファイル経由で取り出す
   /// </summary>
   internal class InputReader
   {
@@ -292,14 +292,14 @@ namespace pfAdapter
         switch (reqPos)
         {
           case ReqRelativePos.FrontOfBuff:
-            //バッファよりファイル前方のデータを要求
+            //バッファよりファイル前方にあるデータを要求
             //  ファイル読込みをしてバッファ位置までを追いかける。
             LogInput.WriteLine("    Request FrontOfBuff");
             LogInput.WriteLine("    Not contain in the buff. read the file");
             return new byte[] { };     //ファイル読込みへ
 
           case ReqRelativePos.BackOfBuff:
-            //バッファよりファイル後方のデータを要求
+            //バッファよりファイル後方にあるデータを要求
             //　・順調に消化していてバッファにデータがまだ来ていない。
             //　・ファイル読込みによりすでにバッファを追い抜いていた。
             LogInput.WriteLine("    Request BackOfBuff");

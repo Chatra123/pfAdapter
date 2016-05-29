@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace pfAdapter
 {
   /// <summary>
-  /// AbstructPipeClientBase
+  /// AbstructPipeClient
   /// </summary>
   internal abstract class AbstructPipeClient
   {
@@ -57,8 +57,7 @@ namespace pfAdapter
     /// <param name="timeout">接続を待機する最大時間　ミリ秒</param>
     /// <remarks>
     ///・pipeClient.Connect(1000*10)だと接続できるまでＣＰＵ使用率１００％で待機したので、
-    ///　pipeClient.Connect(0) & Thread.Sleep(50) を使う。
-    ///・TimeoutExceptionのみ捕捉する。それ以外の例外ではアプリを停止させる。
+    ///　pipeClient.Connect(0) & Thread.Sleep(50) を用いる。
     /// </remarks>
     public override void Connect(int timeout = 1000)
     {

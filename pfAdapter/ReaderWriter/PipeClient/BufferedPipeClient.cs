@@ -180,10 +180,9 @@ namespace pfAdapter
                         LogWriter inputLog
                       )
     {
-      byte[] requestData = null;                           //戻り値　バッファから取り出したデータ
+      byte[] requestData = null;                            //戻り値　バッファから取り出したデータ
       reqPos = ReqRelativePos.Unknown;                      //戻り値  要求データとバッファとの相対位置
-
-      if (pipeClient == null || ClearBuff_Flag)            //パイプ未作成  or バッファクリア待ち
+      if (pipeClient == null || ClearBuff_Flag)             //パイプ未作成  or バッファクリア待ち
       {
         reqPos = ReqRelativePos.FailToLock;
         return null;
@@ -204,25 +203,23 @@ namespace pfAdapter
         //バッファ終端より後方を要求しているなら、
         //要求をバッファ終端までにする。
         long reqBottomPos = requestTopPos + requestSize - 1;
-
         if (BuffBottomPos < reqBottomPos)
         {
           reqBottomPos = BuffBottomPos;
           requestSize = (int)(reqBottomPos - requestTopPos + 1);
           inputLog.WriteLine("                                              [ reduce ]");
         }
-
         //log
         inputLog.WriteLine("  request    {0,12:N0}    {1,12:N0}    {2,10:N0}",
                             requestTopPos, reqBottomPos, requestSize);
 
 
-        //要求されたデータがバッファ内にあるか？
-        //　要求の先頭位置がバッファ内にあれば取り出せる。
+        //要求データがバッファ内にあるか？
+        //　要求データの先頭位置がバッファ内にあれば取り出せる。
         if (HasData(requestTopPos, requestSize, inputLog))
         {
           requestData = new byte[requestSize];
-          long reqTopPos_InBuff = requestTopPos - BuffTopPos;        //バッファ内での位置
+          long reqTopPos_InBuff = requestTopPos - BuffTopPos;        //バッファ内でのファイル位置
 
           List<Byte> reqData_List = Buff.GetRange((int)reqTopPos_InBuff, requestSize);
           Buffer.BlockCopy(reqData_List.ToArray(), 0, requestData, 0, requestSize);
@@ -236,11 +233,11 @@ namespace pfAdapter
         else
         {
           if (requestTopPos < BuffTopPos)
-            reqPos = ReqRelativePos.FrontOfBuff;           //バッファよりファイル前方のデータを要求
+            reqPos = ReqRelativePos.FrontOfBuff;           //バッファよりファイル前方にあるデータを要求
           else if (BuffBottomPos < requestTopPos)
-            reqPos = ReqRelativePos.BackOfBuff;            //バッファよりファイル後方のデータを要求
+            reqPos = ReqRelativePos.BackOfBuff;            //バッファよりファイル後方にあるデータを要求
           else
-            reqPos = ReqRelativePos.Unknown;               //問題なく動いていれば、ここに来ることない
+            reqPos = ReqRelativePos.Unknown;
         }
 
         Monitor.Exit(sync);                                //ロック解除
@@ -293,7 +290,7 @@ namespace pfAdapter
 
         Log.PipeBuff.WriteLine("Read()");
         byte[] readData = null;
-        //                                   pipe server の書込みは１回あたり 770 KB
+        //                                   pipe server の書込みは平均 770 KB
         //                                   Write_Default のバッファ量と同じ
         readData = pipeClient.ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
 

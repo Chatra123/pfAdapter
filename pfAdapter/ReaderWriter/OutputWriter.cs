@@ -108,12 +108,11 @@ namespace pfAdapter
             if (writer.Process.HasExited == false)
             {
               //書
-              writer.StdinWriter.Write(writeData); 
+              writer.StdinWriter.Write(writeData);
               return true;
             }
             else
             {
-              //writerが終了している。
               //　Caption2Ass_PCR_pfは自動終了している可能性が高い
               Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
               Log.System.WriteLine();
@@ -123,12 +122,15 @@ namespace pfAdapter
           }
           catch (IOException exc)
           {
-            //clientが先に終了して、パイプが破壊された
-            if (writer.Process.HasExited == false)
+            //if(HasExited == false)の後でclientが終了し、パイプが破壊された
+            if (writer.Process.HasExited)
               Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
-            Log.System.WriteLine("  /▽ IOException :  {0} ▽/", writer.FileName);
-            Log.System.WriteLine("         "+exc.ToString());
-            Log.System.WriteLine();
+            else
+            {
+              Log.System.WriteLine("  /▽ IOException :  {0} ▽/", writer.FileName);
+              Log.System.WriteLine("         " + exc.ToString());
+              Log.System.WriteLine();
+            }
             return false;
           }
 
@@ -142,11 +144,11 @@ namespace pfAdapter
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
 
-      //結果の確認
+      //結果
       bool success = true;
       foreach (var task in tasklist)
       {
-        //タスク処理が完了？
+        //完了？
         if (task.IsCompleted)
         {
           //task完了、書込み失敗
@@ -160,7 +162,7 @@ namespace pfAdapter
         }
         else
         {
-          //task未完了、クライアントがフリーズor処理が長い
+          //task未完了、クライアントがフリーズ or 処理が長い
           success = false;
           var writer = (Client_WriteStdin)task.AsyncState;
           writer.StdinWriter.Close();
