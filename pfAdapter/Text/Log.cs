@@ -105,10 +105,10 @@ namespace pfAdapter
       {
         try
         {
-          //１２８ＫＢ以上なら上書き。ログの行数肥大化を抑止。
+          //１２８ＫＢ以下なら追記
           var path = Path.Combine(logDir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
-          bool append = logfile.Exists && 128 * 1024 <= logfile.Length;
+          bool append = logfile.Exists && logfile.Length <= 128 * 1024;
           writer = new StreamWriter(path, append, Encoding.UTF8);  //UTF-8 bom
           break;
         }
