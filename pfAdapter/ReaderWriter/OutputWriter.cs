@@ -113,7 +113,7 @@ namespace pfAdapter
             }
             else
             {
-              //　Caption2Ass_PCR_pfは自動終了している可能性が高い
+              //Caption2Ass_PCR_pfは自動終了している可能性が高い
               Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
               Log.System.WriteLine();
               return false;
@@ -122,7 +122,7 @@ namespace pfAdapter
           }
           catch (IOException exc)
           {
-            //if(HasExited == false)の後でclientが終了し、パイプが破壊された
+            //System.IO.IOException: パイプは終了しました。
             if (writer.Process.HasExited)
               Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
             else
