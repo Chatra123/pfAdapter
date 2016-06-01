@@ -102,7 +102,6 @@ namespace pfAdapter
         var writeTask = Task<bool>.Factory.StartNew((arg) =>
         {
           var writer = (Client_WriteStdin)arg;
-
           try
           {
             if (writer.Process.HasExited == false)
@@ -113,24 +112,17 @@ namespace pfAdapter
             }
             else
             {
-              //Caption2Ass_PCR_pfは自動終了している可能性が高い
+              //Caption2Ass_PCR_pfは終了している可能性が高い
               Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
               Log.System.WriteLine();
               return false;
             }
-
           }
-          catch (IOException exc)
+          catch (IOException)
           {
-            //System.IO.IOException: パイプは終了しました。
-            if (writer.Process.HasExited)
-              Log.System.WriteLine("  /▽ Client HasExited :  {0} ▽/", writer.FileName);
-            else
-            {
-              Log.System.WriteLine("  /▽ IOException :  {0} ▽/", writer.FileName);
-              Log.System.WriteLine("         " + exc.ToString());
-              Log.System.WriteLine();
-            }
+            //IOException:パイプは終了しました。
+            Log.System.WriteLine("  /▽ Client Pipe Closed :  {0} ▽/", writer.FileName);
+            Log.System.WriteLine();
             return false;
           }
 
