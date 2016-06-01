@@ -82,12 +82,14 @@ pfAdapterを中断
 ### 設定
 実行時に設定ファイルがなければ作成します。
 
-    Argumets
+    Argumets  
+
 追加引数  
 入力、-Xml以外の引数が追加できます。  
 　設定ファイル　→　実行ファイル引数　→　  
 　　　　設定ファイルの追加引数　→　外部プロセスからの引数  
-の順で設定が上書きされます。  
+の順で設定が上書きされます。（デバッグ用に使用）  
+
 
 
     BuffSize_MiB  3.0
@@ -125,9 +127,10 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
 
 
     Client_GetExternalCommand  
-入力、-Xml 以外のコマンドライン引数を受け取り、処理を変更します。  
+戻り値をコマンドライン引数としてを受け取り、処理を変更します。  
 -Suspend_pfAMain があればメイン処理を中止し、  
 -Abort_pfAdapter があればプロセスを終了します。  
+-File、-Pipe、-Xml に関しては処理しません。  
 
 
     PreProcess__App  
@@ -150,7 +153,7 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 
 
     PostProcess_App  
-PostProcess_MainA, PostProcess_Enc_Bの後に実行  
+一番最後に実行
 
 
 
@@ -263,10 +266,15 @@ PostProcess_MainA, PostProcess_Enc_Bの後に実行
   Write_PF.dllの代わりにパイプ出力対応のWrite_Default.dllが利用できます。  
   基本的な動作はWrite_PF.dllと同じです。
   
-  Write_Default.dllの設定でTeeコマンドをチェックし、テキストボックスに  
+  Write_Default.dllの設定でTeeコマンドをチェックし、  
+  
+  Teeコマンド  
   .\Write\Write_PF\pfAdapter\pfAdapter.exe  -file "$FilePath$"  
-  と入力する。  
-  録画を開始するとpfAdapterが起動します。
+  
+  Tee読み込み遅延(byte)  
+  0  
+  
+  と設定する。 録画を開始するとpfAdapterが起動します。  
   
   
 ------------------------------------------------------------------
