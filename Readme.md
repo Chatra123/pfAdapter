@@ -1,7 +1,7 @@
 ﻿
 ## pfAdapter
 
-ファイルを読み込み、外部プロセスのパイプへ送信します。
+ファイルを読み込み、外部プロセスへ転送します。
 
 
 ------------------------------------------------------------------
@@ -45,10 +45,18 @@ MidProcessの実行間隔、min
 ------------------------------------------------------------------
 ### 引数２
 
-    -Xml  setting2.xml
-設定ファイルを指定  
-   
+    -Suspend_pfAMain
+Main処理の実行中止  
     
+    
+    -Suspend_pfAEnc
+Enc処理の実行中止  
+    
+    
+    -Abort_pfAdapter
+pfAdapterを中断  
+
+
     -ExtCmd        1
     -PrePrc_App    1
     -MidPrc_Main   1
@@ -64,17 +72,9 @@ MidProcessの実行間隔、min
     -EncProfile  RunTest_mp4  
 マクロの $EncProfile$ を RunTest_mp4 に置換します
     
-    
-    -Suspend_pfAMain
-Main処理の実行中止  
-    
-    
-    -Suspend_pfAEnc
-Enc処理の実行中止  
-    
-    
-    -Abort_pfAdapter
-pfAdapterを中断  
+
+    -Xml  setting2.xml
+設定ファイルを指定  
 
 
 
@@ -83,7 +83,6 @@ pfAdapterを中断
 実行時に設定ファイルがなければ作成します。
 
     Argumets  
-
 追加引数  
 入力、-Xml以外の引数が追加できます。  
 　設定ファイル　→　実行ファイル引数　→　  
@@ -91,11 +90,9 @@ pfAdapterを中断
 の順で設定が上書きされます。（デバッグ用に使用）  
 
 
-
     BuffSize_MiB  3.0
 パイプの最大バッファサイズ  MiB  
 基本的に変更する必要はありません。  
-
 
 
     ReadLimit_MiBsec  10.0
@@ -204,7 +201,7 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 
 
 ---------------------------------------
-##### Listの設定
+##### プロセスリストの設定
 
 |  項目              |  説明                                          |
 |:-------------------|:-----------------------------------------------|
@@ -231,16 +228,17 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 ---------------------------------------
 ##### BasePath、BaseArgsで使えるマクロ  
 
-|  マクロ             |  説明                     |  例               |
-|:--------------------|:--------------------------|:----------------- |
-|  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
-|  $fDir$             |  ディレクトリパス         |  C:\rec           |
-|  $fName$            |  ファイル名               |  news.ts          |
-|  $fNameWithoutExt$  |  拡張子なしファイル名     |  news             |
-|  $fPathWithoutExt$  |  拡張子なしファイルパス   |  C:\rec\news      |
-|  $PID$              |  pfAdapterのプロセスＩＤ  |                   |
-|  $UniqueKey$        |  ユニークキー             |                   |
-|  $EncProfile$       |  引数 -EncProfile の値    |                   |
+|  マクロ                |  マクロ  r11まで    |  説明                     |  例               |
+|:-----------------------|:--------------------|:--------------------------|:------------------|
+|  $FilePath$            |  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
+|  $FolderPath$          |  $fDir$             |  フォルダパス             |  C:\rec           |
+|  $FileName$            |  $fNameWithoutExt$  |  拡張子なしファイル名     |  news             |
+|  $FileNameWithExt$     |  $fName$            |  拡張子ありファイル名     |  news.ts          |
+|  $FilePathWithoutExt$  |  $fPathWithoutExt$  |  拡張子なしファイルパス   |  C:\rec\news      |
+|  $PID$                 |                     |  pfAdapterのＰＩＤ        |                   |
+|  $StartTime$           |                     |  pfAdapter開始時間        |                   |
+|                        |  $UniqueKey$        |  ユニークキー             |                   |
+|  $EncProfile$          |                     |  引数 -EncProfile の値    |  　               |
 
 
 
@@ -275,6 +273,7 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
   0  
   
   に設定する。 録画を開始するとpfAdapterが起動します。  
+  
   
 ------------------------------------------------------------------
 ### 使用ライブラリ
