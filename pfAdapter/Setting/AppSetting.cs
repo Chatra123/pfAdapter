@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Diagnostics;
 
+
 namespace pfAdapter
 {
   using pfAdapter.Setting;
@@ -38,6 +39,14 @@ namespace pfAdapter
     private static DateTime StartTime = DateTime.Now;
 
     /// <summary>
+    /// 起動時間  テキスト
+    /// </summary>
+    public static string StartTimeText
+    {
+      get { return StartTime.ToString("MMddHHmmssff"); }
+    }
+
+    /// <summary>
     /// 起動からの経過時間
     /// </summary>
     public static TimeSpan Elapse
@@ -51,19 +60,6 @@ namespace pfAdapter
     public static long Elapse_ms
     {
       get { return Elapse.Milliseconds; }
-    }
-
-    /// <summary>
-    /// ユニークキー
-    /// </summary>
-    public static string UniqueKey
-    {
-      get
-      {
-        //起動時間
-        string timecode = StartTime.ToString("HHmmssff");
-        return "pfA" + timecode + PID;
-      }
     }
 
   }

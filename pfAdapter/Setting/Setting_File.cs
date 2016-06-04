@@ -16,13 +16,13 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 12.0;
+    const double CurrentRev = 12.1;
 
     public double Rev = 0.0;
-    public string CommandLine = "        ";               //追加コマンドライン
-    public double BuffSize_MiB = 3.0;                     //パイプバッファサイズ
-    public double ReadLimit_MiBsec = 10;                  //ファイル読込速度制限
-    public double MidPrcInterval_min = 10;                //中間プロセスの実行間隔
+    public string CommandLine = "        ";       //追加コマンドライン　（デバッグ時に一時的に設定変更するのに使用した）
+    public double BuffSize_MiB = 3.0;             //パイプバッファサイズ
+    public double ReadLimit_MiBsec = 10;          //ファイル読込速度制限
+    public double MidPrcInterval_min = 10;        //中間プロセスの実行間隔
 
     //ファイルロック用の拡張子
     public string LockMove = " .ts  .pp.d2v  .pp.lwi .pp.lwifooter  .srt .ass .noncap  .avi .mp4 ";
@@ -60,7 +60,7 @@ namespace pfAdapter.Setting
         if (File.Exists(xmlpath) == false)
         {
           //設定ファイル作成
-          var def_Setting = Sample_A();    //  Sample_A  Sample_RunTest  new Setting_File(); 
+          var def_Setting = Sample_A();    //  Sample_A  Sample_RunTest
           XmlRW.Save(xmlpath, def_Setting);
         }
       }
@@ -79,9 +79,154 @@ namespace pfAdapter.Setting
 
 
     /// <summary>
-    /// 設定Ａ    通常使用を想定
+    /// サンプル設定Ａ
     /// </summary>
-    public static Setting_File Sample_A()
+    private static Setting_File Sample_A()
+    {
+      var setting = new Setting_File();
+
+      //GetExternalCommand
+      setting.Client_GetExternalCommand = new Client()
+      {
+        BasePath = @"   ..\LGLauncher\LSystem\LogoSelector.exe   ",
+        BaseArgs = "   \"$Ch$\"   \"$Program$\"   \"$FilePath$\"   ",
+      };
+
+
+      //PreProcess__App
+      setting.PreProcess__App.List = new List<Client>() 
+      { 
+         new Client()
+         {
+           memo = "  preprocess sample  ",
+           Enable = 0,
+           BasePath = @"   .\foo\bar.exe   ",
+           BaseArgs = "   -foo \"$FilePath$\"   -bar   ",
+         },
+      };
+
+
+      //Client_MainA
+      setting.Client_MainA = new List<Client_WriteStdin>()
+      {
+        //Caption2Ass_PCR_pf
+        new Client_WriteStdin()
+        {
+          Enable = 1,
+          BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
+          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag  ",
+          Delay_sec = 1,
+        },
+        //DGIndex_pf
+        new Client_WriteStdin()
+        {
+          Enable = 0,
+          BasePath = @"   ..\DGIndex_pf\DGIndex_pf.exe   ",
+          BaseArgs = "   -pipe \"$FilePath$\" -o \"$FilePath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
+          Delay_sec = 1,
+        },
+        //CreateLwi
+        new Client_WriteStdin()
+        {
+          Enable = 1,
+          BasePath = @"   ..\CreateLwi\CreateLwi.exe   ",
+          BaseArgs = "   -pipe \"$FilePath$\"  -lwi \"$FilePath$.pp\"  -footer   ",
+          Delay_sec = 1,
+        },
+      };
+
+
+      //Client_Enc_B
+      setting.Client_Enc_B = new List<Client_WriteStdin>()
+      {
+        new Client_WriteStdin()
+        {
+          BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
+          BaseArgs =  "  -pipe \"$FilePath$\"  -profile  $EncProfile$   ",
+          Delay_sec = 1,
+        },
+      };
+
+
+      //MidProcess__MainA
+      setting.MidProcess__MainA.Delay_sec = 10;
+      setting.MidProcess__MainA.RandDelay_sec = 20;
+      setting.MidProcess__MainA.List = new List<Client>()
+      {
+        //LGLauncher
+        new Client()
+        {
+          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+        },
+      };
+
+
+      //PostProcess_MainA
+      setting.PostProcess_MainA.Delay_sec = 10;
+      setting.PostProcess_MainA.RandDelay_sec = 20;
+      setting.PostProcess_MainA.List = new List<Client>()
+      {
+        //LGLauncher
+        new Client()
+        {
+          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+        },
+        new Client()
+        {
+          Enable = 0,
+          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+          BaseArgs = "   -all   -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+        },
+      };
+
+
+      //PostProcess_Enc_B
+      setting.PostProcess_Enc_B.Delay_sec = 10;
+      setting.PostProcess_Enc_B.RandDelay_sec = 20;
+      setting.PostProcess_Enc_B.List = new List<Client>()
+      {
+        new Client()
+        {
+          Enable = 1,
+          BasePath = @"   ..\Valve2Pipe\SplitVideo.exe   ",
+          BaseArgs =  "  \"$FilePath$\"  ",
+        },
+      };
+
+
+      //PostProcess_App
+      setting.PostProcess_App.Delay_sec = 4;
+      setting.PostProcess_App.RandDelay_sec = 4;
+      setting.PostProcess_App.List = new List<Client>()
+      {
+         new Client()
+         {
+           memo = "  rename  ",
+           Enable = 1,
+           BasePath = @"   PostProcess_Rename.bat   ",
+           BaseArgs =  "  \"$FilePath$\"  ",
+         },
+         new Client()
+         {
+           memo = "   Post process sample  ",
+           Enable = 0,
+           BasePath = @"   .\foo\bar.exe   ",
+           BaseArgs =  "    ",
+         },
+      };
+
+      return setting;
+    }
+
+
+
+    /// <summary>
+    /// サンプル設定Ｂ    r11までのマクロを使用
+    /// </summary>
+    [Obsolete]
+    private static Setting_File Sample_B()
     {
       var setting = new Setting_File();
 
@@ -222,11 +367,10 @@ namespace pfAdapter.Setting
 
 
 
-
     /// <summary>
-    /// 設定　　動作テスト用
+    /// サンプル設定　　pfAdapter動作テスト
     /// </summary>
-    public static Setting_File Sample_RunTest()
+    private static Setting_File Sample_RunTest()
     {
       var setting = new Setting_File();
 
@@ -237,7 +381,7 @@ namespace pfAdapter.Setting
         {
           Enable = 1,
           BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
-          BaseArgs = "   -pipe  -o \"$fPath$_A\"  -format srt  -NonCapTag   ",
+          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag   ",
         },
       };
 
@@ -247,7 +391,7 @@ namespace pfAdapter.Setting
         {
           Enable = 1,
           BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
-          BaseArgs = "   -pipe  -o \"$fPath$_B\"  -format srt  -NonCapTag   ",
+          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag   ",
         },
       };
       return setting;

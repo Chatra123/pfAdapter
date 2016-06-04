@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
+
 namespace pfAdapter
 {
   /// <summary>
@@ -79,7 +80,7 @@ namespace pfAdapter
   [Serializable]
   public class Client
   {
-    //マクロ置換用の値  簡単のためstaticで保持
+    //マクロ置換用の値  簡単なのでstaticで保持
     public static string Macro_SrcPath;
     public static string Macro_Channel, Macro_Program;
     public static string Macro_EncProfile;
@@ -166,19 +167,42 @@ namespace pfAdapter
 
       string after = before;
 
-      //ファイルパス
+      /*
+       * r12からRecName_Macro.dllと同じようなマクロに変更＆追加した。
+       * 
+       * ファイルパス　（フルパス）       $fPath$           --> $FilePath$                    C:\rec\news.ts
+       * フォルダパス  （最後に\はなし）  $fDir$            --> $FolderPath$                  C:\rec
+       * ファイル名    （拡張子なし）     $fNameWithoutExt$ --> $FileName$                    news
+       * ファイル名    （拡張子あり）　   $fName$           --> $FileNameWithExt$     追加    news.ts
+       * ファイルパス  （拡張子なし）　   $fPathWithoutExt$ --> $FilePathWithoutExt$  追加    C:\rec\news
+       */
+      //パス　（r12から）
+      {
+        Macro_SrcPath = Macro_SrcPath ?? "";
+        string filePath = Macro_SrcPath;
+        string folderPath = Path.GetDirectoryName(filePath);
+        string fileName = Path.GetFileNameWithoutExtension(filePath);
+        string fileNameWithExt = Path.GetFileName(filePath);
+        string filePathWithoutExt = Path.Combine(folderPath, fileName);
+        after = Regex.Replace(after, @"\$FilePath\$", filePath, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$FolderPath\$", folderPath, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$FileName\$", fileName, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$FileNameWithExt\$", fileNameWithExt, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$FilePathWithoutExt\$", filePathWithoutExt, RegexOptions.IgnoreCase);
+      }
+
+      //パス  （r11まで）
       {
         Macro_SrcPath = Macro_SrcPath ?? "";
         string fPath = Macro_SrcPath;
         string fDir = Path.GetDirectoryName(fPath);
-        string fName = Path.GetFileName(fPath);
         string fNameWithoutExt = Path.GetFileNameWithoutExtension(fPath);
+        string fName = Path.GetFileName(fPath);
         string fPathWithoutExt = Path.Combine(fDir, fNameWithoutExt);
-
         after = Regex.Replace(after, @"\$fPath\$", fPath, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$fDir\$", fDir, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$fName\$", fName, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$fNameWithoutExt\$", fNameWithoutExt, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$fName\$", fName, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$fPathWithoutExt\$", fPathWithoutExt, RegexOptions.IgnoreCase);
       }
 
@@ -200,8 +224,15 @@ namespace pfAdapter
       //App
       {
         after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$UniqueKey\$", App.UniqueKey, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);
       }
+
+      //App  （r11まで）
+      {
+        string key = App.StartTimeText + App.PID;
+        after = Regex.Replace(after, @"\$UniqueKey\$", key, RegexOptions.IgnoreCase);
+      }
+
       return after;
     }
 
