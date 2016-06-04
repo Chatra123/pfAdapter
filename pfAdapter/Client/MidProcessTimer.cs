@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace pfAdapter
 {
   /*
@@ -14,7 +15,6 @@ namespace pfAdapter
    */
   internal class MidProcessTimer
   {
-    bool Enable;
     ClientList MidProcessList;
     double Interval_Min;
 
@@ -23,6 +23,7 @@ namespace pfAdapter
     Task activeTask;                             //実行中のTaskへの参照
     DateTime lastRunTime;
     int tickCounter;                             //MidPrc実行回数
+
 
     /// <summary>
     /// Constructor
@@ -36,10 +37,9 @@ namespace pfAdapter
 
       //timer
       timer = new System.Timers.Timer();
+      timer.Enabled = false;
       timer.Interval = 10 * 1000;
       timer.Elapsed += OnTimedEvent;
-
-      Enable = true;
     }
 
 
@@ -48,16 +48,10 @@ namespace pfAdapter
     /// </summary>
     public void Start()
     {
-      if (Enable == false) return;
-      if (timer.Enabled) return;
-
-      lock (syncTask)  　　          //ロック
-      {
-        timer.Enabled = true;
-        lastRunTime = DateTime.Now;
-        tickCounter = 0;
-        Log.System.WriteLine("    MidProcessTimer.Start()    interval = {0,3:f1} min", Interval_Min);
-      }
+      timer.Enabled = true;
+      lastRunTime = DateTime.Now;
+      tickCounter = 0;
+      Log.System.WriteLine("    MidProcessTimer.Start()    interval = {0,3:f1} min", Interval_Min);
     }
 
 
@@ -66,19 +60,16 @@ namespace pfAdapter
     /// </summary>
     private void OnTimedEvent(object o, System.Timers.ElapsedEventArgs e)
     {
-      if (Enable == false) return;
       if (activeTask != null && activeTask.IsCompleted == false) return;
-
-      //最後の実行開始から interval_min 経過した？
       if ((DateTime.Now - lastRunTime).TotalMinutes < Interval_Min) return;
 
-      if (Monitor.TryEnter(syncTask, 30) == true)          //ロック
+      if (Monitor.TryEnter(syncTask, 0))                   //ロック
       {
         lastRunTime = DateTime.Now;
         activeTask = new Task(() =>
         {
           //Taskスレッドでロック取得、Timerスレッドとは別
-          lock (syncTask)          　　　　　　　　　　　　//ロック
+          lock (syncTask)          　　　　　　　          //ロック
           {
             tickCounter++;
             Log.System.WriteLine("    MidPrc__(  " + tickCounter + "  )");
@@ -98,28 +89,21 @@ namespace pfAdapter
     /// </summary>
     public void Stop_and_Wait()
     {
-      if (Enable == false) return;
-
       Log.System.WriteLine("    MidProcessTimer.Stop()  wait...");
-      lock (syncTask)                                      //ロック
-      {
-        Enable = false;
-        timer.Enabled = false;
-      }
+      timer.Enabled = false;
 
       //activeTask、OnTimedEvent関数の中を実行中なら終了まで待機する。
-      //ロックが３回取得できたら処理が終了していると判断する。
+      //ロックが３回取得できたら処理が終了していると判断。
       int lockCount = 0;
       while (lockCount < 3)
       {
         if (activeTask != null && activeTask.IsCompleted == false)
           activeTask.Wait();
 
-        Thread.Sleep(100);                                 //ロック取得待機中のイベントに取得してもらう。
-        if (Monitor.TryEnter(syncTask, 0) == true)         //ロック
+        Thread.Sleep(100);               //ロック取得待機中のイベントにロックをわたす。
+        lock (syncTask)
         {
           lockCount++;
-          Monitor.Exit(syncTask);                          //ロック解除
         }
       }
 
