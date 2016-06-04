@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 
+
 namespace pfAdapter
 {
   /// <summary>
@@ -97,7 +98,6 @@ namespace pfAdapter
       LogInput.Enable = true;
       LogInput.OutConsole = false;
       LogInput.OutFile = true;
-      LogInput.AutoFlush = false;
     }
 
 
@@ -269,7 +269,6 @@ namespace pfAdapter
 
         //log
         {
-          LogStatus.Log_ReadBuffChunk(pipeData.Length);
           LogStatus.TotalPipeRead += pipeData.Length;
           LogInput.WriteLine("○get from pipe:  len = {0,8:N0}    next fpos = {1,12:N0}",
                                    pipeData.Length, filePositon);
@@ -516,7 +515,6 @@ namespace pfAdapter
 
         //log
         {
-          LogStatus.Log_ReadFileChunk(fileData.Length);
           if (pipeReader != null)
             LogStatus.FileReadWithPipe += fileData.Length;
           else

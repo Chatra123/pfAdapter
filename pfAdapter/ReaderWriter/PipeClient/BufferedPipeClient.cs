@@ -65,7 +65,6 @@ namespace pfAdapter
         Log.PipeBuff.Enable = true;
         Log.PipeBuff.OutConsole = true;
         Log.PipeBuff.OutFile = true;
-        Log.PipeBuff.AutoFlush = false;
 #pragma warning restore 0162
       }
 
@@ -366,7 +365,6 @@ namespace pfAdapter
                 Log.PipeBuff.WriteLine("  ++Add    readData  {0,11:N0} ", readData.Length);
                 Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
                 Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
-                LogStatus_PipeBuff.Log_WriteBuffChunk(readData.Length);
               }
 
             }

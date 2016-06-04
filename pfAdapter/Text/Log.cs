@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
+
 namespace pfAdapter
 {
   /// <summary>
@@ -48,16 +49,14 @@ namespace pfAdapter
   {
     private readonly object sync = new object();
     public bool Enable, OutConsole, OutFile;
-    public bool AutoFlush;
     private DateTime timeLastFlush;
 
     private string LogFileName;
-    private StringBuilder LogText;
-    private bool LastCharIsLineFeed;    //”行頭にタイムコードを付加するか？”の判定用
+    private bool IsLogTop, LastCharIsLineFeed;  //”行頭にタイムコードを付加するか？”の判定用
     private StreamWriter Writer;
 
     /// <summary>
-    /// コンストラクター
+    /// Constructor
     /// </summary>
     public LogWriter(string filename)
     {
@@ -65,9 +64,8 @@ namespace pfAdapter
       OutConsole = false;
       OutFile = false;
       LogFileName = filename;
-      LogText = new StringBuilder();
-      LastCharIsLineFeed = true;
-      AutoFlush = false;
+      IsLogTop = true;
+      LastCharIsLineFeed = false;
     }
 
     public void Close()
@@ -78,7 +76,8 @@ namespace pfAdapter
           Writer.Close();
 
         //古いログファイル削除
-        DeleteOldLog(LogFileName);
+        if (Enable) 
+          DeleteOldLog(LogFileName);
       }
     }
 
@@ -155,20 +154,19 @@ namespace pfAdapter
     #region 書込
 
     /// <summary>
-    /// ログファイルに書込  実行部
+    /// 書込  実行部
     /// </summary>
     private void Write_core(string text)
     {
       if (Enable == false) return;
       lock (sync)
       {
-        LogText.Append(text);                              //StringBuilder
-        if (100 * 1000 < LogText.Length)
-          LogText.Remove(0, 50 * 1000);                    //メモリ増加防止  １００ＫＢ
-
-        //末尾の文字が改行コードか？　　　  \r\n   \n
+        // ”行頭にタイムコードを付加するか？”の判定用
         if (1 <= text.Length)
         {
+          IsLogTop = false;
+
+          //末尾の文字が改行コードか？　　　  \r\n   \n
           string lastString = text.Substring(text.Length - 1, 1);
           char lastChar = lastString.ToCharArray()[0];
           LastCharIsLineFeed = (lastChar == '\n');
@@ -191,11 +189,7 @@ namespace pfAdapter
           {
             Writer.Write(text);
 
-            if (AutoFlush)
-            {
-              Writer.Flush();
-            }
-            else if (10 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
+            if (10 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
             {
               timeLastFlush = DateTime.Now;
               Writer.Flush();
@@ -244,8 +238,8 @@ namespace pfAdapter
 
           if (i == 0)
           {
-            //ログの先頭　or  直前のログ末尾が改行コードか？
-            if (LogText.Length == 0 || LastCharIsLineFeed)
+            //ログの先頭　or  直前の末尾が改行コードか？            
+            if (IsLogTop || LastCharIsLineFeed)
               line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
           }
           else
@@ -329,7 +323,7 @@ namespace pfAdapter
       }
       else
       {
-        //20文字以上なら表示できない
+        //20文字以上なら表示しない
         line += " ......";
       }
 
@@ -346,50 +340,13 @@ namespace pfAdapter
   #region LogStatus
 
   /// <summary>
-  /// 状態記録用ログ  パイプバッファへの書込
+  /// 状態記録用ログ  パイプバッファ書込
   /// </summary>
   internal static class LogStatus_PipeBuff
   {
-    private static int Write_Buff__le__10KB = 0,           //１回のバッファ書込量
-                       Write_Buff__le__50KB = 0,
-                       Write_Buff__le_100KB = 0,
-                       Write_Buff__le_200KB = 0,
-                       Write_Buff__le_500KB = 0,
-                       Write_Buff__gt_500KB = 0;
-
-    public static long ClearBuff = 0,                      //バッファクリア回数
-                       FailToLockBuff_Write = 0;           //バッファロック失敗回数　書込み
-
-    /// <summary>
-    /// １回のバッファ書込量を記録
-    /// </summary>
-    /// <param name="writesize">書込んだバイト数  Byte</param>
-    public static void Log_WriteBuffChunk(int writesize)
-    {
-      if (writesize <= 10 * 1024) Write_Buff__le__10KB++;
-      else if (writesize <= 50 * 1024) Write_Buff__le__50KB++;
-      else if (writesize <= 100 * 1024) Write_Buff__le_100KB++;
-      else if (writesize <= 200 * 1024) Write_Buff__le_200KB++;
-      else if (writesize <= 500 * 1024) Write_Buff__le_500KB++;
-      else Write_Buff__gt_500KB++;
-    }
-
-
-    /// <summary>
-    /// データ書込量をテキストで出力
-    /// </summary>
-    public static string OutText_WriteChunk()
-    {
-      var text = new StringBuilder();
-      text.AppendLine("  Write_Buff__le__10KB   = " + Write_Buff__le__10KB);
-      text.AppendLine("  Write_Buff__le__50KB   = " + Write_Buff__le__50KB);
-      text.AppendLine("  Write_Buff__le_100KB   = " + Write_Buff__le_100KB);
-      text.AppendLine("  Write_Buff__le_200KB   = " + Write_Buff__le_200KB);
-      text.AppendLine("  Write_Buff__le_500KB   = " + Write_Buff__le_500KB);
-      text.AppendLine("  Write_Buff__gt_500KB   = " + Write_Buff__gt_500KB);
-      return text.ToString();
-    }
-
+    public static long 
+      ClearBuff = 0,                             //バッファクリア回数
+      FailToLockBuff_Write = 0;                  //バッファロック失敗回数　書込み
 
     /// <summary>
     /// 各項目をテキストで出力
@@ -401,28 +358,14 @@ namespace pfAdapter
       text.AppendLine("  FailToLockBuff_Write     =  " + FailToLockBuff_Write);
       return text.ToString();
     }
-
   }
 
 
-
   /// <summary>
-  /// 状態記録用ログ  パイプバッファ、ファイルの読込
+  /// 状態記録用ログ  パイプバッファ読込、ファイル読込
   /// </summary>
   internal class LogStatus_Input
   {
-    private int Read_Buff__le__10KB = 0,          //１回のバッファ読込量
-                Read_Buff__le__50KB = 0,
-                Read_Buff__le_100KB = 0,
-                Read_Buff__le_200KB = 0,
-                Read_Buff__le_500KB = 0,
-                Read_Buff__gt_500KB = 0,
-                Read_File__le__10KB = 0,          //１回のファイル読込量
-                Read_File__le_100KB = 0,
-                Read_File__le_200KB = 0,
-                Read_File__le_500KB = 0,
-                Read_File__gt_500KB = 0;
-
     public long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //データ総読込量
     public long TotalPipeRead = 0;                                                          //パイプ総読込量
     public long TotalFileRead { get { return FileReadWithPipe + FileReadWithoutPipe; } }    //ファイル総読込量
@@ -433,58 +376,6 @@ namespace pfAdapter
                 FilePos_whenPipeClosed = 0,         //パイプが閉じた時のファイルポジション
                 AccessTimes_UnwriteArea = 0,        //未書込みエリアへのアクセス回数
                 ReqPos_Unknown = 0;                 //RequestRefPos.Unknownの回数
-
-    /// <summary>
-    /// １回のバッファ読込量を記録
-    /// </summary>
-    /// <param name="readsize">読込んだバイト数  Byte</param>
-    public void Log_ReadBuffChunk(int readsize)
-    {
-      if (readsize <= 10 * 1024) Read_Buff__le__10KB++;
-      else if (readsize <= 50 * 1024) Read_Buff__le__50KB++;
-      else if (readsize <= 100 * 1024) Read_Buff__le_100KB++;
-      else if (readsize <= 200 * 1024) Read_Buff__le_200KB++;
-      else if (readsize <= 500 * 1024) Read_Buff__le_500KB++;
-      else Read_Buff__gt_500KB++;
-    }
-
-    /// <summary>
-    /// １回のファイル読込量を記録
-    /// </summary>
-    /// <param name="readsize">読込んだバイト数  Byte</param>
-    public void Log_ReadFileChunk(int readsize)
-    {
-      if (readsize <= 10 * 1024) Read_File__le__10KB++;
-      else if (readsize <= 100 * 1024) Read_File__le_100KB++;
-      else if (readsize <= 200 * 1024) Read_File__le_200KB++;
-      else if (readsize <= 500 * 1024) Read_File__le_500KB++;
-      else Read_File__gt_500KB++;
-    }
-
-
-    /// <summary>
-    /// データ読み込み量をテキストで出力
-    /// </summary>
-    public string OutText_ReadChunk()
-    {
-      var text = new StringBuilder();
-      //バッファ読込
-      text.AppendLine("  Read_Buff__le__10KB   = " + Read_Buff__le__10KB);
-      text.AppendLine("  Read_Buff__le__50KB   = " + Read_Buff__le__50KB);
-      text.AppendLine("  Read_Buff__le_100KB   = " + Read_Buff__le_100KB);
-      text.AppendLine("  Read_Buff__le_200KB   = " + Read_Buff__le_200KB);
-      text.AppendLine("  Read_Buff__le_500KB   = " + Read_Buff__le_500KB);
-      text.AppendLine("  Read_Buff__gt_500KB   = " + Read_Buff__gt_500KB);
-      //ファイル読込
-      text.AppendLine("  Read_File__le__10KB   = " + Read_File__le__10KB);
-      text.AppendLine("  Read_File__le_100KB   = " + Read_File__le_100KB);
-      text.AppendLine("  Read_File__le_200KB   = " + Read_File__le_200KB);
-      text.AppendLine("  Read_File__le_500KB   = " + Read_File__le_500KB);
-      text.AppendLine("  Read_File__gt_500KB   = " + Read_File__gt_500KB);
-      text.AppendLine();
-      return text.ToString();
-    }
-
 
     /// <summary>
     /// データ総読込量をテキストで出力
