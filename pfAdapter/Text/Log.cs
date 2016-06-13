@@ -104,11 +104,10 @@ namespace pfAdapter
       {
         try
         {
-          //１２８ＫＢ以下なら追記
           var path = Path.Combine(logDir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
-          bool append = logfile.Exists && logfile.Length <= 128 * 1024;
-          writer = new StreamWriter(path, append, Encoding.UTF8);  //UTF-8 bom
+          bool append = logfile.Exists && logfile.Length <= 128 * 1024;  //128 KB 以下なら追記
+          writer = new StreamWriter(path, append, Encoding.UTF8);  　　　//UTF-8 bom
           break;
         }
         catch { /*ファイル使用中*/ }
@@ -121,6 +120,7 @@ namespace pfAdapter
         writer.WriteLine();
         writer.WriteLine(new String('=', 80));
       }
+
       return writer;
     }
 
@@ -413,4 +413,5 @@ namespace pfAdapter
   }
 
   #endregion LogStatus
+
 }

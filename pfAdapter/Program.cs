@@ -185,7 +185,7 @@ namespace pfAdapter
       }
 
 
-      //MainSession
+      //MainSession[main loop]
       {
         Log.System.WriteLine("[ Main Session ]");
         Log.Flush();
@@ -253,7 +253,7 @@ namespace pfAdapter
       //多重起動の負荷分散
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        //  Client_WriteStdinの起動タイミングも少しずらされる。
+        //  Client_WriteStdinの起動タイミングも少しずらす。
         int rand_msec = new Random(App.PID).Next(2 * 1000, 6 * 1000);
         Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();
@@ -270,8 +270,7 @@ namespace pfAdapter
         Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
         Log.System.WriteLine();
       }
-      //Clientのマクロを設定１
-      //Macro_EncProfileはExternalCommandで変更される可能性がある
+      //マクロを設定
       {
         Client.Macro_SrcPath = setting.File;
         Client.Macro_Channel = ProgramInfo.Channel;
@@ -304,17 +303,15 @@ namespace pfAdapter
       //コマンドライン
       {
         //外部プロセスからコマンドライン取得
-        //  取得前に*.program.txt読込をしておくこと
+        //  取得前に*.program.txtの読込みをしておくこと
         setting.Get_ExternalCommand();
+
         //終了要求があった？
         if (setting.Abort == true)
           return false;                //アプリ終了
 
         Log.System.WriteLine("[ CommandLine ]");
         Log.System.WriteLine(setting.Cmdline_ToString());
-        //Clientのマクロを設定２
-        //　コマンドラインが確定したので再設定
-        Client.Macro_EncProfile = setting.EncProfile;
       }
 
       //ProhibitFileMove初期化
@@ -329,19 +326,21 @@ namespace pfAdapter
     #region MainSession
 
     /// <summary>
-    /// MainSession [main loop]
+    /// MainSession[main loop]
     /// </summary>
     static class MainSession
     {
       /// <summary>
       /// Task間のLog同期
-      /// 　Taskごとのログを混ぜないための lock
-      /// 　Log側では１行分のロックしかできない。
       /// </summary>
+      /// <remarks>
+      ///  Taskごとのログを混ぜないための lock
+      ///  Log側では１行分のロックしかできない。
+      /// </remarks>
       static readonly object syncLog = new object();
 
       /// <summary>
-      /// MainSession [main loop] をTaskで取得
+      /// MainSession[main loop] をTaskで取得
       /// </summary>
       public static Task GetTask(
                                  InputReader reader,

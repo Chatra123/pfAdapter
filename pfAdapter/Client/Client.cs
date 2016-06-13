@@ -80,7 +80,7 @@ namespace pfAdapter
   [Serializable]
   public class Client
   {
-    //マクロ置換用の値  簡単なのでstaticで保持
+    //マクロ用の値  簡単なのでstaticで保持
     public static string Macro_SrcPath;
     public static string Macro_Channel, Macro_Program;
     public static string Macro_EncProfile;
@@ -113,8 +113,6 @@ namespace pfAdapter
     /// <summary>
     /// プロセス作成
     /// </summary>
-    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
-    /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>作成したプロセス</returns>
     protected Process CreateProcess()
     {
@@ -124,35 +122,41 @@ namespace pfAdapter
       var prc = new Process();
 
       //Path
-      string sessionPath;
+      string sessionPath;  //マクロ置換後のパス
       {
-        BasePath = BasePath ?? "";
-        sessionPath = BasePath;
+        sessionPath = BasePath ?? "";
         sessionPath = ReplaceMacro(sessionPath);
         sessionPath = sessionPath.Trim();
-        if (string.IsNullOrWhiteSpace(sessionPath))
-          return null;                                       //パスが無効
+        if (string.IsNullOrEmpty(sessionPath))
+          return null;                               //パスが無効
       }
 
       //Args
-      string sessionArgs;
+      string sessionArgs;  //マクロ置換後の引数
       {
-        BaseArgs = BaseArgs ?? "";
-        sessionArgs = BaseArgs;
+        sessionArgs = BaseArgs ?? "";
         sessionArgs = ReplaceMacro(sessionArgs);
         sessionArgs = sessionArgs.Trim();
       }
 
-      SetScriptLoader(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeをセット
+      bool isVBS = SetVbsScript(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeをセット
+      bool isExist = File.Exists(sessionPath) || isVBS;
+
       prc.StartInfo.FileName = sessionPath;
       prc.StartInfo.Arguments = sessionArgs;
 
-      Log.System.WriteLine("      BasePath     :" + BasePath);
-      Log.System.WriteLine("      BaseArgs     :" + BaseArgs);
-      Log.System.WriteLine("      SessionPath  :" + sessionPath);
-      Log.System.WriteLine("      SessionArgs  :" + sessionArgs);
-      Log.System.WriteLine("                   :");
-      Log.System.WriteLine();
+      //Log
+      {
+        Log.System.WriteLine("      BasePath  :" + BasePath);
+        Log.System.WriteLine("      BaseArgs  :" + BaseArgs);
+        Log.System.WriteLine("          Path  :" + sessionPath);
+        Log.System.WriteLine("          Args  :" + sessionArgs);
+        if (isExist == false)
+          Log.System.WriteLine("        /▽  File not found  ▽/");
+        Log.System.WriteLine("                :");
+        Log.System.WriteLine();
+      }
+
       return prc;
     }
 
@@ -168,7 +172,7 @@ namespace pfAdapter
       string after = before;
 
       /*
-       * r12からRecName_Macro.dllと同じようなマクロに変更＆追加した。
+       * r12からRecName_Macro.dllと同じマクロ名に変更＆追加した。
        * 
        * ファイルパス　（フルパス）       $fPath$           --> $FilePath$                    C:\rec\news.ts
        * フォルダパス  （最後に\はなし）  $fDir$            --> $FolderPath$                  C:\rec
@@ -221,10 +225,10 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$EncProfile\$", Macro_EncProfile, RegexOptions.IgnoreCase);
       }
 
-      //App
+      //App　（r12から）
       {
-        after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
       }
 
       //App  （r11まで）
@@ -237,19 +241,31 @@ namespace pfAdapter
     }
 
 
+
     /// <summary>
     /// vbsがセットされていたらcscript.exeに変更。
     /// batは変更しなくても処理できる。
     /// </summary>
-    protected static void SetScriptLoader(ref string exepath, ref string args)
+    /// <returns>
+    ///       vbs &     exist  -->  true
+    ///           & not exist  -->  false
+    ///   not vbs              -->  false
+    /// </returns>
+    protected static bool SetVbsScript(ref string exepath, ref string args)
     {
       var ext = System.IO.Path.GetExtension(exepath).ToLower();
+      var isVBS = (ext == ".vbs" || ext == ".js");
 
-      if (ext == ".vbs" || ext == ".js")
+      if (isVBS)
       {
-        string scriptPath = exepath;
+        string vbsPath = exepath;
         exepath = "cscript.exe";
-        args = string.Format(" \"{0}\"  {1} ", scriptPath, args);
+        args = string.Format(" \"{0}\"  {1} ", vbsPath, args);
+        return File.Exists(vbsPath);
+      }
+      else
+      {
+        return false;
       }
     }
 
@@ -257,8 +273,6 @@ namespace pfAdapter
     /// <summary>
     /// プロセス実行  通常実行
     /// </summary>
-    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
-    /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
     public bool Start()
     {
@@ -279,13 +293,12 @@ namespace pfAdapter
           if (0 <= WaitTimeout_sec)
             Process.WaitForExit((int)(WaitTimeout_sec * 1000));
           else
-            //WaitForExit(int)は-1でない負数だと例外発生
+            //WaitForExit(int)は -1 でない負数だと例外発生
             Process.WaitForExit(-1);
         }
       }
       catch (Exception exc)
       {
-        //FileNotFoundExceptionもここでキャッチ
         launch = false;
         Log.System.WriteLine("  /☆ Exception ☆/");
         Log.System.WriteLine("        " + FileName);
@@ -300,8 +313,6 @@ namespace pfAdapter
     /// <summary>
     /// プロセス実行  標準出力を取得
     /// </summary>
-    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
-    /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
     public string Start_GetStdout()
     {
@@ -314,15 +325,15 @@ namespace pfAdapter
       //入出力のリダイレクト
       Process.StartInfo.RedirectStandardOutput = true;
 
-      //プロセス実行
+      //実行
       string result;
       try
       {
-        //標準出力を読み取る、プロセス終了まで待機
+        //標準出力を取得
         Process.Start();
         result = Process.StandardOutput.ReadToEnd();
         Process.WaitForExit();
-        Process.Close();               //必ずプロセスが終了した後にとじること
+        Process.Close();
       }
       catch (Exception exc)
       {
@@ -348,8 +359,6 @@ namespace pfAdapter
     /// <summary>
     /// プロセス実行  標準入力に書き込む
     /// </summary>
-    /// <param name="sessionPath">今回のみ使用するファイルパス</param>
-    /// <param name="sessionArgs">今回のみ使用する引数</param>
     /// <returns>プロセスが実行できたか</returns>
     public bool Start_WriteStdin()
     {
@@ -373,8 +382,8 @@ namespace pfAdapter
 
 
       //標準エラー
-      //CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す
-      //　falseだとコンソールに表示されるので非同期で取り出して捨てる
+      //CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す。
+      //　falseだとコンソールに表示されるので非同期で取り出して捨てる。
       Process.StartInfo.RedirectStandardError = true;
       //標準エラーを取り出す。
       Process.ErrorDataReceived += (o, e) =>
@@ -418,8 +427,7 @@ namespace pfAdapter
     public Client_OutStdout()
     {
       Enable = 1;
-      //ダミーのProcessを割り当てる。プロセスの生存チェック回避
-      //if (client.Process.HasExited==false)を回避する。
+      //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
 
       StdinWriter = new BinaryWriter(Console.OpenStandardOutput());
@@ -435,8 +443,7 @@ namespace pfAdapter
     public Client_OutFile(string filepath)
     {
       Enable = 1;
-      //ダミーのProcessを割り当てる。プロセスの生存チェック回避
-      //if (client.Process.HasExited==false)を回避する。
+      //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
 
       StdinWriter = CreateOutFileWriter(filepath);
