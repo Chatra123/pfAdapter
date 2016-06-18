@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
+
 #region title
 #endregion
 
@@ -142,7 +143,7 @@ namespace pfAdapter
         {
           Log.System.WriteLine("  Main_A:");
           writerA.RegisterWriter(setting.Client_MainA);
-          writerA.Timeout = TimeSpan.FromSeconds(10);      // 10 sec
+          writerA.Timeout = TimeSpan.FromSeconds(10);
         }
 
         if (setting.EnableRun_Enc_B)

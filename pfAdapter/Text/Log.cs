@@ -374,8 +374,7 @@ namespace pfAdapter
 
     public long FailToLockBuff__Read = 0,           //バッファロック失敗回数　読込み
                 FilePos_whenPipeClosed = 0,         //パイプが閉じた時のファイルポジション
-                AccessTimes_UnwriteArea = 0,        //未書込みエリアへのアクセス回数
-                ReqPos_Unknown = 0;                 //RequestRefPos.Unknownの回数
+                AccessTimes_UnwriteArea = 0;        //未書込みエリアへのアクセス回数
 
     /// <summary>
     /// データ総読込量をテキストで出力
@@ -406,7 +405,6 @@ namespace pfAdapter
       text.AppendLine("  FailToLockBuff__Read     =  " + FailToLockBuff__Read);
       text.AppendLine("  FilePos_whenPipeClosed   =  " + FilePos_whenPipeClosed);
       text.AppendLine("  AccessTimes_UnwriteArea  =  " + AccessTimes_UnwriteArea);
-      text.AppendLine("  ReqPos_Unknown           =  " + ReqPos_Unknown);
       return text.ToString();
     }
 

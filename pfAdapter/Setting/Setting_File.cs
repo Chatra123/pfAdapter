@@ -59,7 +59,7 @@ namespace pfAdapter.Setting
 
         if (File.Exists(xmlpath) == false)
         {
-          //設定ファイル作成
+          //作成
           var def_Setting = Sample_A();    //  Sample_A  Sample_RunTest
           XmlRW.Save(xmlpath, def_Setting);
         }
@@ -380,8 +380,8 @@ namespace pfAdapter.Setting
         new Client_WriteStdin()
         {
           Enable = 1,
-          BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
-          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag   ",
+          BasePath = @"   ..\Pipe2File.exe   ",
+          BaseArgs = "  \"$FilePath$.p2f.ts\"   ",
         },
       };
 
@@ -389,11 +389,12 @@ namespace pfAdapter.Setting
       {
         new Client_WriteStdin()
         {
-          Enable = 1,
-          BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
-          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag   ",
+          Enable = 0,
+          BasePath = @"   ..\Pipe2File.exe   ",
+          BaseArgs = "  \"$FilePath$.p2f.ts\"   ",
         },
       };
+
       return setting;
     }
 

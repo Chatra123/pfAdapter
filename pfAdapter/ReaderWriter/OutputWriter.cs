@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+
 
 namespace pfAdapter
 {
@@ -57,18 +59,19 @@ namespace pfAdapter
       if (srcList == null) return false;
 
       WriterList = new List<Client_WriteStdin>(srcList);
+      WriterList = WriterList.Where(client => client.IsEnable).ToList();
       WriterList.Reverse();                                 //末尾から登録するので逆順に。
 
       //プロセス実行
       for (int i = WriterList.Count - 1; 0 <= i; i--)
       {
         var writer = WriterList[i];
-        //有効？
-        if (writer.IsEnable == false) { WriterList.Remove(writer); continue; }
+
         //実行
         Log.System.WriteLine("  " + writer.FileName);
         writer.Start_WriteStdin();
-        //実行失敗
+
+        //実行失敗？
         if (writer.StdinWriter == null) { WriterList.Remove(writer); continue; }
       }
       Log.System.WriteLine();
@@ -134,7 +137,6 @@ namespace pfAdapter
 
       //全タスクが完了するまで待機。Timeout = -1にはしないこと
       Task.WaitAll(tasklist.ToArray(), Timeout);
-
 
       //結果
       bool success = true;

@@ -92,9 +92,9 @@ namespace pfAdapter
     /// <summary>
     /// LogInputの出力を有効にする
     /// </summary>
-    public void Enable_LogInput(LogWriter logger)
+    public void Enable_LogInput(LogWriter baseLogInput)
     {
-      LogInput = logger;
+      LogInput = baseLogInput;
       LogInput.Enable = true;
       LogInput.OutConsole = false;
       LogInput.OutFile = true;
@@ -309,8 +309,6 @@ namespace pfAdapter
           case ReqRelativePos.FailToLock:
           case ReqRelativePos.Unknown:
           default:
-            if (reqPos == ReqRelativePos.Unknown) LogStatus.ReqPos_Unknown++;
-
             //ロック失敗 or バッファクリア待ち
             LogStatus.FailToLockBuff__Read++;
             LogInput.WriteLine("    FailToLock");
@@ -325,10 +323,15 @@ namespace pfAdapter
       if (pipeReader.IsConnected == false
                   && pipeReader.HasData(filePositon, 1, LogInput) == false)
       {
-        //バッファが空になったと推定。パイプバッファからの読込み終了。
-        //ファイル末尾の書き込まれてないデータがあればファイルから読み込む。
+        //バッファが空になったと推定。
+        //ファイル末尾の読み込まれてないデータがあればファイルから読み込む。
         pipeReader.Close();
         pipeReader = null;
+
+
+        Log.System.WriteLine();
+        Log.System.WriteLine("△△△Pipe Disconnected   fpos = {0,12:N0}", filePositon);
+        Log.System.WriteLine();
 
         //log
         {
@@ -343,7 +346,7 @@ namespace pfAdapter
       else
       {
         //　パイプが閉じた　＆　バッファロック失敗
-        //　次のループで残りのバッファを読込む。
+        //　リトライ
         Thread.Sleep(30);
         return null;
       }
@@ -433,7 +436,7 @@ namespace pfAdapter
             Thread.Sleep(3 * 1000);
             return null;               //リトライ ReadBytes()
           }
-          else//パイプが閉じている
+          else
           {
             //check file position
             if (fileStream.Position < fileInfo.Length)
@@ -445,7 +448,7 @@ namespace pfAdapter
 
             if (retry < 2)
             {
-              //ファイルが拡張されるかもpart2、待機
+              //ファイルが拡張されるかもpart2
               Thread.Sleep(2 * 1000);
               continue;                //retry for
             }
@@ -500,7 +503,7 @@ namespace pfAdapter
           //ファイル末尾の１９.９パケット以降が読み込まれるとここにくる
           if (retry < 2)
           {
-            //ファイルが拡張されるかも 
+            //ファイルが拡張されるかもpart1
             //　＆　末尾の１９.９パケットが確実に書き込まれるように待機
             Thread.Sleep(2 * 1000);
             continue;                                      //retry for
@@ -530,6 +533,8 @@ namespace pfAdapter
 
       throw new Exception("FileReadBytes(): unknown file read");
     }//func
+
+
 
     /// <summary>
     /// ゼロパケットを含んでいるか？
@@ -597,13 +602,13 @@ namespace pfAdapter
      *  numPakcet005 =   5
      *
      *             i =      0   ...  19   ...  39   ...  59   ...  79   ...  99
-     *                ｜■■■■｜■■■■｜■■■■｜■■■□｜□□□□｜□□□□｜□
+     *                ｜■■■■｜■■■■｜■■■■｜■■■□｜□□□□｜□□□□｜□□□
      *
      *                                                                   ｜     ：パケットの境界
      *                                                                ■■■■  ：値パケット　　　　　　パケット全体に値がある
      *                                                                ■■■□  ：一部値パケット　　　　パケットの後半がゼロ
      *                                                                □□□□  ：ゼロパケット　　　　　パケット全体が０
-     *                                                                □        ：１パケット未満のデータ
+     *                                                                □□□    ：１パケット未満のデータ
      *  処理
      *  ・まず最初に最後尾 i = 99がゼロパケットか検査。
      *  ・ゼロパケットなら５％だけ戻り i = 94を検査。

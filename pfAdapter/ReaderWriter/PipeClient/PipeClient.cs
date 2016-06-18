@@ -54,19 +54,19 @@ namespace pfAdapter
     /// <summary>
     /// Connect  sync
     /// </summary>
-    /// <param name="timeout">接続を待機する最大時間　ミリ秒</param>
     /// <remarks>
     ///・pipeClient.Connect(1000*10)だと接続できるまでＣＰＵ使用率１００％で待機したので、
     ///　pipeClient.Connect(0) & Thread.Sleep(50) を用いる。
     /// </remarks>
-    public override void Connect(int timeout = 1000)
+    public override void Connect(int timeout = 2000)
     {
       try { pipeClient.Connect(0); }
       catch (TimeoutException) { }
 
-      for (int i = 0; i < (timeout / 50); i++)
+      int retry = timeout / 50;
+      for (int i = 0; i < retry; i++)
       {
-        if (IsConnected) break;
+        if (pipeClient.IsConnected) break;
 
         try { pipeClient.Connect(0); }
         catch (TimeoutException) { }
@@ -143,7 +143,7 @@ namespace pfAdapter
     /// <summary>
     /// Connect  sync
     /// </summary>
-    public override void Connect(int timeout = 1000)
+    public override void Connect(int timeout = 2000)
     {
       /*do nothing*/
     }

@@ -38,7 +38,7 @@ namespace pfAdapter
     /// <param name="pipeName">名前付きパイプ</param>
     public BufferedPipeClient(string pipeName)
     {
-      //BasePipe初期化
+      //PipeClient初期化
       pipeClient = String.IsNullOrEmpty(pipeName)
         ? new StdinPipeClient() as AbstructPipeClient
         : new NamedPipeClient() as AbstructPipeClient;
@@ -73,7 +73,7 @@ namespace pfAdapter
     /// <summary>
     /// パイプ接続
     /// </summary>
-    public void Connect(int timeout = 1000)
+    public void Connect(int timeout = 2000)
     {
       lock (sync)
       {
@@ -256,19 +256,18 @@ namespace pfAdapter
     /// </summary>
     private void DataPipeReader()
     {
-      //接続待機中
+      //接続待機
       while (true)
       {
         //タスクキャンセル？
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        //接続？
         if (pipeClient.IsConnected) break;
         else Thread.Sleep(30);
       }
 
 
-      //接続中
+      //接続
       while (true)
       {
         //タスクキャンセル？
@@ -286,11 +285,10 @@ namespace pfAdapter
         //
         Log.PipeBuff.WriteLine();
         Log.PipeBuff.WriteLine();
-
         Log.PipeBuff.WriteLine("Read()");
         byte[] readData = null;
-        //                                   pipe server の書込みは平均 770 KB
-        //                                   Write_Default のバッファ量と同じ
+        //                              pipe server の書込みは平均 770 KB
+        //                              Write_Default のバッファ量と同じ
         readData = pipeClient.ReadPipe(Packet.Size * 1000);           //Packet.Size * 1024 = 188 KiB
 
         //読込データがある？
@@ -377,7 +375,7 @@ namespace pfAdapter
               Buff.Clear();
               //log
               {
-                Log.PipeBuff.WriteLine("×××Read large data grater than buffer.  destruct all data.");
+                Log.PipeBuff.WriteLine("×××Read data is grater than buffer.  destruct all data.");
                 Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + readData.Length) + "  BuffTopPos = " + BuffTopPos);
               }
             }

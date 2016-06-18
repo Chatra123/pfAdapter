@@ -67,7 +67,6 @@ namespace pfAdapter
     public void Run()
     {
       if (IsEnable == false) return;
-      if (List.Where((client) => client.IsEnable).Count() == 0) return;
 
       foreach (var client in List)
         client.Start();
