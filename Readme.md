@@ -258,9 +258,9 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 
   
 ------------------------------------------------------------------
-##### Write_Default.dllのパイプ出力
+##### Write_Default.dllのTee出力
 
-  Write_PF.dllの代わりにパイプ出力対応のWrite_Default.dllが利用できます。  
+  Write_PF.dllの代わりにTee出力対応のWrite_Default.dllが利用できます。  
   基本的な動作はWrite_PF.dllと同じです。
   
   Write_Default.dllの設定でTeeコマンドをチェックし、  
