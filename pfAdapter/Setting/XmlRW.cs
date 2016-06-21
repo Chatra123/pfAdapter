@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/03/29
+ * 最終更新日　16/06/21
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -35,7 +35,7 @@ namespace OctNov.IO
     {
       if (File.Exists(filename) == false) return default(T);
 
-      for (int i = 1; i <= 3; i++)
+      for (int i = 1; i <= 2; i++)
       {
         try
         {
@@ -59,8 +59,7 @@ namespace OctNov.IO
         }
         catch (IOException ioexc)
         {
-          //３回目の失敗？
-          if (3 <= i)
+          if (2 <= i)
           {
             var msg = new StringBuilder();
             msg.AppendLine(ioexc.Message);
@@ -76,7 +75,7 @@ namespace OctNov.IO
           //フォーマット、シリアル属性を確認してください。
           throw exc;
         }
-        System.Threading.Thread.Sleep(i * 300);
+        System.Threading.Thread.Sleep(50);
       }
 
       return default(T);
@@ -91,7 +90,7 @@ namespace OctNov.IO
     /// <returns>保存が成功したか</returns>
     public static bool Save<T>(string filename, T setting)
     {
-      for (int i = 1; i <= 3; i++)
+      for (int i = 1; i <= 2; i++)
       {
         try
         {
@@ -110,12 +109,12 @@ namespace OctNov.IO
         catch (IOException)
         {
           //別プロセスがファイルを使用中
-          System.Threading.Thread.Sleep(i * 300);
+          System.Threading.Thread.Sleep(50);
         }
-        catch (Exception excp)
+        catch (Exception exc)
         {
           //オブジェクトのシリアル化失敗
-          throw excp;
+          throw exc;
         }
       }
 
@@ -131,7 +130,6 @@ namespace OctNov.IO
     /// <returns>保存が成功したか</returns>
     public static bool Save_withBackup<T>(string filename, T settings)
     {
-      //ファイルが存在するならバックアップにリネーム
       if (File.Exists(filename))
       {
         try
@@ -142,7 +140,7 @@ namespace OctNov.IO
         }
         catch { /* do nothing */ }
       }
-      //保存
+
       return Save(filename, settings);
     }
 
