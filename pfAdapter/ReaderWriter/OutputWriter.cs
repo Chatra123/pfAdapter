@@ -135,7 +135,7 @@ namespace pfAdapter
       }
 
 
-      //全タスクが完了するまで待機。Timeout = -1にはしないこと
+      //全タスクが完了するまで待機
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
       //結果

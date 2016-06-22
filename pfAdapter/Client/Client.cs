@@ -426,6 +426,7 @@ namespace pfAdapter
     public Client_OutStdout()
     {
       Enable = 1;
+      Name = "OutStdout";
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
 
@@ -442,6 +443,7 @@ namespace pfAdapter
     public Client_OutFile(string filepath)
     {
       Enable = 1;
+      Name = "OutFile";
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
 
