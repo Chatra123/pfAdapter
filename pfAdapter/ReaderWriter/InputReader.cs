@@ -104,10 +104,7 @@ namespace pfAdapter
     /// <summary>
     /// パイプ接続、ファイル確認
     /// </summary>
-    /// <param name="ipipe">名前付きパイプ</param>
-    /// <param name="ifile">ファイルパス</param>
-    /// <returns></returns>
-    public bool Connect(string ipipe, string ifile, bool SuspendLog = false)
+    public bool Connect(string ipipe, string ifile, bool logging = true)
     {
       //パイプ
       {
@@ -138,7 +135,7 @@ namespace pfAdapter
         }
 
       //log
-      if (SuspendLog == false)
+      if (logging)
       {
         if (PipeIsConnected)
           Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
@@ -161,7 +158,7 @@ namespace pfAdapter
     /// </summary>
     /// <param name="newBuff_MiB">バイプ用のバッファサイズ　MiB</param>
     /// <param name="newLimit_MiBsec">ファイル読込み速度の上限　MiB/sec</param>
-    public void SetParam(double newBuff_MiB, double newLimit_MiBsec, bool SuspendLog = false)
+    public void SetParam(double newBuff_MiB, double newLimit_MiBsec, bool logging = true)
     {
       //バッファサイズ
       if (pipeReader != null)
@@ -172,7 +169,7 @@ namespace pfAdapter
       ReadSpeedLimit = newLimit_MiBsec * 1024 * 1024;
 
       //log
-      if (SuspendLog == false)
+      if (logging)
       {
         if (PipeIsConnected)
           Log.System.WriteLine("      Pipe         BuffSize  =  {0,2:N0}    MiB", PipeBuffSize / 1024 / 1024);
@@ -285,7 +282,7 @@ namespace pfAdapter
         return pipeData;
 
       }
-      else if (pipeReader.IsConnected)
+      else if (PipeIsConnected)
       {
         //Read失敗　＆　パイプ接続中
         switch (reqPos)
@@ -319,19 +316,14 @@ namespace pfAdapter
       }
 
 
-      //パイプが閉じた　＆　バッファにデータがない？
-      if (pipeReader.IsConnected == false
+      //パイプが閉じた　＆　バッファが空　？
+      if (PipeIsConnected == false
                   && pipeReader.HasData(filePositon, 1, LogInput) == false)
       {
         //バッファが空になったと推定。
         //ファイル末尾の読み込まれてないデータがあればファイルから読み込む。
         pipeReader.Close();
         pipeReader = null;
-
-
-        Log.System.WriteLine();
-        Log.System.WriteLine("△△△Pipe Disconnected   fpos = {0,12:N0}", filePositon);
-        Log.System.WriteLine();
 
         //log
         {
@@ -340,7 +332,6 @@ namespace pfAdapter
           LogInput.WriteLine("△△△Pipe Disconnected   fpos = {0,12:N0}", filePositon);
           LogInput.WriteLine();
         }
-
         return new byte[] { };
       }
       else
@@ -367,9 +358,18 @@ namespace pfAdapter
     {
       if (fileReader == null) return new byte[] { };
 
-      //読込速度制限
+      //速度制限
       {
-        double tickReadSpeedLimit = ReadSpeedLimit;                       //制限速度  起動直後なら 6 MiB/sに強制指定
+        double tickReadLimit = ReadSpeedLimit;                             //制限速度  起動直後なら 6.0 MiB/sに強制指定
+
+        //　アプリ起動直後＆パイプ接続中なら強制的に速度制限
+        //　起動直後はファイル読込みが必ず発生するため。
+        if (App.Elapse_ms < 60 * 1000)
+        {
+          if (PipeIsConnected)
+            if (ReadSpeedLimit <= 0 || 6.0 * 1024 * 1024 < ReadSpeedLimit)
+              tickReadLimit = 6.0 * 1024 * 1024;
+        }
 
         if (200 < (DateTime.Now - tickBeginTime).TotalMilliseconds)       //Nmsごとにカウンタリセット
         {
@@ -377,20 +377,11 @@ namespace pfAdapter
           tickReadSize = 0;
         }
 
-        //　アプリ起動直後＆パイプ接続中なら強制的に速度制限
-        //　起動直後はファイル読込みが必ず発生するため。
-        if (App.Elapse_ms < 60 * 1000)
-        {
-          if (pipeReader != null && pipeReader.IsConnected)
-            if (ReadSpeedLimit <= 0 || 6 * 1024 * 1024 < ReadSpeedLimit)
-              tickReadSpeedLimit = 6 * 1024 * 1024;
-        }
-
         //　制限をこえていたらsleep()
-        if (0 < tickReadSpeedLimit)
+        if (0 < tickReadLimit)
         {
           //読込みサイズに直して比較
-          if (tickReadSpeedLimit * (200.0 / 1000.0) < tickReadSize)
+          if (tickReadLimit * (200.0 / 1000.0) < tickReadSize)
           {
             LogInput.WriteLine("△sleep 30  over read speed limit. ");
             Thread.Sleep(30);
@@ -401,8 +392,10 @@ namespace pfAdapter
 
 
       //ファイル読込み処理
-      for (int retry = 0; retry <= 2; retry++)
+      for (int retry = 0; retry <= 1; retry++)
       {
+        bool last_try = (1 <= retry);
+
         //
         //読込
         //
@@ -410,54 +403,44 @@ namespace pfAdapter
         var fileData = fileReader.ReadBytes(Packet.Size * 1000);     //Packet.Size * 1024 = 188 KiB
         tickReadSize += fileData.Length;                             //読込量記録  速度制限用
 
+
         //
-        //ファイル終端に到達？
+        //終端に到達？
         //
         if (fileData.Length == 0)
         {
           //作成直後のファイル？
           if (fileStream.Length == 0)
-          {
-            if (retry < 2)
+            if (last_try == false)
             {
-              if (retry == 0)
-                Log.System.WriteLine("  File size is 0. sleep()");
-              Thread.Sleep(3 * 1000);
+              Log.System.WriteLine("  File size is 0. sleep()");
+              Thread.Sleep(5 * 1000);
               continue;                //retry for
             }
-          }
 
           //パイプ接続中？
-          if (pipeReader != null)
+          if (PipeIsConnected)
           {
-            //パイプ接続中ならサーバープロセスの終了を待つ。
-            if (retry == 0)
-              Log.System.WriteLine("  Reach EOF with pipe connection. sleep()");
-            Thread.Sleep(3 * 1000);
+            //サーバープロセスの終了を待つ。
+            Log.System.WriteLine("  Reach EOF with pipe connection. waiting for disconnect. sleep()");
+            Thread.Sleep(10 * 1000);
             return null;               //リトライ ReadBytes()
           }
           else
           {
-            //check file position
-            if (fileStream.Position < fileInfo.Length)
-            {
-              //ファイルが拡張された
-              Thread.Sleep(2 * 1000);
-              return null;             //リトライ ReadBytes()
-            }
-
-            if (retry < 2)
-            {
-              //ファイルが拡張されるかもpart2
-              Thread.Sleep(2 * 1000);
-              continue;                //retry for
-            }
-            else
+            if (last_try)
             {
               //ファイル終端を確定
               LogInput.WriteLine("  Reach EOF");
               return new byte[] { };   //読込ループ終了
             }
+            else
+            {
+              //ファイルが拡張されるかもpart2
+              Thread.Sleep(5 * 1000);
+              continue;                //retry for
+            }
+
           }
         }
 
@@ -483,12 +466,12 @@ namespace pfAdapter
             //先頭５％以降が全てゼロだとfileData = nullが返ってくる
             if (fileData == null)
             {
-              //ゼロパケットを３０秒以上読み続けている？
+              //ゼロパケットを読み続けている？
               if (filePositon == lastPosReadPacket
-                && 1000 * 30 < (DateTime.Now - lastTimeReadPacket).TotalMilliseconds)
+                && 1000 * 20 < (DateTime.Now - lastTimeReadPacket).TotalMilliseconds)
               {
                 //値が書込まれてないファイル。書込み側がフリーズ or 強制終了してできたファイル
-                Log.System.WriteLine("/▽  Read zero packet for over 30secs.  fpos = {0,12:N0} ▽/", filePositon);
+                Log.System.WriteLine("/▽  Read zero packet over 20secs.  fpos = {0,12:N0} ▽/", filePositon);
                 return new byte[] { };                     //読込ループ終了
               }
               else
@@ -501,11 +484,11 @@ namespace pfAdapter
         else
         {
           //ファイル末尾の１９.９パケット以降が読み込まれるとここにくる
-          if (retry < 2)
+          if (last_try == false)
           {
             //ファイルが拡張されるかもpart1
             //　＆　末尾の１９.９パケットが確実に書き込まれるように待機
-            Thread.Sleep(2 * 1000);
+            Thread.Sleep(5 * 1000);
             continue;                                      //retry for
           }
         }
@@ -531,7 +514,7 @@ namespace pfAdapter
 
       }//for
 
-      throw new Exception("FileReadBytes(): unknown file read");
+      throw new Exception("FileReadBytes(): unknown error");
     }//func
 
 

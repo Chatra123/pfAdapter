@@ -56,7 +56,7 @@ namespace pfAdapter
         readerA = new InputReader("MainA");
         readerB = new InputReader("Enc_B");
         var isConnectedA = readerA.Connect(setting.Pipe, setting.File);
-        var isConnectedB = readerB.Connect(setting.Pipe, setting.File, true);
+        var isConnectedB = readerB.Connect(setting.Pipe, setting.File, false);
         //デバッグ用  入力ストリームのログ
         //readerA.Enable_LogInput(Log.InputA);
         //readerB.Enable_LogInput(Log.InputB);
@@ -126,7 +126,7 @@ namespace pfAdapter
       Log.System.WriteLine("[ Reader Param ]");
       {
         readerA.SetParam(setting.BuffSize_MiB, setting.ReadLimit_MiBsec);
-        readerB.SetParam(-1, setting.ReadLimit_MiBsec, true);
+        readerB.SetParam(-1, setting.ReadLimit_MiBsec, false);
       }
 
 
@@ -470,7 +470,7 @@ namespace pfAdapter
         {
           if (CollectSpan < (DateTime.Now - timeGCCollect).TotalMilliseconds)
           {
-            timeGCCollect = DateTime.Now;          
+            timeGCCollect = DateTime.Now;
             GC.Collect();
           }
         }
