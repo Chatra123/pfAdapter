@@ -132,14 +132,14 @@ namespace pfAdapter
     public bool LoadFile()
     {
       //カレントディレクトリ
-      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-      string AppDir = System.IO.Path.GetDirectoryName(AppPath);
-      Directory.SetCurrentDirectory(AppDir);
+      //string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+      //string AppDir = System.IO.Path.GetDirectoryName(AppPath);
+      //Directory.SetCurrentDirectory(AppDir);
 
       //コマンドラインで指定された Xml
       string xmlpath = setting_cmdline.XmlPath;
 
-      //指定されたファイルがない？
+      //指定ファイルがない？
       if (string.IsNullOrWhiteSpace(xmlpath) == false
         && System.IO.File.Exists(xmlpath) == false)
       {
