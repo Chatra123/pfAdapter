@@ -169,7 +169,7 @@ namespace pfAdapter
     /// </summary>
     /// <param name="requestTopPos">要求データ先頭のファイル位置</param>
     /// <param name="requestSize">要求データのサイズ</param>
-    /// <param name="reqPos">要求データとバッファとの相対位置</param>
+    /// <param name="ReqRelativePos">要求データとバッファとの相対位置</param>
     /// <returns>バッファから読み込んだデータ</returns>
     /// <remarks>バッファ内にデータがなければnullを返す。</remarks>
     public byte[] Read(
@@ -262,7 +262,7 @@ namespace pfAdapter
         //タスクキャンセル？
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        if (pipeClient.IsConnected) break;
+        if (IsConnected) break;
         else Thread.Sleep(30);
       }
 
@@ -274,7 +274,7 @@ namespace pfAdapter
         taskCanceller.Token.ThrowIfCancellationRequested();
 
         //切断？
-        if (pipeClient.IsConnected == false)
+        if (IsConnected == false)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected");
           break;                     //ループ終了
@@ -294,11 +294,8 @@ namespace pfAdapter
         //読込データがある？
         if (readData != null)
         {
-          //log
-          {
-            Log.PipeBuff.WriteLine("Read from pipe server");
-            Log.PipeBuff.WriteLine("           readData [{0,11:N0}]", readData.Length);
-          }
+          Log.PipeBuff.WriteLine("Read from pipe server");
+          Log.PipeBuff.WriteLine("           readData [{0,11:N0}]", readData.Length);
 
           //server disconnected ?
           if (readData.Length == 0)
@@ -314,7 +311,7 @@ namespace pfAdapter
         }
         else
         {
-          //パイプが切断された
+          //disconnected
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected,  readData == null");
           break;                       //ループ終了
         }
@@ -323,79 +320,65 @@ namespace pfAdapter
         //
         //読込成功　バッファに追加
         //
-        if (readData != null)
+        if (Monitor.TryEnter(sync, 120) == true)     //ロック
         {
-          if (Monitor.TryEnter(sync, 150) == true)     //ロック
+          //前回、バッファのロックに失敗した？
+          if (ClearBuff_Flag)
           {
+            BuffTopPos += Buff.Count() + ClearBuff_AdvancePos;
+            Buff.Clear();
+            ClearBuff_Flag = false;
+            ClearBuff_AdvancePos = 0;
+            LogStatus_PipeBuff.ClearBuff++;
+          }
 
-            //前回、バッファのロックに失敗した？
-            if (ClearBuff_Flag)
+          //Bufferに入るサイズか？
+          if (readData.Length <= BuffSize)
+          {
+            //Buffer容量不足なら先頭からデータ削除
+            while (BuffSize < Buff.Count + readData.Length)
             {
-              BuffTopPos += Buff.Count() + ClearBuff_AdvancePos;
-              Buff.Clear();
-              ClearBuff_Flag = false;
-              ClearBuff_AdvancePos = 0;
-              LogStatus_PipeBuff.ClearBuff++;
-            }
-
-            //Bufferに入るサイズか？
-            if (readData.Length <= BuffSize)
-            {
-              //Buffer容量不足なら先頭からデータ削除
-              while (BuffSize < Buff.Count + readData.Length)
-              {
-                Buff.RemoveRange(0, readData.Length);
-                BuffTopPos += readData.Length;
-
-                //log
-                {
-                  Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
-                  Log.PipeBuff.WriteLine("  --Remove readData  {0,11:N0} ", readData.Length);
-                  Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
-                  Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
-                }
-              }
-
-              Buff.AddRange(readData);
+              Buff.RemoveRange(0, readData.Length);
+              BuffTopPos += readData.Length;
 
               //log
-              {
-                Log.PipeBuff.WriteLine("  ++Add    readData  {0,11:N0} ", readData.Length);
-                Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
-                Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
-              }
+              Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
+              Log.PipeBuff.WriteLine("  --Remove readData  {0,11:N0} ", readData.Length);
+              Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
+              Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
 
             }
-            else
-            {
-              //Buffに入らない
-              //  データの連続性が途切れるので、全データ破棄。
-              //　読込サイズが大きすぎる。Buffに対して十分小さいサイズを読み込むこと。
-              BuffTopPos += Buff.Count() + readData.Length;
-              Buff.Clear();
-              //log
-              {
-                Log.PipeBuff.WriteLine("×××Read data is grater than buffer.  destruct all data.");
-                Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + readData.Length) + "  BuffTopPos = " + BuffTopPos);
-              }
-            }
 
-            Monitor.Exit(sync);    //ロック解除
+            Buff.AddRange(readData);
+
+            //log
+            Log.PipeBuff.WriteLine("  ++Add    readData  {0,11:N0} ", readData.Length);
+            Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
+            Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
+
           }
           else
           {
-            //Buffロック失敗
-            //  データの連続性が途切れるので、全データの破棄を予約。
-            //  次のループでバッファをクリアする。
-            ClearBuff_Flag = true;
-            ClearBuff_AdvancePos += readData.Length;
-            //log
-            {
-              Log.PipeBuff.WriteLine("×fail to lock");
-              Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + readData.Length) + "  BuffTopPos = " + BuffTopPos);
-              LogStatus_PipeBuff.FailToLockBuff_Write++;
-            }
+            //Buffに入らない
+            //  データの連続性が途切れるので、全データ破棄。
+            //　読込サイズが大きすぎる。Buffに対して十分小さいサイズを読み込むこと。
+            BuffTopPos += Buff.Count() + readData.Length;
+            Buff.Clear();
+            Log.PipeBuff.WriteLine("×××Read data is grater than buffer.  destruct all data.");
+            Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + readData.Length) + "  BuffTopPos = " + BuffTopPos);
           }
+
+          Monitor.Exit(sync);    //ロック解除
+        }
+        else
+        {
+          //Buffロック失敗
+          //  データの連続性が途切れるので、全データの破棄を予約。
+          ClearBuff_Flag = true;
+          ClearBuff_AdvancePos += readData.Length;
+          Log.PipeBuff.WriteLine("×fail to lock");
+          Log.PipeBuff.WriteLine("    advance " + (Buff.Count() + ClearBuff_AdvancePos) + "  BuffTopPos = " + BuffTopPos);
+          LogStatus_PipeBuff.FailToLockBuff_Write++;
         }
 
       }//end while
