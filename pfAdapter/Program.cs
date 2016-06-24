@@ -186,7 +186,7 @@ namespace pfAdapter
       }
 
 
-      //MainSession[main loop]
+      //Main Session  [main loop]
       {
         Log.System.WriteLine("[ Main Session ]");
         Log.Flush();
@@ -251,6 +251,11 @@ namespace pfAdapter
     /// </summary>
     static bool Initialize(AppSetting setting, string[] appArgs)
     {
+      //カレントディレクトリ
+      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+      string AppDir = System.IO.Path.GetDirectoryName(AppPath);
+      Directory.SetCurrentDirectory(AppDir);
+
       //多重起動の負荷分散
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
