@@ -394,7 +394,7 @@ namespace pfAdapter
       //ファイル読込み処理
       for (int retry = 0; retry <= 1; retry++)
       {
-        bool last_try = (1 <= retry);
+        bool last_retry = (1 <= retry);
 
         //
         //読込
@@ -411,9 +411,9 @@ namespace pfAdapter
         {
           //作成直後のファイル？
           if (fileStream.Length == 0)
-            if (last_try == false)
+            if (last_retry == false)
             {
-              Log.System.WriteLine("  File size is 0. sleep()");
+              LogInput.WriteLine("  File size is 0. sleep()");
               Thread.Sleep(5 * 1000);
               continue;                //retry for
             }
@@ -422,13 +422,13 @@ namespace pfAdapter
           if (PipeIsConnected)
           {
             //サーバープロセスの終了を待つ。
-            Log.System.WriteLine("  Reach EOF with pipe connection. waiting for disconnect. sleep()");
+            LogInput.WriteLine("  Reach EOF with pipe connection. waiting for disconnect. sleep()");
             Thread.Sleep(10 * 1000);
             return null;               //リトライ ReadBytes()
           }
           else
           {
-            if (last_try)
+            if (last_retry)
             {
               //ファイル終端を確定
               LogInput.WriteLine("  Reach EOF");
@@ -484,7 +484,7 @@ namespace pfAdapter
         else
         {
           //ファイル末尾の１９.９パケット以降が読み込まれるとここにくる
-          if (last_try == false)
+          if (last_retry == false)
           {
             //ファイルが拡張されるかもpart1
             //　＆　末尾の１９.９パケットが確実に書き込まれるように待機
@@ -561,10 +561,9 @@ namespace pfAdapter
       {
         //最後尾の１０パケット →　sample_packet
         Buffer.BlockCopy(readData, Packet.Size * i, sample_packet, 0, Packet.Size * 10);
-        //値がある？
+
         if (HasValue(sample_packet))
         {
-          //yes
           //検査した１０パケットを切捨てて、それより前を返す。
           valueData = new byte[Packet.Size * i];
           Buffer.BlockCopy(readData, 0, valueData, 0, Packet.Size * i);

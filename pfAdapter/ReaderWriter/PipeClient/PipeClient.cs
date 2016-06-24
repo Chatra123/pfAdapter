@@ -89,7 +89,10 @@ namespace pfAdapter
     /// Read  sync
     /// </summary>
     /// <param name="requestSize">要求データサイズ</param>
-    /// <returns>読込んだデータ</returns>
+    /// <returns>
+    ///   成功  -->  byte[] 
+    ///   切断  -->  null
+    /// </returns>
     public override byte[] ReadPipe(int requestSize)
     {
       if (IsConnected == false) return null;
@@ -161,7 +164,10 @@ namespace pfAdapter
     /// Read  sync
     /// </summary>
     /// <param name="requestSize">要求データサイズ</param>
-    /// <returns>読込んだデータ</returns>
+    /// <returns
+    ///   成功  -->  byte[] 
+    ///   切断  -->  null
+    /// </returns>
     public override byte[] ReadPipe(int requestSize)
     {
       if (IsConnected == false) return null;
