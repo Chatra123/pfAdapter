@@ -176,6 +176,7 @@ namespace pfAdapter
        * ファイルパス　（フルパス）       $fPath$           --> $FilePath$                    C:\rec\news.ts
        * フォルダパス  （最後に\はなし）  $fDir$            --> $FolderPath$                  C:\rec
        * ファイル名    （拡張子なし）     $fNameWithoutExt$ --> $FileName$                    news
+       * 拡張子                           none                  $Ext$                 追加    .ts
        * ファイル名    （拡張子あり）　   $fName$           --> $FileNameWithExt$     追加    news.ts
        * ファイルパス  （拡張子なし）　   $fPathWithoutExt$ --> $FilePathWithoutExt$  追加    C:\rec\news
        */
@@ -185,14 +186,18 @@ namespace pfAdapter
         string filePath = Macro_SrcPath;
         string folderPath = Path.GetDirectoryName(filePath);
         string fileName = Path.GetFileNameWithoutExtension(filePath);
+        string ext = Path.GetExtension(filePath);
         string fileNameWithExt = Path.GetFileName(filePath);
         string filePathWithoutExt = Path.Combine(folderPath, fileName);
         after = Regex.Replace(after, @"\$FilePath\$", filePath, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FolderPath\$", folderPath, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FileName\$", fileName, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$Ext\$", ext, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FileNameWithExt\$", fileNameWithExt, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FilePathWithoutExt\$", filePathWithoutExt, RegexOptions.IgnoreCase);
       }
+
+
 
       //パス  （r11まで）
       {
