@@ -106,8 +106,8 @@ namespace pfAdapter
         {
           var path = Path.Combine(logDir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
-          bool append = logfile.Exists && logfile.Length <= 128 * 1024;  //128 KB 以下なら追記
-          writer = new StreamWriter(path, append, Encoding.UTF8);  　　　//UTF-8 bom
+          bool append = logfile.Exists && logfile.Length <= 64 * 1024;  //64 KB 以下なら追記
+          writer = new StreamWriter(path, append, Encoding.UTF8);       //UTF-8 bom
           break;
         }
         catch { /*ファイル使用中*/ }

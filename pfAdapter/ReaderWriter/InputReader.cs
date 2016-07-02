@@ -49,7 +49,7 @@ namespace pfAdapter
     //バッファがうまく機能しないことがあればstaticにする。
 
     //file
-    private FileInfo fileInfo;
+    //private FileInfo fileInfo;
     private FileStream fileStream;
     private BinaryReader fileReader;
     private long filePositon;                              //次に読み込むバイトの位置
@@ -111,7 +111,7 @@ namespace pfAdapter
         if (common_pipeReader == null)
         {
           common_pipeReader = new BufferedPipeClient(ipipe);
-          common_pipeReader.Connect();
+          common_pipeReader.Connect(5 * 1000);
         }
 
         //インスタンスからのアクセス用  pipeReader
@@ -122,13 +122,13 @@ namespace pfAdapter
 
       //ファイル
       if (string.IsNullOrWhiteSpace(ifile) == false)
-        for (int i = 0; i < 5 * 6; i++)
+        for (int i = 0; i < 5 * 5; i++)
         {
           if (File.Exists(ifile))
           {
             fileStream = new FileStream(ifile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             fileReader = new BinaryReader(fileStream);
-            fileInfo = new FileInfo(ifile);
+            //fileInfo = new FileInfo(ifile);
             break;
           }
           Thread.Sleep(200);           //まだファイルが作成されていない？
@@ -149,7 +149,7 @@ namespace pfAdapter
         Log.System.WriteLine();
       }
 
-      return pipeReader != null || fileReader != null;
+      return fileReader != null;
     }
 
 

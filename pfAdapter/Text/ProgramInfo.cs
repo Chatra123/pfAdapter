@@ -13,7 +13,7 @@ namespace pfAdapter
   /// </summary>
   internal static class ProgramInfo
   {
-    public static bool HasInfo { get; private set; }
+    private static bool HasInfo = false;
     public static String Channel { get; private set; }
     public static String Program { get; private set; }
 
@@ -48,7 +48,7 @@ namespace pfAdapter
 
       //読
       List<string> infotext = null;
-      for (int i = 0; i < 4 * 2; i++)
+      for (int i = 0; i < 4 * 6; i++)
       {
         //４行以上取得できるまで繰り返す。
         //４行取得できたなら３行目は確実にある。

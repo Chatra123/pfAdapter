@@ -13,7 +13,7 @@ namespace pfAdapter
   internal class OutputWriter
   {
     private List<Client_WriteStdin> WriterList;
-    public TimeSpan Timeout = TimeSpan.FromSeconds(10);
+    public TimeSpan Timeout = TimeSpan.FromSeconds(20);
     public bool HasWriter { get { return WriterList != null && 0 < WriterList.Count; } }
 
     /// <summary>
