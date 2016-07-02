@@ -13,7 +13,7 @@ namespace pfAdapter
   /// <summary>
   /// AbstructPipeClient
   /// </summary>
-  internal abstract class AbstructPipeClient
+  internal abstract class PipeClient
   {
     public abstract string PipeName { get; }
     public abstract void Initialize(string pipename);
@@ -25,10 +25,11 @@ namespace pfAdapter
 
 
 
+
   /// <summary>
   /// NamedPipeClient
   /// </summary>
-  internal class NamedPipeClient : AbstructPipeClient
+  internal class NamedPipeClient : PipeClient
   {
     protected NamedPipeClientStream pipeClient;
 
@@ -58,8 +59,10 @@ namespace pfAdapter
     ///・pipeClient.Connect(1000*10)だと接続できるまでＣＰＵ使用率１００％で待機したので、
     ///　pipeClient.Connect(0) & Thread.Sleep(50) を用いる。
     /// </remarks>
-    public override void Connect(int timeout = 2000)
+    public override void Connect(int timeout)
     {
+      if (pipeClient == null) return;
+
       try { pipeClient.Connect(0); }
       catch (TimeoutException) { }
 
@@ -118,7 +121,7 @@ namespace pfAdapter
   /// <summary>
   /// StdinPipeClient
   /// </summary>
-  internal class StdinPipeClient : AbstructPipeClient
+  internal class StdinPipeClient : PipeClient
   {
     private BinaryReader reader;
     private bool isConnected;
@@ -146,7 +149,7 @@ namespace pfAdapter
     /// <summary>
     /// Connect  sync
     /// </summary>
-    public override void Connect(int timeout = 2000)
+    public override void Connect(int timeout)
     {
       /*do nothing*/
     }

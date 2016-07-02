@@ -14,12 +14,12 @@ namespace pfAdapter
   /// </summary>
   internal class BufferedPipeClient
   {
-    AbstructPipeClient pipeClient;
+    PipeClient pipeClient;
 
     public string PipeName { get { return pipeClient != null ? pipeClient.PipeName : "pipe is null"; } }
     public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
 
-    private Task taskPipeReader;                                   //パイプ読込タスク
+    private Task taskPipeReader;
     private CancellationTokenSource taskCanceller;                 //パイプ読込キャンセル用トークン
     private readonly object sync = new object();
 
@@ -39,18 +39,25 @@ namespace pfAdapter
     public BufferedPipeClient(string pipeName)
     {
       //PipeClient初期化
-      pipeClient = String.IsNullOrEmpty(pipeName)
-        ? new StdinPipeClient() as AbstructPipeClient
-        : new NamedPipeClient() as AbstructPipeClient;
-      pipeClient.Initialize(pipeName);
-
+      if (Console.IsInputRedirected)
+      {
+        pipeClient = new StdinPipeClient() as PipeClient;
+        pipeClient.Initialize(pipeName);
+      }
+      else if (String.IsNullOrEmpty(pipeName) == false)
+      {
+        pipeClient = new NamedPipeClient() as PipeClient;
+        pipeClient.Initialize(pipeName);
+      }
+      else
+        return;
 
       //参考
       //  地上波：　16 Mbps    2.0 MiB/sec    11,000 packet/sec
       //  ＢＳ　：　24 Mbps    3.0 MiB/sec    17,000 packet/sec
 
       //バッファサイズ
-      const int Default_BuffSize = 3 * 1024 * 1024;                  //初期サイズ３ＭＢ
+      const int Default_BuffSize = 3 * 1024 * 1024;
       BuffSize = Default_BuffSize;
       Buff = new List<byte>(Default_BuffSize);
 
@@ -73,8 +80,10 @@ namespace pfAdapter
     /// <summary>
     /// パイプ接続
     /// </summary>
-    public void Connect(int timeout = 2000)
+    public void Connect(int timeout = 1000)
     {
+      if (pipeClient == null) return;
+
       lock (sync)
       {
         pipeClient.Connect(timeout);
@@ -85,14 +94,12 @@ namespace pfAdapter
     /// <summary>
     /// バッファサイズ変更、拡張のみ
     /// </summary>
-    /// <param name="newSize_MiB">新しいバッファサイズ　MiB</param>
     public void ExpandBuffSize(double newSize_MiB)
     {
       lock (sync)
       {
         int newSize_B = (int)(newSize_MiB * 1024 * 1024);
-        if (BuffSize < newSize_B)
-          BuffSize = newSize_B;
+        BuffSize = 0 < newSize_B ? newSize_B : BuffSize;
       }
     }
 
@@ -101,6 +108,8 @@ namespace pfAdapter
     /// </summary>
     public void Close()
     {
+      if (pipeClient == null) return;
+
       lock (sync)
       {
         pipeClient.Close();
@@ -320,7 +329,7 @@ namespace pfAdapter
         //
         //読込成功　バッファに追加
         //
-        if (Monitor.TryEnter(sync, 120) == true)     //ロック
+        if (Monitor.TryEnter(sync, 100) == true)     //ロック
         {
           //前回、バッファのロックに失敗した？
           if (ClearBuff_Flag)
@@ -335,8 +344,8 @@ namespace pfAdapter
           //Bufferに入るサイズか？
           if (readData.Length <= BuffSize)
           {
-            //Buffer容量不足なら先頭からデータ削除
-            while (BuffSize < Buff.Count + readData.Length)
+            //容量不足なら先頭からデータ削除
+            if (BuffSize < Buff.Count + readData.Length)
             {
               Buff.RemoveRange(0, readData.Length);
               BuffTopPos += readData.Length;
@@ -346,7 +355,6 @@ namespace pfAdapter
               Log.PipeBuff.WriteLine("  --Remove readData  {0,11:N0} ", readData.Length);
               Log.PipeBuff.WriteLine("               Buff [{0,11:N0}]", Buff.Count());
               Log.PipeBuff.WriteByte("                                  Buff = ", Buff);
-
             }
 
             Buff.AddRange(readData);
