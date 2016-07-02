@@ -57,8 +57,17 @@ namespace pfAdapter.Setting
       //引数の１つ目がファイル？
       if (0 < args.Count())
         if (except_input == false)
-          if (System.IO.File.Exists(args[0]))
+          try
+          {
+            //ファイル名として使える文字列？
+            var finfo = new System.IO.FileInfo(args[0]);
             File = args[0];
+          }
+          catch
+          {
+            //パスに無効な文字が含まれています。
+          }
+
 
       //    /*Mono.Options*/
       //case insensitive
@@ -90,7 +99,7 @@ namespace pfAdapter.Setting
 
         .Add("preprc=", "switch PreProcessList   ", (int v) => this.PrePrc_App = 0 < v)
         .Add("midprcn=", "switch MidProcessList  ", (int v) => this.MidPrc_Main = 0 < v)
-        .Add("postprc=", "switch PostProcessList", 
+        .Add("postprc=", "switch PostProcessList",
              (int v) => { this.PostPrc_Main = this.PostPrc_Enc = this.PostPrc_App = 0 < v; })
 
         //Encoder
@@ -109,6 +118,7 @@ namespace pfAdapter.Setting
 
         .Add("and_more", "help mes", (v) => { /*action*/ });
 
+
       try
       {
         //パース仕切れなかったコマンドラインはList<string>で返される。
@@ -122,7 +132,6 @@ namespace pfAdapter.Setting
         Log.System.WriteLine();
         return;
       }
-
 
       //ファイル名　→　フルパス
       //  ファイル名形式でないと、この後のパス変換で例外がでる。
@@ -141,8 +150,8 @@ namespace pfAdapter.Setting
           File = "";
         }
       }
-
     }
+
     /// <summary>
     ///コマンドライン上書き　（入力、ＸＭＬは上書きしない。）
     /// </summary>
