@@ -49,6 +49,11 @@ namespace pfAdapter
       //　名前付きパイプの接続は最優先で行う。
       //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
       //　通常は10msもかからない。
+      //
+      // 16/06/20
+      //   Write_PF.dll側にファイル読み込み機能を加えたのでバッファによる時間制限がなくなった。
+      //   ２秒以上かかっても問題ない。
+      //
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
       {
@@ -70,7 +75,8 @@ namespace pfAdapter
           Log.System.WriteLine("[ App CommandLine ]");
           foreach (var arg in AppArgs) Log.System.WriteLine(arg);
           Log.System.WriteLine();
-          Log.System.WriteLine("入力を確認できません。");
+          Log.System.WriteLine("入力ファイルが確認できません。");
+          Log.System.WriteLine(setting.File);
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
@@ -78,6 +84,7 @@ namespace pfAdapter
           return;                                            //アプリ終了
         }
       }
+
 
       //
       //設定、各種ファイル読込
@@ -143,7 +150,7 @@ namespace pfAdapter
         {
           Log.System.WriteLine("  Main_A:");
           writerA.RegisterWriter(setting.Client_MainA);
-          writerA.Timeout = TimeSpan.FromSeconds(10);
+          writerA.Timeout = TimeSpan.FromSeconds(20);
         }
 
         if (setting.EnableRun_Enc_B)
@@ -159,7 +166,7 @@ namespace pfAdapter
          * writerB.Timeout_msec = -1;  だと
          * MainAの標準入力への書込みが短時間 or 完全に止まることがあり、
          * 書き込み処理がタイムアウトする。
-         * task MainAだけが動いているなら止まることはない。
+         * task MainA単体で動いているときは止まることはない。
          * 
          * writerA.Timeout_msec = -1;  writerB.Timeout_msec = -1;  のように、
          * 両方のタイムアウトを無期限にすると、録画終了後にwriterAの書込み処理が再開され、
@@ -191,28 +198,34 @@ namespace pfAdapter
         Log.System.WriteLine("[ Main Session ]");
         Log.Flush();
 
-        var enc_B = MainSession.GetTask(
-                                    readerB, writerB,
-                                    null, null,
-                                    false);
-
-        var mainA = MainSession.GetTask(
-                                    readerA, writerA,
-                                    midPrcTimer, postProcess_MainA,
-                                    true);
-        mainA.ContinueWith(t =>
+        var enc_B = MainSession.GetTask(readerB, writerB, null, false);
+        var mainA = MainSession.GetTask(readerA, writerA, midPrcTimer, true);
+        var mainA_post = mainA.ContinueWith(t =>
         {
+          //PostProcess
+          if (postProcess_MainA != null)
+          {
+            Log.System.WriteLine();
+            Log.System.WriteLine("[ PostProcess_MainA ]");
+            postProcess_MainA.Wait();
+            ProhibitFileMove_pfA.Unlock();           //移動禁止は待機中だけ
+            postProcess_MainA.Run();
+            ProhibitFileMove_pfA.Lock();             //移動禁止　　再
+            Log.System.WriteLine();
+          }
+
           if (enc_B.IsCompleted == false)
             Log.System.WriteLine("    wait for Enc_B to exit.  wait...");
         });
+
         mainA.Start();
         enc_B.Start();
         mainA.Wait();
+        mainA_post.Wait();
         enc_B.Wait();
       }
 
-      //後処理
-      //PostProcess_Enc
+      //PostProcess
       if (setting.EnableRun_Enc_B)
         if (setting.EnableRun_PostPrc_Enc)
         {
@@ -223,7 +236,6 @@ namespace pfAdapter
           ProhibitFileMove_pfA.Lock();                             //移動禁止　　再
         }
 
-      //PostProcess_App
       if (setting.EnableRun_PostPrc_App)
       {
         Log.System.WriteLine("[ PostProcess_App ]");
@@ -351,17 +363,16 @@ namespace pfAdapter
       public static Task GetTask(
                                  InputReader reader,
                                  OutputWriter writer,
-                                 MidProcessTimer midPrcTimer_MainA,
-                                 ClientList postPrcList_MainA,
-                                 bool enable_UpdateLog
+                                 MidProcessTimer midPrcTimer,
+                                 bool updateLog
                                 )
       {
         Task task = new Task(() =>
         {
           if (writer.HasWriter == false) return;
 
-          if (midPrcTimer_MainA != null)
-            midPrcTimer_MainA.Start();
+          if (midPrcTimer != null)
+            midPrcTimer.Start();
 
           while (true)
           {
@@ -374,15 +385,12 @@ namespace pfAdapter
             writer.WriteData(readData);
             if (writer.HasWriter == false) break;
 
-            //コンソール、ログ更新
-            if (enable_UpdateLog)
-              UpdateLogStatus(
-                      reader.LogStatus.TotalPipeRead,
-                      reader.LogStatus.TotalFileRead);
 
+            if (updateLog)
+              UpdateLogStatus(reader.LogStatus.TotalPipeRead,
+                              reader.LogStatus.TotalFileRead);
             TimedGC.Collect();
           }
-
 
           //終了処理
           ProhibitFileMove_pfA.Lock();
@@ -396,28 +404,11 @@ namespace pfAdapter
             Log.System.WriteLine(reader.Name + ":");
             Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
           }
-          //  同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
+          //同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
           Thread.Sleep(100);
 
-          lock (syncLog)
-          {
-            //MidProcessTimer
-            if (midPrcTimer_MainA != null)
-            {
-              midPrcTimer_MainA.Stop_and_Wait();
-            }
-            //PostProcess
-            if (postPrcList_MainA != null)
-            {
-              Log.System.WriteLine();
-              Log.System.WriteLine("[ PostProcess_MainA ]");
-              postPrcList_MainA.Wait();
-              ProhibitFileMove_pfA.Unlock();           //移動禁止は待機中だけ
-              postPrcList_MainA.Run();
-              ProhibitFileMove_pfA.Lock();             //移動禁止　　再
-              Log.System.WriteLine();
-            }
-          }
+          if (midPrcTimer != null)
+            midPrcTimer.Stop_and_Wait();
         });
 
         return task;
@@ -441,7 +432,7 @@ namespace pfAdapter
           string status = string.Format(
                               "    (pipe, file) = {0,6},{1,6} MiB",
                               (int)(totalPipeRead / 1024 / 1024),        //総読込み量　ファイル
-                              (int)(totalFileRead / 1024 / 1024)         //総読込み量　パイプ
+                              (int)(totalFileRead / 1024 / 1024)         //　　　　　　パイプ
                               );
 
           //コンソールタイトル
