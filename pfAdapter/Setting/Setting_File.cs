@@ -16,6 +16,9 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
+    const double CurrentRev = 12.0;
+
+    public double Rev = 0.0;
     public string CommandLine = "        ";       //追加コマンドライン　（デバッグ時に一時的に設定変更するのに使用した）
     public double BuffSize_MiB = 3.0;             //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;          //ファイル読込速度制限
@@ -66,7 +69,11 @@ namespace pfAdapter.Setting
 
       //追加された項目、削除された項目を書き換え。
       //ユーザーが消したタグなども復元される。
-      XmlRW.Save(xmlpath, file);
+      if (file.Rev != CurrentRev)
+      {
+        file.Rev = CurrentRev;
+        XmlRW.Save(xmlpath, file);
+      }
 
       return file;
     }
