@@ -26,11 +26,10 @@ namespace pfAdapter
       // C:\video.ext
       // C:\video.ts.ext
       //の２パターンでファイルを探す
-      var fPath = filePath;
-      var fDir = Path.GetDirectoryName(fPath);
-      var fNameWithoutExt = Path.GetFileNameWithoutExtension(fPath);
-      var fPathWithoutExt = Path.Combine(fDir, fNameWithoutExt);
-      BasePathPattern = new string[] { fPathWithoutExt, fPath };
+      var folder = Path.GetDirectoryName(filePath);
+      var fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
+      var filePathWithoutExt = Path.Combine(folder, fileNameWithoutExt);
+      BasePathPattern = new string[] { filePath, filePathWithoutExt };
 
       //extension list
       ExtList = lockFileExts.Split()      //スペースで分割

@@ -50,7 +50,7 @@ namespace pfAdapter
       //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
       //　通常は10msもかからない。
       //
-      // 16/06/20
+      // r12
       //   Write_PF.dll側にファイル読み込み機能を加えたのでバッファによる時間制限がなくなった。
       //   ２秒以上かかっても問題ない。
       //
@@ -272,7 +272,7 @@ namespace pfAdapter
       {
         //  他のpfAdapterのパイプ接続を優先するためにSleep()
         //  Client_WriteStdinの起動タイミングも少しずらす。
-        int rand_msec = new Random(App.PID).Next(2 * 1000, 6 * 1000);
+        int rand_msec = new Random(App.PID).Next(1 * 1000, 4 * 1000);
         Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
         Log.System.WriteLine();
         Thread.Sleep(rand_msec);
