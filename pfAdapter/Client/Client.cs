@@ -171,14 +171,14 @@ namespace pfAdapter
       string after = before;
 
       /*
-       * r12からRecName_Macro.dllと同じマクロ名に変更＆追加した。
+       * r12からEDCBと同じマクロ名に変更
        * 
-       * ファイルパス　（フルパス）       $fPath$           --> $FilePath$                    C:\rec\news.ts
-       * フォルダパス  （最後に\はなし）  $fDir$            --> $FolderPath$                  C:\rec
-       * ファイル名    （拡張子なし）     $fNameWithoutExt$ --> $FileName$                    news
-       * 拡張子                           none                  $Ext$                 追加    .ts
-       * ファイル名    （拡張子あり）　   $fName$           --> $FileNameWithExt$     追加    news.ts
-       * ファイルパス  （拡張子なし）　   $fPathWithoutExt$ --> $FilePathWithoutExt$  追加    C:\rec\news
+       * ファイルパス　（フルパス）       $fPath$           --> $FilePath$               C:\rec\news.ts
+       * フォルダパス  （最後に\は無し）  $fDir$            --> $FolderPath$             C:\rec
+       * ファイル名    （拡張子無し）     $fNameWithoutExt$ --> $FileName$               news
+       * 拡張子                           none                  $Ext$                    .ts
+       * ファイル名    （拡張子付き）　   $fName$           --> $FileNameExt$            news.ts
+       * ファイルパス  （拡張子無し）　   $fPathWithoutExt$ --> $FilePathWithoutExt$     C:\rec\news
        */
       //パス　（r12から）
       {
@@ -187,13 +187,13 @@ namespace pfAdapter
         string folderPath = Path.GetDirectoryName(filePath);
         string fileName = Path.GetFileNameWithoutExtension(filePath);
         string ext = Path.GetExtension(filePath);
-        string fileNameWithExt = Path.GetFileName(filePath);
+        string fileNameExt = Path.GetFileName(filePath);
         string filePathWithoutExt = Path.Combine(folderPath, fileName);
         after = Regex.Replace(after, @"\$FilePath\$", filePath, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FolderPath\$", folderPath, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FileName\$", fileName, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$Ext\$", ext, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$FileNameWithExt\$", fileNameWithExt, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$FileNameExt\$", fileNameExt, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FilePathWithoutExt\$", filePathWithoutExt, RegexOptions.IgnoreCase);
       }
 
