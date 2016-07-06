@@ -27,8 +27,8 @@ namespace pfAdapter
       // C:\video.ts.ext
       //の２パターンでファイルを探す
       var folder = Path.GetDirectoryName(filePath);
-      var fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-      var filePathWithoutExt = Path.Combine(folder, fileNameWithoutExt);
+      var fileName = Path.GetFileNameWithoutExtension(filePath);
+      var filePathWithoutExt = Path.Combine(folder, fileName);
       BasePathPattern = new string[] { filePath, filePathWithoutExt };
 
       //extension list

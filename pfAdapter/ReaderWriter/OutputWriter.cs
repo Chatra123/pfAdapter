@@ -31,9 +31,16 @@ namespace pfAdapter
         {
           System.Threading.Thread.Sleep(500);
           if (one != null && one.StdinWriter != null)
+          {
             one.StdinWriter.Close();
+            //各プロセスが掴んでいるファイルを完全に離してほしいので少し待機
+            //　スクランブル解除失敗時、CreateLwiはすくに終了せず *.ts.pp.lwi
+            //  を保持し続ける。最後のbatで削除失敗することがあったので待機する。
+            one.Process.WaitForExit(20 * 1000);
+          }
         }
     }
+
 
 
     /// <summary>
