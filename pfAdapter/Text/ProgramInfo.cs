@@ -13,7 +13,7 @@ namespace pfAdapter
   /// </summary>
   internal static class ProgramInfo
   {
-    private static bool HasInfo = false;
+    public static bool HasInfo { get; private set; }
     public static String Channel { get; private set; }
     public static String Program { get; private set; }
 
@@ -22,6 +22,7 @@ namespace pfAdapter
     {
       //nullだと置換処理で例外がでるので空文字列をいれておく。
       Channel = Program = string.Empty;
+      HasInfo = false;
     }
 
 
@@ -35,7 +36,7 @@ namespace pfAdapter
       string infoPath = tspath + ".program.txt";
 
       //ファイル
-      for (int i = 0; i < 4 * 4; i++)
+      for (int i = 0; i < 4 * 5; i++)
       {
         if (File.Exists(infoPath)) break;
         Thread.Sleep(250);
@@ -46,9 +47,10 @@ namespace pfAdapter
         return;
       }
 
+
       //読
       List<string> infotext = null;
-      for (int i = 0; i < 4 * 6; i++)
+      for (int i = 0; i < 4 * 5; i++)
       {
         //４行以上取得できるまで繰り返す。
         //４行取得できたなら３行目は確実にある。

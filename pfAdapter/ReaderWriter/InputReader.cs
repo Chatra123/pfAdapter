@@ -122,7 +122,7 @@ namespace pfAdapter
 
       //ファイル
       if (string.IsNullOrWhiteSpace(ifile) == false)
-        for (int i = 0; i < 5 * 5; i++)
+        for (int i = 0; i < 4 * 5; i++)
         {
           if (File.Exists(ifile))
           {
@@ -131,7 +131,7 @@ namespace pfAdapter
             //fileInfo = new FileInfo(ifile);
             break;
           }
-          Thread.Sleep(200);           //まだファイルが作成されていない？
+          Thread.Sleep(250);           //まだファイルが作成されていない？
         }
 
       //log

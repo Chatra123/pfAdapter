@@ -183,7 +183,10 @@ namespace pfAdapter
         // no writer?
         if (writerA.HasWriter == false && writerB.HasWriter == false)
         {
-          Log.System.WriteLine("出力先プロセスが起動していません。");
+          Log.System.WriteLine("  - 出力先プロセスが起動していません。");
+
+          if (ProgramInfo.HasInfo == false)
+            Log.System.WriteLine("  - Not Found *.ts.program.txt");
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();

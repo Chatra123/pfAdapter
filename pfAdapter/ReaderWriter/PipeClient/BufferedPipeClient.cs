@@ -99,7 +99,7 @@ namespace pfAdapter
       lock (sync)
       {
         int newSize_B = (int)(newSize_MiB * 1024 * 1024);
-        BuffSize = 0 < newSize_B ? newSize_B : BuffSize;
+        BuffSize = BuffSize < newSize_B ? newSize_B : BuffSize;
       }
     }
 
