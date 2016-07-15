@@ -36,7 +36,7 @@ namespace pfAdapter
       string infoPath = tspath + ".program.txt";
 
       //ファイル
-      for (int i = 0; i < 4 * 5; i++)
+      for (int i = 0; i < 4 * 3; i++)
       {
         if (File.Exists(infoPath)) break;
         Thread.Sleep(250);
@@ -50,7 +50,7 @@ namespace pfAdapter
 
       //読
       List<string> infotext = null;
-      for (int i = 0; i < 4 * 5; i++)
+      for (int i = 0; i < 4 * 3; i++)
       {
         //４行以上取得できるまで繰り返す。
         //４行取得できたなら３行目は確実にある。

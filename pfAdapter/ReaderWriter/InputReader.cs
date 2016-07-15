@@ -49,7 +49,6 @@ namespace pfAdapter
     //バッファがうまく機能しないことがあればstaticにする。
 
     //file
-    //private FileInfo fileInfo;
     private FileStream fileStream;
     private BinaryReader fileReader;
     private long filePositon;                              //次に読み込むバイトの位置
@@ -122,13 +121,12 @@ namespace pfAdapter
 
       //ファイル
       if (string.IsNullOrWhiteSpace(ifile) == false)
-        for (int i = 0; i < 4 * 5; i++)
+        for (int i = 0; i < 4 * 3; i++)
         {
           if (File.Exists(ifile))
           {
             fileStream = new FileStream(ifile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             fileReader = new BinaryReader(fileStream);
-            //fileInfo = new FileInfo(ifile);
             break;
           }
           Thread.Sleep(250);           //まだファイルが作成されていない？

@@ -184,6 +184,7 @@ namespace pfAdapter
         if (writerA.HasWriter == false && writerB.HasWriter == false)
         {
           Log.System.WriteLine("  - 出力先プロセスが起動していません。");
+          Log.System.WriteLine();
 
           if (ProgramInfo.HasInfo == false)
             Log.System.WriteLine("  - Not Found *.ts.program.txt");
