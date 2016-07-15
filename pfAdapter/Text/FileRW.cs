@@ -275,7 +275,7 @@ namespace OctNov.IO
     /// </summary>
     public void WriteLine(string line)
     {
-      WriteLine(new string[] { line });
+      writer.WriteLine(line);
     }
 
     /// <summary>
