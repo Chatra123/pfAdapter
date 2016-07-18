@@ -13,13 +13,13 @@ Run_pfAdapter.batのショートカットを作成し、TSファイルをドロ�
 ### 使い方　　コマンドライン
 
 ファイル＆名前付きパイプ  
-pfAdapter.exe  -file "C:\video.ts"  -npipe pipename
+pfAdapter.exe  -file "C:\video.ts"  -npipe pipename  
 
 ファイル＆標準入力  
-pfAdapter.exe  "C:\video.ts"
+pfAdapter.exe  "C:\video.ts"  
 
 ファイル   
-pfAdapter.exe  "C:\video.ts"
+pfAdapter.exe  "C:\video.ts"  
 
 
 
@@ -90,8 +90,8 @@ pfAdapterを中断
 
 
     BuffSize_MiB  3.0
-パイプの最大バッファサイズ  MiB  
-基本的に変更する必要はありません。  
+パイプのバッファサイズ  MiB  
+基本的に変更する必要はありません。 
 
 
     ReadLimit_MiBsec  10.0
@@ -231,9 +231,10 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 |:-----------------------|:--------------------|:--------------------------|:------------------|
 |  $FilePath$            |  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
 |  $FolderPath$          |  $fDir$             |  フォルダパス             |  C:\rec           |
-|  $FileName$            |  $fNameWithoutExt$  |  拡張子なしファイル名     |  news             |
-|  $FileNameWithExt$     |  $fName$            |  拡張子ありファイル名     |  news.ts          |
-|  $FilePathWithoutExt$  |  $fPathWithoutExt$  |  拡張子なしファイルパス   |  C:\rec\news      |
+|  $FileName$            |  $fNameWithoutExt$  |  拡張子無しファイル名     |  news             |
+|  $Ext$                 |                     |  拡張子                   |  .ts              |
+|  $FileNameExt$         |  $fName$            |  拡張子付きファイル名     |  news.ts          |
+|  $FilePathWithoutExt$  |  $fPathWithoutExt$  |  拡張子無しファイルパス   |  C:\rec\news      |
 |  $PID$                 |                     |  pfAdapterのＰＩＤ        |                   |
 |  $StartTime$           |                     |  pfAdapter開始時間        |                   |
 |                        |  $UniqueKey$        |  ユニークキー             |                   |
@@ -267,9 +268,6 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
   
   Teeコマンド  
   .\Write\Write_PF\pfAdapter\pfAdapter.exe  -file "$FilePath$"  
-  
-  Tee読み込み遅延(byte)  
-  0  
   
   に設定する。 録画を開始するとpfAdapterが起動します。  
   
