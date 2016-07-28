@@ -185,9 +185,12 @@ namespace pfAdapter
         {
           Log.System.WriteLine("  - 出力先プロセスが起動していません。");
           Log.System.WriteLine();
-
           if (ProgramInfo.HasInfo == false)
-            Log.System.WriteLine("  - Not Found *.ts.program.txt");
+          {
+            Log.System.WriteLine("[ program.txt ]");
+            Log.System.WriteLine("    Not Found  *.ts.program.txt");
+          }
+          Log.System.WriteLine();
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
           Log.Close();
