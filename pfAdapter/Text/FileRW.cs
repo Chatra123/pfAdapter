@@ -1,6 +1,6 @@
 ﻿/*
  * 最終更新日
- *   16/07/12
+ *   16/08/06
  *  
  * 概要
  *   テキストファイルの読み書きにファイル共有設定をつける。
@@ -157,7 +157,7 @@ namespace OctNov.IO
     /// <param name="NLines">読み込む最大行数</param>
     /// <returns>
     /// 読み込んだテキスト、０～Ｎ行
-    /// NLinesに満たない場合は読み込めた分だけ返す。
+    /// EOFに到達すると NLinesに満たない行数を返す。
     /// </returns>
     public List<string> ReadNLines(int NLines)
     {
@@ -207,19 +207,6 @@ namespace OctNov.IO
 
   internal class FileW
   {
-    /// <summary>
-    /// ライター作成　　ファイルパス形式でないと例外
-    /// </summary>
-    /// <param name="path">作成するファイルパス</param>
-    /// <param name="enc">文字エンコードの指定。デフォルトShift-JIS</param>
-    /// <returns></returns>
-    //public static StreamWriter CreateWriter(string path, Encoding enc)
-    //{
-    //  var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);        //FileShare
-    //  var writer = new StreamWriter(stream, enc);                                                  //文字エンコード
-    //  return writer;
-    //}
-
     /// <summary>
     /// バイナリ追記
     /// </summary>
