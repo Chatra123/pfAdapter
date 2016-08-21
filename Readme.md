@@ -39,7 +39,7 @@ pfAdapter.exe  "C:\video.ts"
 
 
     -midint 10.0
-MidProcessの実行間隔、min
+MidProcessの実行間隔、minutes  
 
 
 ------------------------------------------------------------------
@@ -100,7 +100,7 @@ pfAdapterを中断
 
 
     MidPrcInterval_min  10.0
-MidProcessの実行間隔  min  
+MidProcessの実行間隔  minutes  
 
 
     LockFile
@@ -216,10 +216,10 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 |:-------------------|:-----------------------------------------------|
 |  Enable            |  有効、無効                                    |
 |  Delay_sec         |  実行前に待機する秒数                          |
-|  BasePath          |  実行ファイルのパス、前後の空白は削除される。  |
-|  BaseArgs          |  実行ファイルの引数、前後の空白は削除される。  |
+|  BasePath          |  実行ファイルのパス、前後の空白は削除          |
+|  BaseArgs          |  実行ファイルの引数、前後の空白は削除          |
 |  NoWindow          |  コンソールウィンドウを非表示にする。          |
-|  WaitForExit       |  プロセス終了まで待機する。                    |
+|  WaitForExit       |  プロセス終了まで待機                          |
 |  WaitTimeout_sec   |  プロセス終了を待機する最大秒数、-1で無期限    |
 
 
@@ -285,13 +285,10 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
     Copyright (C) 2012 Xamarin Inc (http://www.xamarin.com)  
  
  
-
 ------------------------------------------------------------------
 ### ライセンス
 
-    GPL v3
+    MIT Licence
     Copyright (C) 2014  CHATRA
-    http://www.gnu.org/licenses/
-
 
 
