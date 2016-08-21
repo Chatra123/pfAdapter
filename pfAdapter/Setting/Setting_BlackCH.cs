@@ -80,22 +80,20 @@ namespace pfAdapter.Setting
     /// <summary>
     /// targetChの一部にblackListが含まれているか？
     /// </summary>
-    public bool ListContains_Target(string targetCh, IEnumerable<string> blackList)
+    public bool ListContains_Target(string _targetCh, IEnumerable<string> _blackList)
     {
-      if (string.IsNullOrEmpty(targetCh)) return false;
-      if (blackList == null) return false;
+      if (string.IsNullOrEmpty(_targetCh)) return false;
+      if (_blackList == null) return false;
 
 
       //大文字全角ひらがなに変換
-      string shortCh, nonNumCh;
+      string targetCh, shortCh, nonNumCh;
       {
-        targetCh = StrConverter.ToUWH(targetCh);
-        shortCh = (4 < targetCh.Length) ? targetCh.Substring(0, 4) : targetCh;   //前４文字
-        nonNumCh = targetCh;
-        nonNumCh = StrConverter.RemoveNumber(nonNumCh);                       //数字除去
-        nonNumCh = StrConverter.RemoveSymbol(nonNumCh);                       //記号除去
+        targetCh = NameConv.GetUWH(_targetCh);
+        shortCh = NameConv.GetShort(_targetCh);    //前４文字
+        nonNumCh = NameConv.GetNonNum(_targetCh);  //数字記号除去
       }
-      blackList = blackList.Select((line) => StrConverter.ToUWH(line));
+      var blackList = NameConv.GetUWH(_blackList.ToList());
 
 
       //部分一致で検索
@@ -105,10 +103,10 @@ namespace pfAdapter.Setting
 
 
       //Has search option ?
-      bool AppendSearch_ShortCh = blackList.Any(
+      bool enable_ShortCh = blackList.Any(
         (line) => Regex.Match(line, @"^AppendSearch_ShortCh$", RegexOptions.IgnoreCase).Success);
 
-      bool AppendSearch_NonNumCh = blackList.Any(
+      bool enable_NonNumCh = blackList.Any(
         (line) => Regex.Match(line, @"^AppendSearch_NonNumCh$", RegexOptions.IgnoreCase).Success);
 
 
@@ -117,11 +115,11 @@ namespace pfAdapter.Setting
       {
         return true;
       }
-      else if (AppendSearch_ShortCh && isContains_ShortCh)
+      else if (enable_ShortCh && isContains_ShortCh)
       {
         return true;
       }
-      else if (AppendSearch_NonNumCh && isContains_NonNumCh)
+      else if (enable_NonNumCh && isContains_NonNumCh)
       {
         return true;
       }
@@ -178,7 +176,7 @@ namespace pfAdapter.Setting
 
 
 
-  NHK
+//  NHK
 
 
 
@@ -196,7 +194,7 @@ namespace pfAdapter.Setting
 //
 // *  *.ts.program.txtから取得したチャンネル名の一部に指定キーワードが含まれていると、
 //    エンコード処理を行いません。
-//　  例えば、NHKBS と書けば、 NHKBS の含まれているチャンネル全てでエンコード処理を
+//　  例えば NHKBS と書けば、 NHKBS の含まれているチャンネル全てでエンコード処理を
 //    実施しません。
 //
 //    ffmpegが音声の切り替えに対応できずフリーズする場合等に指定してください。
@@ -231,7 +229,7 @@ namespace pfAdapter.Setting
 
 
 
-  NHKBS
+//  NHKBS
 
 
 

@@ -39,7 +39,7 @@ namespace pfAdapter
     private static DateTime StartTime = DateTime.Now;
 
     /// <summary>
-    /// 起動時間  テキスト
+    /// 起動時間  string
     /// </summary>
     public static string StartTimeText
     {
@@ -47,7 +47,7 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// 起動からの経過時間
+    /// 経過時間  TimeSpan
     /// </summary>
     public static TimeSpan Elapse
     {
@@ -55,7 +55,7 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// 起動からの経過時間  Milliseconds
+    /// 経過時間  Milliseconds
     /// </summary>
     public static long Elapse_ms
     {
@@ -100,7 +100,7 @@ namespace pfAdapter
     /// <summary>
     /// コマンドライン　パース結果
     /// </summary>
-    public String Cmdline_ToString()
+    public string Cmdline_ToString()
     {
       return setting_cmdline.ToString();
     }

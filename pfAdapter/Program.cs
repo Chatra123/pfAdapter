@@ -19,11 +19,6 @@ namespace pfAdapter
   {
     private static void Main(string[] AppArgs)
     {
-      ////テスト引数
-      //var testArgs = new List<string>();
-      //testArgs.Add(@"-File");
-      //testArgs.Add(@"ac2s.ts");
-      //AppArgs = testArgs.ToArray();
 
 
       //例外を捕捉する
@@ -45,14 +40,6 @@ namespace pfAdapter
 
       //
       //パイプ接続、ファイル確認
-      //
-      //　名前付きパイプの接続は最優先で行う。
-      //　Write_PFのバッファが６ＭＢなので２秒以内に接続すること。
-      //　通常は10msもかからない。
-      //
-      // r12
-      //   Write_PF.dll側にファイル読み込み機能を加えたのでバッファによる時間制限がなくなった。
-      //   ２秒以上かかっても問題ない。
       //
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
@@ -100,7 +87,7 @@ namespace pfAdapter
 
 
       //
-      //PrcessList
+      //ProcessList
       //
       MidProcessTimer midPrcTimer = null;
       ClientList postProcess_MainA = null;
@@ -160,16 +147,15 @@ namespace pfAdapter
           writerB.Timeout = TimeSpan.FromHours(24);        // 24 hour      無期限( -1 )にはしないこと。
         }
         /*
+         * 
          * 16/02/10  .net 4.5.2
          * □　タイムアウトについて
-         * task  MainA,  Enc_Bの両方が動いているときに、
-         * writerB.Timeout_msec = -1;  だと
-         * MainAの標準入力への書込みが短時間 or 完全に止まることがあり、
-         * 書き込み処理がタイムアウトする。
+         * task MainA, Enc_Bの両方が動いているときに、writerB.Timeout = -1; だと
+         * MainAの標準入力への書込みが短時間 or 完全に止まることがあり処理がタイムアウトする。
          * task MainA単体で動いているときは止まることはない。
          * 
          * writerA.Timeout_msec = -1;  writerB.Timeout_msec = -1;  のように、
-         * 両方のタイムアウトを無期限にすると、録画終了後にwriterAの書込み処理が再開され、
+         * 両方のタイムアウトを無期限にすると、録画終了後にtask MainAの書込み処理が再開され、
          * pfAdapterの処理は正常に終了する。
          * 録画終了後にファイル読込みが行われて、時間がかかるだけで正常に処理はできる。
          * 
@@ -270,7 +256,7 @@ namespace pfAdapter
     /// </summary>
     static bool Initialize(AppSetting setting, string[] appArgs)
     {
-      //カレントディレクトリ
+      //カレント
       string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
       string AppDir = System.IO.Path.GetDirectoryName(AppPath);
       Directory.SetCurrentDirectory(AppDir);
@@ -295,7 +281,7 @@ namespace pfAdapter
         Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
         Log.System.WriteLine();
       }
-      //マクロを設定
+      //マクロ
       {
         Client.Macro_SrcPath = setting.File;
         Client.Macro_Channel = ProgramInfo.Channel;
@@ -310,7 +296,6 @@ namespace pfAdapter
           return false;                //アプリ終了
       }
 
-      //ログ
       {
         //  App
         Log.System.WriteLine("[ App CommandLine ]");
@@ -328,7 +313,7 @@ namespace pfAdapter
       //コマンドライン
       {
         //外部プロセスからコマンドライン取得
-        //  取得前に*.program.txtの読込みをしておくこと
+        //  取得前に *.program.txtの読込みをしておくこと
         setting.Get_ExternalCommand();
 
         //終了要求があった？
