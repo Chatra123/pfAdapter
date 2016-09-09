@@ -28,7 +28,7 @@ namespace pfAdapter.Setting
     /// <summary>
     /// 対象のCHがブラックリストにあるか調べる
     /// </summary>
-    public void Check_IsBlackCH(string targetCH)
+    public void CheckBlackCH(string targetCH)
     {
       var blackList_NonCMCut = Get_BlackListFile(NonCMCut_BlackListFile, BlackList_Text_Default.NonCMCutCH);
       var blackList_NonEnc__ = Get_BlackListFile(NonEnc___BlackListFile, BlackList_Text_Default.NonEnc__CH);

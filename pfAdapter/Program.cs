@@ -6,8 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
-using System.Text.RegularExpressions;
 
 
 #region title
@@ -20,20 +18,16 @@ namespace pfAdapter
     private static void Main(string[] AppArgs)
     {
 
-
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
-      //
       //ログ
-      //
       Log.System.Enable = true;
       Log.System.OutConsole = true;
       Log.System.OutFile = true;
 
-      //
+
       //App引数解析 
-      //
       var setting = new AppSetting();
       setting.ParseCmdLine(AppArgs);
 
@@ -45,11 +39,11 @@ namespace pfAdapter
       InputReader readerA, readerB;
       {
         //InputReader
-        readerA = new InputReader("MainA");
-        readerB = new InputReader("Enc_B");
+        readerA = new InputReader();
+        readerB = new InputReader();
         var isConnectedA = readerA.Connect(setting.Pipe, setting.File);
-        var isConnectedB = readerB.Connect(setting.Pipe, setting.File, false);
-        //デバッグ用  入力ストリームのログ
+        var isConnectedB = readerB.Connect(null, setting.File, false);
+        /*  デバッグ用  入力ストリームのログ     log file size  8 MB / 10 min  */
         //readerA.Enable_LogInput(Log.InputA);
         //readerB.Enable_LogInput(Log.InputB);
 
@@ -114,9 +108,7 @@ namespace pfAdapter
       }
 
 
-      //
       //InputReader設定
-      //
       Log.System.WriteLine("[ Reader Param ]");
       {
         readerA.SetParam(setting.BuffSize_MiB, setting.ReadLimit_MiBsec);
@@ -144,10 +136,9 @@ namespace pfAdapter
         {
           Log.System.WriteLine("  Enc__B:");
           writerB.RegisterWriter(setting.Client_Enc_B);
-          writerB.Timeout = TimeSpan.FromHours(24);        // 24 hour      無期限( -1 )にはしないこと。
+          writerB.Timeout = TimeSpan.FromHours(24);        //無期限( -1 )にはしないこと。
         }
         /*
-         * 
          * 16/02/10  .net 4.5.2
          * □　タイムアウトについて
          * task MainA, Enc_Bの両方が動いているときに、writerB.Timeout = -1; だと
@@ -161,8 +152,9 @@ namespace pfAdapter
          * 
          * 原因は不明
          * Task.WaitAll();の仕様？
+         * 
          */
-        //デバッグ用　ファイル出力を登録
+        /*  デバッグ用　ファイル出力を登録  */
         //writerA.RegisterOutFileWriter(setting.File + ".pfA_Outfile_A.ts");
         //writerB.RegisterOutFileWriter(setting.File + ".pfA_Outfile_B.ts");
 
@@ -185,14 +177,15 @@ namespace pfAdapter
         }
       }
 
-
+      //
       //Main Session  [main loop]
+      //
       {
         Log.System.WriteLine("[ Main Session ]");
         Log.Flush();
 
-        var enc_B = MainSession.GetTask(readerB, writerB, null, false);
-        var mainA = MainSession.GetTask(readerA, writerA, midPrcTimer, true);
+        var mainA = MainSession.GetTask("MainA", readerA, writerA, midPrcTimer, true);
+        var enc_B = MainSession.GetTask("Enc_B", readerB, writerB, null, false);
         var mainA_post = mainA.ContinueWith(t =>
         {
           //PostProcess
@@ -262,71 +255,51 @@ namespace pfAdapter
       Directory.SetCurrentDirectory(AppDir);
 
       //多重起動の負荷分散
-      {
-        //  他のpfAdapterのパイプ接続を優先するためにSleep()
-        //  Client_WriteStdinの起動タイミングも少しずらす。
-        int rand_msec = new Random(App.PID).Next(1 * 1000, 4 * 1000);
-        Log.System.WriteLine("    Sleep({0,5:N0}ms)", rand_msec);
-        Log.System.WriteLine();
-        Thread.Sleep(rand_msec);
-      }
+      //  他のpfAdapterのパイプ接続を優先するためにSleep()
+      //  Client_WriteStdinの起動タイミングも少しずらす。
+      int sleep = new Random(App.PID).Next(1 * 1000, 4 * 1000);
+      Log.System.WriteLine("    Sleep({0,5:N0}ms)", sleep);
+      Log.System.WriteLine();
+      Thread.Sleep(sleep);
 
-      //番組情報
+
       Log.System.WriteLine("  [ program.txt ]");
-      {
-        ProgramInfo.TryToGetInfo(setting.File);
-        setting.Check_IsBlackCH(ProgramInfo.Channel);
-        Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
-        Log.System.WriteLine("      IsNonCMCutCH  = " + setting.IsNonCMCutCH);
-        Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
-        Log.System.WriteLine();
-      }
-      //マクロ
-      {
-        Client.Macro_SrcPath = setting.File;
-        Client.Macro_Channel = ProgramInfo.Channel;
-        Client.Macro_Program = ProgramInfo.Program;
-        Client.Macro_EncProfile = setting.EncProfile;
-      }
+      ProgramInfo.TryToGetInfo(setting.File);
+      setting.Check_IsBlackCH(ProgramInfo.Channel);
+      Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
+      Log.System.WriteLine("      IsNonCMCutCH  = " + setting.IsNonCMCutCH);
+      Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
+      Log.System.WriteLine();
 
-      //xmlファイル
-      {
-        bool loadXml = setting.LoadFile();
-        if (loadXml == false)
-          return false;                //アプリ終了
-      }
+      Client.Macro_SrcPath = setting.File;
+      Client.Macro_Channel = ProgramInfo.Channel;
+      Client.Macro_Program = ProgramInfo.Program;
+      Client.Macro_EncProfile = setting.EncProfile;
 
-      {
-        //  App
-        Log.System.WriteLine("[ App CommandLine ]");
-        foreach (var arg in appArgs)
-          Log.System.WriteLine(arg);
-        Log.System.WriteLine();
+      bool loadXml = setting.LoadFile();
+      if (loadXml == false)
+        return false;                //アプリ終了
 
-        //  xml
-        Log.System.WriteLine("  [ XmlFile.CommandLine ]");
-        Log.System.WriteLine("    " + setting.File_CommandLine);
-        Log.System.WriteLine();
-      }
+      Log.System.WriteLine("[ App CommandLine ]");
+      foreach (var arg in appArgs)
+        Log.System.WriteLine(arg);
+      Log.System.WriteLine();
+      Log.System.WriteLine("  [ XmlFile.CommandLine ]");
+      Log.System.WriteLine("    " + setting.File_CommandLine);
+      Log.System.WriteLine();
 
 
-      //コマンドライン
-      {
-        //外部プロセスからコマンドライン取得
-        //  取得前に *.program.txtの読込みをしておくこと
-        setting.Get_ExternalCommand();
+      //外部プロセスからコマンドライン取得
+      //  取得前に *.program.txtの読込みをしておくこと
+      setting.Get_ExternalCommand();
+      //終了要求があった？
+      if (setting.Abort == true)
+        return false;                //アプリ終了
+      Log.System.WriteLine("[ CommandLine ]");
+      Log.System.WriteLine(setting.Cmdline_ToString());
 
-        //終了要求があった？
-        if (setting.Abort == true)
-          return false;                //アプリ終了
 
-        Log.System.WriteLine("[ CommandLine ]");
-        Log.System.WriteLine(setting.Cmdline_ToString());
-      }
-
-      //ProhibitFileMove初期化
       ProhibitFileMove_pfA.Initialize(setting.File, setting.LockFile);
-
       return true;
     }
     #endregion
@@ -344,8 +317,7 @@ namespace pfAdapter
       /// Task間のLog同期
       /// </summary>
       /// <remarks>
-      ///  Taskごとのログを混ぜないための lock
-      ///  Log側では１行分のロックしかできない。
+      ///  Log側では１行分のロックしかできないので syncLogで制御
       /// </remarks>
       static readonly object syncLog = new object();
 
@@ -353,6 +325,7 @@ namespace pfAdapter
       /// MainSession[main loop] をTaskで取得
       /// </summary>
       public static Task GetTask(
+                                 string taskName,
                                  InputReader reader,
                                  OutputWriter writer,
                                  MidProcessTimer midPrcTimer,
@@ -362,15 +335,16 @@ namespace pfAdapter
         Task task = new Task(() =>
         {
           if (writer.HasWriter == false) return;
-
           if (midPrcTimer != null)
             midPrcTimer.Start();
 
           while (true)
           {
+            GC.Collect();
+
             //読
             byte[] readData = reader.ReadBytes();
-            if (readData == null) continue;                  //値を取得できない。（Buffロック失敗、未書込エリアの読込み）
+            if (readData == null) continue;                  //パイプバッファ待ち、未書込エリアの読込み
             else if (readData.Length == 0) break;            //パイプ切断 ＆ ファイル終端
 
             //書
@@ -379,12 +353,11 @@ namespace pfAdapter
 
 
             if (updateLog)
-              UpdateLogStatus(reader.LogStatus.TotalPipeRead,
-                              reader.LogStatus.TotalFileRead);
-            TimedGC.Collect();
+              UpdateLogStatus(reader.log_Input.TotalPipeRead,
+                              reader.log_Input.TotalFileRead);
           }
 
-          //終了処理
+          //Close
           ProhibitFileMove_pfA.Lock();
           reader.Close();
           writer.Close();
@@ -393,8 +366,8 @@ namespace pfAdapter
           lock (syncLog)
           {
             Log.System.WriteLine();
-            Log.System.WriteLine(reader.Name + ":");
-            Log.System.WriteLine(reader.LogStatus.OutText_TotalRead());
+            Log.System.WriteLine(taskName + ":");
+            Log.System.WriteLine(reader.log_Input.GetText());
           }
           //同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
           Thread.Sleep(100);
@@ -417,7 +390,6 @@ namespace pfAdapter
       /// </summary>
       private static void UpdateLogStatus(long totalPipeRead, long totalFileRead)
       {
-        //１秒毎
         if (0.970 * 1000 < (DateTime.Now - timeUpdateTitle).TotalMilliseconds)
         {
           timeUpdateTitle = DateTime.Now;
@@ -443,26 +415,6 @@ namespace pfAdapter
                 && DateTime.Now.Second % 60 == 0)
             Log.System.WriteLine("  " + status);
         }
-      }
-
-      /// <summary>
-      ///  ガベージコレクター実行
-      ///  GCクラスはスレッドセーフ
-      /// </summary>
-      static class TimedGC
-      {
-        const int CollectSpan = 350;
-        static DateTime timeGCCollect;
-
-        public static void Collect()
-        {
-          if (CollectSpan < (DateTime.Now - timeGCCollect).TotalMilliseconds)
-          {
-            timeGCCollect = DateTime.Now;
-            GC.Collect();
-          }
-        }
-
       }
 
     }//class MainSession

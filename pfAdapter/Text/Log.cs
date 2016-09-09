@@ -13,15 +13,20 @@ namespace pfAdapter
   /// </summary>
   internal static class Log
   {
+    public static readonly string
+      Spc50 = new string(' ', 50),
+      Spc40 = new string(' ', 40),
+      Spc30 = new string(' ', 30);
+
     public static LogWriter System, PipeBuff;
     public static LogWriter InputA, InputB;
 
     static Log()
     {
       System = new LogWriter("pfAdapter");
-      PipeBuff = new LogWriter("PipeBuff");
       InputA = new LogWriter("Input_MainA");
       InputB = new LogWriter("Input_Enc_B");
+      PipeBuff = InputA;
     }
 
     public static void Flush()
@@ -49,6 +54,7 @@ namespace pfAdapter
   {
     private readonly object sync = new object();
     public bool Enable, OutConsole, OutFile;
+    public bool AutoFlush;
     private DateTime timeLastFlush;
 
     private string LogFileName;
@@ -63,11 +69,15 @@ namespace pfAdapter
       Enable = false;
       OutConsole = false;
       OutFile = false;
+      AutoFlush = false;
       LogFileName = filename;
       IsLogTop = true;
       LastCharIsLineFeed = false;
     }
 
+    /// <summary>
+    /// Close
+    /// </summary>
     public void Close()
     {
       lock (sync)
@@ -75,8 +85,7 @@ namespace pfAdapter
         if (Writer != null)
           Writer.Close();
 
-        //古いログファイル削除
-        if (Enable) 
+        if (Enable)
           DeleteOldLog(LogFileName);
       }
     }
@@ -173,9 +182,10 @@ namespace pfAdapter
         }
 
 
-        if (OutConsole) Console.Error.Write(text);         //標準エラー
+        if (OutConsole)
+          Console.Error.Write(text);              //標準エラー
 
-        if (OutFile)                                       //ファイル
+        if (OutFile)                              //ファイル
         {
           //ライター作成
           if (Writer == null)
@@ -189,14 +199,15 @@ namespace pfAdapter
           {
             Writer.Write(text);
 
-            if (10 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
+            if (AutoFlush ||
+              4 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
             {
               timeLastFlush = DateTime.Now;
               Writer.Flush();
             }
           }
-        }
 
+        }
       }//lock
     }
 
@@ -248,7 +259,7 @@ namespace pfAdapter
             line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
           }
 
-          if (isMultiLine) line += Environment.NewLine;
+          line = isMultiLine ? line + Environment.NewLine : line;
           timedText.Append(line);
         }
       }
@@ -282,9 +293,7 @@ namespace pfAdapter
     /// <summary>
     /// format指定で１行追加
     /// </summary>
-    /// <param name="format">複合書式指定文字列</param>
-    /// <param name="args">０個以上の書式設定対象オブジェクトを含んだオブジェクト配列。</param>
-    /// <remarks> string Format(string format, params Object[] args)と同じ</remarks>
+    /// <remarks> string.Format()と同じ</remarks>
     public void WriteLine(string format, params object[] args)
     {
       if (Enable == false) return;
@@ -298,9 +307,7 @@ namespace pfAdapter
         case 3: line = string.Format(format, args[0], args[1], args[2]); break;
         case 4: line = string.Format(format, args[0], args[1], args[2], args[3]); break;
         case 5: line = string.Format(format, args[0], args[1], args[2], args[3], args[4]); break;
-        case 6: line = string.Format(format, args[0], args[1], args[2], args[3], args[4], args[5]); break;
       }
-
       line = Append_Timecode(line + Environment.NewLine);
       Write_core(line);
     }
@@ -336,50 +343,21 @@ namespace pfAdapter
   }
 
 
-
-  #region LogStatus
-
   /// <summary>
-  /// 状態記録用ログ  パイプバッファ書込
+  /// 読込量ログ 
   /// </summary>
-  internal static class LogStatus_PipeBuff
+  internal class Log_TotalInput
   {
-    public static long 
-      ClearBuff = 0,                             //バッファクリア回数
-      FailToLockBuff_Write = 0;                  //バッファロック失敗回数　書込み
-
-    /// <summary>
-    /// 各項目をテキストで出力
-    /// </summary>
-    public static string OutText_Status()
-    {
-      var text = new StringBuilder();
-      text.AppendLine("  ClearBuff                =  " + ClearBuff);
-      text.AppendLine("  FailToLockBuff_Write     =  " + FailToLockBuff_Write);
-      return text.ToString();
-    }
-  }
-
-
-  /// <summary>
-  /// 状態記録用ログ  パイプバッファ読込、ファイル読込
-  /// </summary>
-  internal class LogStatus_Input
-  {
-    public long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //データ総読込量
+    public long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //総読込量
     public long TotalPipeRead = 0;                                                          //パイプ総読込量
     public long TotalFileRead { get { return FileReadWithPipe + FileReadWithoutPipe; } }    //ファイル総読込量
     public long FileReadWithPipe = 0,                                                       //パイプ接続中のファイル総読込量
                 FileReadWithoutPipe = 0;                                                    //パイプ切断中のファイル総読込量
 
-    public long FailToLockBuff__Read = 0,           //バッファロック失敗回数　読込み
-                FilePos_whenPipeClosed = 0,         //パイプが閉じた時のファイルポジション
-                AccessTimes_UnwriteArea = 0;        //未書込みエリアへのアクセス回数
-
     /// <summary>
-    /// データ総読込量をテキストで出力
+    /// 読込量をテキストで出力
     /// </summary>
-    public string OutText_TotalRead()
+    public string GetText()
     {
       var text = new StringBuilder();
       text.AppendLine(
@@ -395,21 +373,8 @@ namespace pfAdapter
       return text.ToString();
     }
 
-
-    /// <summary>
-    /// 各項目をテキストで出力
-    /// </summary>
-    public string OutText_Status()
-    {
-      var text = new StringBuilder();
-      text.AppendLine("  FailToLockBuff__Read     =  " + FailToLockBuff__Read);
-      text.AppendLine("  FilePos_whenPipeClosed   =  " + FilePos_whenPipeClosed);
-      text.AppendLine("  AccessTimes_UnwriteArea  =  " + AccessTimes_UnwriteArea);
-      return text.ToString();
-    }
-
   }
 
-  #endregion LogStatus
+
 
 }

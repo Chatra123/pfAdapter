@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 
@@ -57,8 +56,8 @@ namespace pfAdapter
 
       Thread.Sleep((int)(Delay_sec * 1000));
       int seed = Process.GetCurrentProcess().Id + DateTime.Now.Millisecond;
-      var rand = new Random(seed);
-      Thread.Sleep(rand.Next(0, (int)(RandDelay_sec * 1000)));
+      var sleep = new Random(seed).Next(0, (int)(RandDelay_sec * 1000));
+      Thread.Sleep(sleep);
     }
 
     /// <summary>
@@ -198,7 +197,6 @@ namespace pfAdapter
       }
 
 
-
       //パス  （r11まで）
       {
         Macro_SrcPath = Macro_SrcPath ?? "";
@@ -259,7 +257,6 @@ namespace pfAdapter
     {
       var ext = System.IO.Path.GetExtension(exepath).ToLower();
       var isVBS = (ext == ".vbs" || ext == ".js");
-
       if (isVBS)
       {
         string vbsPath = exepath;
@@ -366,8 +363,6 @@ namespace pfAdapter
     /// <returns>プロセスが実行できたか</returns>
     public bool Start_WriteStdin()
     {
-      //Client_OutStdoutは既にダミープロセスを割り当て済み。
-      //this.Processに直接いれず、prcを経由する。
       var prc = CreateProcess();
       if (prc == null) return false;
 
@@ -386,7 +381,7 @@ namespace pfAdapter
 
 
       //標準エラー
-      //CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す。
+      //  CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す。
       //　falseだとコンソールに表示されるので非同期で取り出して捨てる。
       Process.StartInfo.RedirectStandardError = true;
       //標準エラーを取り出す。

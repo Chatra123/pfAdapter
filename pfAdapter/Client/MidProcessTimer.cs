@@ -11,7 +11,7 @@ namespace pfAdapter
   /*
    * ・定期的にMidProcessを実行する
    * ・最低でもInterval_Minだけ間隔をあける
-   * ・Taskは同時に実行しない。syncTaskで同期をとる
+   * ・Taskは並列実行しない。syncTaskで同期をとる
    */
   internal class MidProcessTimer
   {
@@ -44,7 +44,7 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// タイマーを動かす
+    /// タイマー始動
     /// </summary>
     public void Start()
     {
@@ -56,20 +56,21 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// Taskを実行
+    /// MidProcessList実行
     /// </summary>
     private void OnTimedEvent(object o, System.Timers.ElapsedEventArgs e)
     {
       if (activeTask != null && activeTask.IsCompleted == false) return;
       if ((DateTime.Now - lastRunTime).TotalMinutes < Interval_Min) return;
 
-      if (Monitor.TryEnter(syncTask, 0))                   //ロック
+      //MidProcessList実行中ならロックは取得できない。
+      if (Monitor.TryEnter(syncTask, 0))
       {
         lastRunTime = DateTime.Now;
         activeTask = new Task(() =>
         {
           //Taskスレッドでロック取得、Timerスレッドとは別
-          lock (syncTask)          　　　　　　　          //ロック
+          lock (syncTask)
           {
             tickCounter++;
             Log.System.WriteLine("    MidPrc__(  " + tickCounter + "  )");
@@ -78,7 +79,7 @@ namespace pfAdapter
         });
         activeTask.Start();
 
-        Monitor.Exit(syncTask);                            //ロック解除
+        Monitor.Exit(syncTask);
       }
     }
 
@@ -92,18 +93,18 @@ namespace pfAdapter
       Log.System.WriteLine("    MidProcessTimer.Stop()  wait...");
       timer.Enabled = false;
 
-      //activeTask、OnTimedEvent関数の中を実行中なら終了まで待機する。
-      //ロックが３回取得できたら処理が終了していると判断。
-      int lockCount = 0;
-      while (lockCount < 3)
+      //activeTask、OnTimedEvent関数の中を実行中なら終了まで待機。
+      //ロックが３回取得できたら終了していると判断する。
+      int count = 0;
+      while (count < 3)
       {
         if (activeTask != null && activeTask.IsCompleted == false)
           activeTask.Wait();
 
-        Thread.Sleep(100);               //ロック取得待機中のイベントにロックをわたす。
+        Thread.Sleep(100);
         lock (syncTask)
         {
-          lockCount++;
+          count++;
         }
       }
 

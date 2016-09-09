@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
@@ -68,7 +66,7 @@ namespace pfAdapter
 
   /// <summary>
   /// アプリ設定
-  ///   コマンドライン、ファイル設定、BlackCHテキストを内包
+  ///   コマンドライン、設定ファイル、BlackCHテキストを内包
   /// </summary>
   class AppSetting
   {
@@ -107,26 +105,6 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// コマンドラインをログ出力
-    /// </summary>
-    public void Log_CmdLine(string[] appArgs)
-    {
-      //  App
-      Log.System.WriteLine("[ App CommandLine ]");
-      foreach (var arg in appArgs)
-        Log.System.WriteLine(arg);
-      Log.System.WriteLine();
-
-      //  xml
-      Log.System.WriteLine("  [ Setting.CommandLine ]");
-      Log.System.WriteLine("    " + File_CommandLine);
-      Log.System.WriteLine();
-      Log.System.WriteLine();
-      Log.System.WriteLine();
-    }
-
-
-    /// <summary>
     /// 設定ファイル読込み
     /// </summary>
     public bool LoadFile()
@@ -153,7 +131,6 @@ namespace pfAdapter
                                    .ToArray();
 
       setting_cmdline.Parse_OverWrite(xmlCmdLine);
-
       return true;
     }
 
@@ -163,7 +140,7 @@ namespace pfAdapter
     /// </summary>
     public void Check_IsBlackCH(string ch)
     {
-      setting_blackCH.Check_IsBlackCH(ch);
+      setting_blackCH.CheckBlackCH(ch);
     }
 
 
@@ -216,9 +193,9 @@ namespace pfAdapter
     // AppSetteing value
     //
     //コマンドラインから
-    public String Pipe { get { return setting_cmdline.Pipe; } }
-    public String File { get { return setting_cmdline.File; } }
-    private String XmlPath { get { return setting_cmdline.XmlPath; } }
+    public string Pipe { get { return setting_cmdline.Pipe; } }
+    public string File { get { return setting_cmdline.File; } }
+    private string XmlPath { get { return setting_cmdline.XmlPath; } }
     public String EncProfile { get { return setting_cmdline.EncProfile; } }
     public bool Abort { get { return setting_cmdline.Abort_pfAdapter; } }
 
@@ -260,7 +237,7 @@ namespace pfAdapter
     {
       get
       {
-        //コマンドラインにあれば優先する
+        //コマンドラインを優先
         var limit = (-1 < setting_cmdline.Limit)
                           ? setting_cmdline.Limit
                           : setting_file.ReadLimit_MiBsec;
@@ -272,7 +249,7 @@ namespace pfAdapter
     {
       get
       {
-        //コマンドラインにあれば優先する
+        //コマンドラインを優先
         var interval = (0 < setting_cmdline.MidInterval)
                                  ? setting_cmdline.MidInterval
                                  : setting_file.MidPrcInterval_min;
@@ -286,7 +263,7 @@ namespace pfAdapter
     /// </summary>
     private static bool EnableRun_PrcList(bool? cmdline_PrcList, int setting_file_PrcList_Enable)
     {
-      //コマンドラインにあれば優先する。  -PrePrc 0  or  -PrePrc 1
+      //コマンドラインを優先           -PrePrc 0  or  -PrePrc 1
       if (cmdline_PrcList.HasValue)
       {
         if ((bool)cmdline_PrcList)

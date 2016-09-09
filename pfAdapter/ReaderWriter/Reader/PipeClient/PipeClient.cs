@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.IO.Pipes;
 using System.IO;
-using System.Linq;
 using System.Security.Principal;
 using System.Threading;
-using System.Threading.Tasks;
+
 
 
 namespace pfAdapter
@@ -15,15 +17,13 @@ namespace pfAdapter
   /// </summary>
   internal abstract class PipeClient
   {
-    public abstract string PipeName { get; }
+    public abstract string Name { get; }
     public abstract void Initialize(string pipename);
     public abstract bool IsConnected { get; }
-    public abstract void Connect(int timeout);
+    public abstract void Connect();
     public abstract void Close();
-    public abstract byte[] ReadPipe(int requestSize);
+    public abstract byte[] ReadPipe(int req_size);
   }
-
-
 
 
   /// <summary>
@@ -31,26 +31,26 @@ namespace pfAdapter
   /// </summary>
   internal class NamedPipeClient : PipeClient
   {
-    protected NamedPipeClientStream pipeClient;
+    protected NamedPipeClientStream client;
 
     /// <summary>
-    /// PipeName
+    /// Name
     /// </summary>
-    public override string PipeName { get { return "NamedPipe"; } }
+    public override string Name { get { return "NamedPipe"; } }
 
     /// <summary>
     /// Initialize
     /// </summary>
     public override void Initialize(string pipeName)
     {
-      pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
+      client = new NamedPipeClientStream(".", pipeName, PipeDirection.In,
                                              PipeOptions.None, TokenImpersonationLevel.None);
     }
 
     /// <summary>
     /// IsConnected
     /// </summary>
-    public override bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
+    public override bool IsConnected { get { return client != null && client.IsConnected; } }
 
     /// <summary>
     /// Connect  sync
@@ -59,19 +59,19 @@ namespace pfAdapter
     ///・pipeClient.Connect(1000*10)だと接続できるまでＣＰＵ使用率１００％で待機したので、
     ///　pipeClient.Connect(0) & Thread.Sleep(50) を用いる。
     /// </remarks>
-    public override void Connect(int timeout)
+    public override void Connect()
     {
-      if (pipeClient == null) return;
+      if (client == null) return;
 
-      try { pipeClient.Connect(0); }
+      try { client.Connect(0); }
       catch (TimeoutException) { }
 
-      int retry = timeout / 50;
+      int retry = 3000 / 50;
       for (int i = 0; i < retry; i++)
       {
-        if (pipeClient.IsConnected) break;
+        if (client.IsConnected) break;
 
-        try { pipeClient.Connect(0); }
+        try { client.Connect(0); }
         catch (TimeoutException) { }
         Thread.Sleep(50);
       }
@@ -82,36 +82,33 @@ namespace pfAdapter
     /// </summary>
     public override void Close()
     {
-      if (pipeClient != null)
-      {
-        pipeClient.Close();
-      }
+      if (client != null)
+        client.Close();
     }
 
     /// <summary>
     /// Read  sync
     /// </summary>
-    /// <param name="requestSize">要求データサイズ</param>
     /// <returns>
     ///   成功  -->  byte[] 
-    ///   切断  -->  null
+    ///   切断  -->  new byte[] { }
     /// </returns>
-    public override byte[] ReadPipe(int requestSize)
+    public override byte[] ReadPipe(int req_size)
     {
-      if (IsConnected == false) return null;
+      if (IsConnected == false) return new byte[] { };
 
-      byte[] readBuffer = new byte[requestSize];
-      int readSize = pipeClient.Read(readBuffer, 0, requestSize);
+      byte[] data = new byte[req_size];
+      int read_size = client.Read(data, 0, req_size);
 
       //要求サイズより小さければトリム
-      if (readSize != requestSize)
+      if (read_size != req_size)
       {
-        var trimBuffer = new byte[readSize];
-        Buffer.BlockCopy(readBuffer, 0, trimBuffer, 0, readSize);
-        return trimBuffer;
+        var trim_data = new byte[read_size];
+        Buffer.BlockCopy(data, 0, trim_data, 0, read_size);
+        return trim_data;
       }
-
-      return readBuffer;
+      else
+        return data;
     }
   }
 
@@ -137,9 +134,9 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// PipeName
+    /// Name
     /// </summary>
-    public override string PipeName { get { return "StdinPipe"; } }
+    public override string Name { get { return "StdinPipe"; } }
 
     /// <summary>
     /// IsConnected
@@ -149,7 +146,7 @@ namespace pfAdapter
     /// <summary>
     /// Connect  sync
     /// </summary>
-    public override void Connect(int timeout)
+    public override void Connect()
     {
       /*do nothing*/
     }
@@ -166,30 +163,30 @@ namespace pfAdapter
     /// <summary>
     /// Read  sync
     /// </summary>
-    /// <param name="requestSize">要求データサイズ</param>
-    /// <returns
+    /// <returns>
     ///   成功  -->  byte[] 
-    ///   切断  -->  null
+    ///   切断  -->  new byte[] { }
     /// </returns>
-    public override byte[] ReadPipe(int requestSize)
+    public override byte[] ReadPipe(int req_size)
     {
-      if (IsConnected == false) return null;
+      if (isConnected == false) return new byte[] { };
 
-      byte[] readBuffer = new byte[requestSize];
-      int readSize = reader.Read(readBuffer, 0, requestSize);
+      byte[] data = new byte[req_size];
+      int read_size = reader.Read(data, 0, req_size);
 
-      //server close the pipe
-      if (readSize == 0) isConnected = false;
+      //server closed
+      if (read_size == 0)
+        isConnected = false;
 
       //要求サイズより小さければトリム
-      if (readSize != requestSize)
+      if (read_size != req_size)
       {
-        var trimBuffer = new byte[readSize];
-        Buffer.BlockCopy(readBuffer, 0, trimBuffer, 0, readSize);
-        return trimBuffer;
+        var trim_data = new byte[read_size];
+        Buffer.BlockCopy(data, 0, trim_data, 0, read_size);
+        return trim_data;
       }
-
-      return readBuffer;
+      else
+        return data;
     }
   }
 
