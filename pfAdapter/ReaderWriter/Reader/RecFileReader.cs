@@ -12,7 +12,7 @@ namespace pfAdapter
   {
     private FileStream fileStream;
     private BinaryReader binReader;
-    public bool IsConnected { get { return binReader != null; } }
+    public bool IsConnected { get { return fileStream != null; } }
 
     private LogWriter log;
 
@@ -78,7 +78,7 @@ namespace pfAdapter
         }
         Thread.Sleep(250);           //まだファイルが作成されていない？
       }
-      return binReader != null;
+      return fileStream != null;
     }
 
 
@@ -144,7 +144,7 @@ namespace pfAdapter
     ///   return null;　           失敗、待機してリトライ
     ///   return new byte[]{ };    ＥＯＦ
     /// </remarks>
-    public byte[] ReadBytes(long req_fpos)
+    public byte[] Read(long req_fpos)
     {
       for (int retry = 0; retry <= 1; retry++)
       {
@@ -194,12 +194,12 @@ namespace pfAdapter
           }
           else
           {
-            //ゼロパケットを読み続けている？
+            //ゼロパケットを読み続けているか？
             if (lastPos_ReadPacket == req_fpos
-              && 20 < (DateTime.Now - lastTime_ReadPacket).TotalSeconds)
+              && 10 < (DateTime.Now - lastTime_ReadPacket).TotalSeconds)
             {
               //EDCBが強制終了したときのファイル
-              Log.System.WriteLine("/▽  Read zero packet over 20secs.  filePos = {0,12:N0} ▽/", req_fpos);
+              Log.System.WriteLine("/▽  Read zero packet over 10secs. Finish read.  Pos = {0,12:N0} ▽/", req_fpos);
               return new byte[] { };  //読込ループ終了
             }
             return null;

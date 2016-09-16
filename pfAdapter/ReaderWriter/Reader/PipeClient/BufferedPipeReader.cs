@@ -117,11 +117,24 @@ namespace pfAdapter
 
 
     /// <summary>
+    /// データ終端に到達したと推定
+    /// </summary>
+    public bool EndOfStream(long req_fpos)
+    {
+      if (IsConnected)
+        return false;
+      else
+        return IsBackOfBuff(req_fpos);
+    }
+
+
+
+    /// <summary>
     /// パイプバッファから読込み
     /// </summary>
     public byte[] ReadBytes(long req_fpos)
     {
-      return piepBuff.GetData(req_fpos);
+      return piepBuff.Get(req_fpos);
 
       ///* test */
       ///*    データ読込を失敗させる */
@@ -158,9 +171,8 @@ namespace pfAdapter
       {
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        // const int Req_Size = 1024 * 128;
-        const int Req_Size = 1000 * 100;
-        byte[] data = pipeClient.ReadPipe(Req_Size);
+        const int Req_Size = 1024 * 128;
+        byte[] data = pipeClient.Read(Req_Size);
         if (data.Length == 0)
         {
           Log.PipeBuff.WriteLine("△△△Pipe Disconnected,  filePos = {0,11:N0}", filePos);

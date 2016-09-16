@@ -15,7 +15,6 @@ namespace pfAdapter
     //pipe
     private static BufferedPipeReader pipeReader;
     private static bool PipeIsConnected { get { return pipeReader.IsConnected; } }
-    private static bool PipeBuffIsClosed;
 
     //file
     private RecFileReader fileReader;
@@ -32,7 +31,6 @@ namespace pfAdapter
     {
       log = new LogWriter("");    //null reference回避用
       log_Input = new Log_TotalInput();
-      PipeBuffIsClosed = true;
     }
 
 
@@ -71,7 +69,6 @@ namespace pfAdapter
       {
         pipeReader = new BufferedPipeReader(pipename);
         pipeReader.Connect();
-        PipeBuffIsClosed = PipeIsConnected == false;
       }
 
       //file
@@ -129,10 +126,10 @@ namespace pfAdapter
     ///   return null;              失敗、待機してリトライ
     ///   return new byte[] { };    ＥＯＦ
     /// </remarks>
-    public byte[] ReadBytes()
+    public byte[] Read()
     {
       //パイプ読込
-      byte[] pipe_data = ReadBytes_Pipe();
+      byte[] pipe_data = Read_Pipe();
       if (pipe_data != null && 0 < pipe_data.Length)
       {
         //成功
@@ -152,7 +149,7 @@ namespace pfAdapter
 
 
       //ファイル読込
-      byte[] file_data = ReadBytes_File();
+      byte[] file_data = Read_File();
       if (file_data != null && 0 < file_data.Length)
       {
         //成功
@@ -182,9 +179,10 @@ namespace pfAdapter
     ///   return null;              失敗、待機してリトライ
     ///   return new byte[] { };    バッファ内に要求データがない、ファイル読み込みへ
     /// </remarks>
-    private byte[] ReadBytes_Pipe()
+    private byte[] Read_Pipe()
     {
-      if (PipeBuffIsClosed) return new byte[] { };
+      if (pipeReader.EndOfStream(filePos)) return new byte[] { };
+      
 
       //read
       var data = pipeReader.ReadBytes(filePos);
@@ -217,10 +215,11 @@ namespace pfAdapter
         }
         else
         {
-          //末尾のデータが未読込ならファイルから読み込む
+          //パイプ読み込み終了
+          //　末尾のデータが未読込ならファイルから読み込む
+          //　他のインスタンスもファイル読み込みへ移行
           log.WriteLine("            :    Pipe Buff Closed      filePos = {0,12:N0}", filePos);
           pipeReader.Close();
-          PipeBuffIsClosed = true;
           return new byte[] { };
         }
       }
@@ -236,12 +235,11 @@ namespace pfAdapter
     ///   return null;             失敗、待機してリトライ
     ///   return new byte[]{ };    ＥＯＦ
     /// </remarks>
-    private byte[] ReadBytes_File()
+    private byte[] Read_File()
     {
+      var data = fileReader.Read(filePos);
 
-      var data = fileReader.ReadBytes(filePos);
-
-      //ゼロパケットのみを読み込んだ
+      //ファイル書込の先端を読み込んだ
       if (data == null)
         return null;
 
@@ -251,7 +249,7 @@ namespace pfAdapter
         if (PipeIsConnected)
         {
           //サーバープロセスの終了を待つ。
-          log.WriteLine("  Reach EOF with pipe connection. waiting for disconnect. sleep()");
+          log.WriteLine("  Reach EOF with pipe connection. waiting for disconnect.");
           Thread.Sleep(10 * 1000);
           return null;
         }

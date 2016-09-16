@@ -129,7 +129,7 @@ namespace pfAdapter
     ///       found   -->  byte[]
     ///   not found   -->  null 
     /// </returns>
-    public byte[] GetData(long req_fpos)
+    public byte[] Get(long req_fpos)
     {
       lock (sync)
       {

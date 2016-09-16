@@ -22,7 +22,7 @@ namespace pfAdapter
     public abstract bool IsConnected { get; }
     public abstract void Connect();
     public abstract void Close();
-    public abstract byte[] ReadPipe(int req_size);
+    public abstract byte[] Read(int req_size);
   }
 
 
@@ -93,7 +93,7 @@ namespace pfAdapter
     ///   成功  -->  byte[] 
     ///   切断  -->  new byte[] { }
     /// </returns>
-    public override byte[] ReadPipe(int req_size)
+    public override byte[] Read(int req_size)
     {
       if (IsConnected == false) return new byte[] { };
 
@@ -167,7 +167,7 @@ namespace pfAdapter
     ///   成功  -->  byte[] 
     ///   切断  -->  new byte[] { }
     /// </returns>
-    public override byte[] ReadPipe(int req_size)
+    public override byte[] Read(int req_size)
     {
       if (isConnected == false) return new byte[] { };
 

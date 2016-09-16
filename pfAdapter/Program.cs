@@ -17,7 +17,6 @@ namespace pfAdapter
   {
     private static void Main(string[] AppArgs)
     {
-
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
@@ -343,7 +342,7 @@ namespace pfAdapter
             GC.Collect();
 
             //読
-            byte[] readData = reader.ReadBytes();
+            byte[] readData = reader.Read();
             if (readData == null) continue;                  //パイプバッファ待ち、未書込エリアの読込み
             else if (readData.Length == 0) break;            //パイプ切断 ＆ ファイル終端
 
