@@ -352,8 +352,8 @@ namespace pfAdapter
 
 
             if (updateLog)
-              UpdateLogStatus(reader.log_Input.TotalPipeRead,
-                              reader.log_Input.TotalFileRead);
+              UpdateLogStatus(reader.log_TotalRead.TotalPipeRead,
+                              reader.log_TotalRead.TotalFileRead);
           }
 
           //Close
@@ -366,7 +366,7 @@ namespace pfAdapter
           {
             Log.System.WriteLine();
             Log.System.WriteLine(taskName + ":");
-            Log.System.WriteLine(reader.log_Input.GetText());
+            Log.System.WriteLine(reader.log_TotalRead.GetText());
           }
           //同時に終了していたら別のTaskにロックを渡してログを書いてもらう。
           Thread.Sleep(100);

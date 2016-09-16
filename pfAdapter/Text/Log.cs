@@ -346,7 +346,7 @@ namespace pfAdapter
   /// <summary>
   /// 読込量ログ 
   /// </summary>
-  internal class Log_TotalInput
+  internal class Log_TotalRead
   {
     public long TotalRead { get { return TotalPipeRead + TotalFileRead; } }                 //総読込量
     public long TotalPipeRead = 0;                                                          //パイプ総読込量

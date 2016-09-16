@@ -21,7 +21,7 @@ namespace pfAdapter
 
     //Log
     public LogWriter log { get; private set; }
-    public Log_TotalInput log_Input { get; private set; }
+    public Log_TotalRead log_TotalRead { get; private set; }
 
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace pfAdapter
     public InputReader()
     {
       log = new LogWriter("");    //null reference回避用
-      log_Input = new Log_TotalInput();
+      log_TotalRead = new Log_TotalRead();
     }
 
 
@@ -188,7 +188,7 @@ namespace pfAdapter
       var data = pipeReader.ReadBytes(filePos);
       if (data != null && 0 < data.Length)
       {
-        log_Input.TotalPipeRead += data.Length;
+        log_TotalRead.TotalPipeRead += data.Length;
         log.WriteLine("( )from pipe:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
                       filePos, filePos + data.Length, data.Length);
 
@@ -264,9 +264,9 @@ namespace pfAdapter
       //log
       {
         if (PipeIsConnected)
-          log_Input.FileReadWithPipe += data.Length;
+          log_TotalRead.FileReadWithPipe += data.Length;
         else
-          log_Input.FileReadWithoutPipe += data.Length;
+          log_TotalRead.FileReadWithoutPipe += data.Length;
         log.WriteLine(" $ from file:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
                       filePos, filePos + data.Length, data.Length);
       }
