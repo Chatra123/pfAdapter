@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/09/16
+ * 最終更新日　16/09/18
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -27,16 +27,16 @@ namespace OctNov.IO
     /// <param name="filename">XMLファイル名</param>
     /// <returns>
     /// 　success  -->  load_obj
-    /// 　fail     -->  new T()
+    /// 　fail     -->  null
     /// </returns>
     /// <remarks>
     ///   ◇スペースだけのstringを維持
     ///     XmlSerializerで直接読み込むとスペースだけの文字列が空文字になる。
     ///   　XmlDocumentを経由し、PreserveWhitespace = true;で変換する。
     /// </remarks>
-    public static T Load<T>(string filename) where T : new()
+    public static T Load<T>(string filename) where T : class
     {
-      if (File.Exists(filename) == false) return default(T);
+      if (File.Exists(filename) == false) return null;
 
       for (int i = 1; i <= 3; i++)
       {
@@ -72,11 +72,10 @@ namespace OctNov.IO
           //フォーマット、シリアル属性を確認
           throw;
         }
-
         System.Threading.Thread.Sleep(30);
       }
 
-      return default(T);
+      return null;
     }
 
 
@@ -88,7 +87,7 @@ namespace OctNov.IO
     /// <typeparam name="T">保存するクラス型</typeparam>
     /// <param name="filename">XMLファイル名</param>
     /// <param name="save_obj">保存するオブジェクト</param>
-    public static bool Save<T>(string filename, T save_obj) where T : new()
+    public static bool Save<T>(string filename, T save_obj) where T : class
     {
       for (int i = 1; i <= 3; i++)
       {

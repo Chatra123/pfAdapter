@@ -47,25 +47,20 @@ namespace pfAdapter.Setting
             Default_XmlPath = Path.Combine(AppDir, Default_XmlName);
 
     /// <summary>
-    /// 設定ファイルを読み込む
+    /// 設定ファイルを読込
     /// </summary>
-    /// <param name="xmlpath">ファイル名を指定</param>
     public static Setting_File LoadFile(string xmlpath = null)
     {
-      //デフォルト名を使用
+      //デフォルト名を使用、新規作成
       if (string.IsNullOrEmpty(xmlpath))
       {
         xmlpath = Default_XmlPath;
-
         if (File.Exists(xmlpath) == false)
-        {
-          //作成
-          var def_Setting = Sample_A();    //  Sample_A  Sample_RunTest
-          XmlRW.Save(xmlpath, def_Setting);
-        }
+          XmlRW.Save(xmlpath, Sample_A()); // Sample_A  Sample_RunTest
       }
 
       var file = XmlRW.Load<Setting_File>(xmlpath);
+      file = file ?? Sample_A();
 
       //追加された項目、削除された項目を書き換え。
       //ユーザーが消したタグなども復元される。
