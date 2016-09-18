@@ -361,15 +361,15 @@ namespace pfAdapter
     {
       var text = new StringBuilder();
       text.AppendLine(
-        string.Format("    TotalRead                =  {0,14:N0}", TotalRead));
+        string.Format("    TotalRead                 =  {0,14:N0}", TotalRead));
       text.AppendLine(
-        string.Format("      TotalPipeRead          =  {0,14:N0}", TotalPipeRead));
+        string.Format("      TotalPipeRead           =  {0,14:N0}", TotalPipeRead));
       text.AppendLine(
-        string.Format("      TotalFileRead          =  {0,14:N0}", TotalFileRead));
+        string.Format("      TotalFileRead           =  {0,14:N0}", TotalFileRead));
       text.AppendLine(
-        string.Format("        FileReadWithPipe     =  {0,14:N0}", FileReadWithPipe));
+        string.Format("        FileRead_withPipe     =  {0,14:N0}", FileReadWithPipe));
       text.AppendLine(
-        string.Format("        FileReadWithoutPipe  =  {0,14:N0}", FileReadWithoutPipe));
+        string.Format("        FileRead_withoutPipe  =  {0,14:N0}", FileReadWithoutPipe));
       return text.ToString();
     }
 
