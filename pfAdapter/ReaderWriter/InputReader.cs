@@ -181,8 +181,7 @@ namespace pfAdapter
     /// </remarks>
     private byte[] Read_Pipe()
     {
-      if (pipeReader.EndOfStream(filePos)) return new byte[] { };
-      
+      if (pipeReader.IsOpened == false) return new byte[] { };
 
       //read
       var data = pipeReader.ReadBytes(filePos);
