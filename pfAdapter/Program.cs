@@ -17,6 +17,7 @@ namespace pfAdapter
   {
     private static void Main(string[] AppArgs)
     {
+
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
 
@@ -193,9 +194,9 @@ namespace pfAdapter
             Log.System.WriteLine();
             Log.System.WriteLine("[ PostProcess_MainA ]");
             postProcess_MainA.Wait();
-            ProhibitFileMove_pfA.Unlock();           //移動禁止は待機中だけ
+            ProhibitFileMove_pfA.Unlock();                 //移動禁止は待機中だけ
             postProcess_MainA.Run();
-            ProhibitFileMove_pfA.Lock();             //移動禁止　　再
+            ProhibitFileMove_pfA.Lock();                   //移動禁止　　再
             Log.System.WriteLine();
           }
 
@@ -216,16 +217,16 @@ namespace pfAdapter
         {
           Log.System.WriteLine("[ PostProcess_Enc_B ]");
           setting.PostProcess_Enc_B.Wait();
-          ProhibitFileMove_pfA.Unlock();                           //移動禁止は待機中だけ
+          ProhibitFileMove_pfA.Unlock();                   //移動禁止は待機中だけ
           setting.PostProcess_Enc_B.Run();
-          ProhibitFileMove_pfA.Lock();                             //移動禁止　　再
+          ProhibitFileMove_pfA.Lock();                     //移動禁止　　再
         }
 
       if (setting.EnableRun_PostPrc_App)
       {
         Log.System.WriteLine("[ PostProcess_App ]");
         setting.PostProcess_App.Wait();
-        ProhibitFileMove_pfA.Unlock();                             //移動禁止は待機中だけ
+        ProhibitFileMove_pfA.Unlock();                     //移動禁止は待機中だけ
         setting.PostProcess_App.Run();
       }
 
@@ -419,6 +420,8 @@ namespace pfAdapter
     }//class MainSession
 
     #endregion
+
+
 
 
   }//class Program
