@@ -53,11 +53,11 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// 経過時間  Milliseconds
+    /// 経過時間  sec
     /// </summary>
-    public static long Elapse_ms
+    public static long Elapse_sec
     {
-      get { return Elapse.Milliseconds; }
+      get { return Elapse.Seconds; }
     }
 
   }

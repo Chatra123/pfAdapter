@@ -18,19 +18,15 @@ namespace pfAdapter
 
 
     //インスタンスごとに制御するのでプロセスＩＯは SpeedLimit以上になることもある。
-    //ただし、実際にはSpeedLimit以上の速度が出るような状況になることはない。
-    public int SpeedLimit { get; private set; }            //読込速度上限　 byte/sec
+    //ただし、実際にSpeedLimit以上の速度が出る状況にはならない。
+    public int SpeedLimit { get; private set; }            //読込速度上限　byte/sec
     private double tick_ReadSize;                          //速度計算用　　200ms間のファイル読込量
     private DateTime tick_BeginTime = DateTime.Now;        //　　　　　  　200ms計測開始
 
 
     //”ＴＳへの書込みが停止していないか”の判定用
-    private DateTime lastTime_ReadPacket = DateTime.Now;   //最後に値パケットを読み込んだ時間
-    private long lastPos_ReadPacket = 0;                   //　　　　　　　　　　　　　　位置
-
-
-    //パケットサイズ参照用
-    class Packet { public const int Size = 188;}           //任意の値、188以外でもいい
+    private DateTime lastRead_Time = DateTime.MinValue;  //最後に値パケットを読み込んだ時間
+    private long lastRead_Pos = 0;                       //　　　　　　　　　　　　　　位置
 
 
     /// <summary>
@@ -105,11 +101,11 @@ namespace pfAdapter
       tick_ReadSize += read_size;
 
       double limit = SpeedLimit;
-      if (App.Elapse_ms < 30 * 1000)
+      if (App.Elapse_sec < 30)
       {
         //強制速度制限   6.0 MiB/sec
         //　起動直後はファイル読込みが必ず発生するため。
-        if (SpeedLimit <= 0 || 6.0 * 1024 * 1024 < SpeedLimit)
+        if (0 < SpeedLimit && 6.0 * 1024 * 1024 < SpeedLimit)
           limit = 6.0 * 1024 * 1024;
       }
 
@@ -124,7 +120,7 @@ namespace pfAdapter
       if (0 < limit
         && limit * (200.0 / 1000.0) < tick_ReadSize)
       {
-        int sleep = (200 - elapse) < 0 ? 0 : (200 - elapse);
+        int sleep = 200 - elapse;
         if (0 < sleep)
         {
           log.WriteLine("  sleep {0,3:N0} :    read speed limit.", sleep);
@@ -146,6 +142,10 @@ namespace pfAdapter
     /// </remarks>
     public byte[] Read(long req_fpos)
     {
+      if (lastRead_Time == DateTime.MinValue)
+        lastRead_Time = DateTime.Now;
+
+
       for (int retry = 0; retry <= 1; retry++)
       {
         bool last_retry = (1 <= retry);
@@ -176,10 +176,10 @@ namespace pfAdapter
 
 
         //未書込みエリアを読み込んだか？
-        if (Packet.Size * 20 <= data.Length)                //パケット*２０以上が必須
+        if (Packet.Size * 10 <= data.Length)                //パケット*１０以上が必須
         {
-          bool trimmed = TrimZeroPacket(ref data);
-          if (trimmed)
+          bool trimZero = TrimZeroPacket(ref data);
+          if (trimZero)
           {
             //ファイル書込みの先端に到達、Sleep()
             log.WriteLine("  sleep 300 :  trim zero packet");
@@ -189,14 +189,14 @@ namespace pfAdapter
           if (data != null)
           {
             //read valid data
-            lastTime_ReadPacket = DateTime.Now;
-            lastPos_ReadPacket = req_fpos;
+            lastRead_Time = DateTime.Now;
+            lastRead_Pos = req_fpos;
           }
           else
           {
             //ゼロパケットを読み続けているか？
-            if (lastPos_ReadPacket == req_fpos
-              && 10 < (DateTime.Now - lastTime_ReadPacket).TotalSeconds)
+            if (lastRead_Pos == req_fpos
+              && 10 < (DateTime.Now - lastRead_Time).TotalSeconds)
             {
               //EDCBが強制終了したときのファイル
               Log.System.WriteLine("/▽  Read zero packet over 10secs. Finish read.  Pos = {0,12:N0} ▽/", req_fpos);
@@ -220,34 +220,43 @@ namespace pfAdapter
         return data;
       }//for
 
-      throw new Exception("RecFileReader.ReadBytes() : unknown error");
+      throw new Exception();
     }//func
 
 
 
-
+    //パケットサイズ参照用
+    class Packet { public const int Size = 188;}           //任意の値、188以外でもいい
 
     /// <summary>
     /// 値パケットのみにする。ゼロパケットは切り捨て
     /// </summary>
-    /// <returns>ゼロパケットがトリムされたか？</returns>
+    /// <returns>
+    /// ゼロパケットを削ったか？
+    /// 
+    ///   return false
+    ///     data = byte[]  -->  全て値パケットだった、最後尾の５パケットを切り捨て
+    /// 
+    ///   return true
+    ///     data = byte[]  -->  一部値パケットだった、値のみにトリム
+    ///    
+    ///   return true
+    ///     data = null    -->  全て０ or 先頭５％以内にゼロパケットがあった
+    ///     
+    /// </returns>
     /// <remarks> 
-    ///   dataのサイズは Packet.Size * 20 以上であること。
-    ///   最後尾の１０パケットは必ず切り捨てられる。
-    ///   
-    /// return
-    ///    data = byte[]  -->  トリム成功
-    ///    data = null    -->  先頭５％以内にゼロパケットがある
+    ///   data.lengthは Packet.Size * 10 以上であること。
     /// </remarks>
     private bool TrimZeroPacket(ref byte[] data)
     {
       //check packet has value
-      Func<byte[], bool> HasValue =
-        (packet) =>
+      Func<byte[], int, int, bool> HasValue =
+        (d, offset, len) =>
         {
-          foreach (byte b in packet)
+          for (int i = offset; i < offset + len; i++)
           {
-            if (b != 0x00) return true;
+            if (d[i] != 0x00)
+              return true;
           }
           return false;
         };
@@ -255,44 +264,45 @@ namespace pfAdapter
 
       var read_data = data;
 
-      int numPacket_100p;                                      //総パケット数 　１００％
-      int numPacket_005p;                                      //総パケット数の５％  or １０パケット以上
-      numPacket_100p = (int)Math.Floor(1.0 * read_data.Length / Packet.Size);
-      numPacket_005p = (int)(0.05 * numPacket_100p);
-      numPacket_005p = 10 < numPacket_005p ? numPacket_005p : 10;
-      if (numPacket_100p < 20)
+      int packet_100p;                           //総パケット数の１００％個  and  パケット１０個  以上
+      int packet_010p;                           //総パケット数の  １０％個   or  パケット  ５個  以上
+      packet_100p = (int)Math.Floor(1.0 * read_data.Length / Packet.Size);
+      packet_010p = (int)(1.0 * packet_100p * 0.10);
+      packet_010p = 5 < packet_010p ? packet_010p : 5;
+      if (packet_100p < 10)
       {
-        //１０パケット分を検査するので必ず２０パケット分は必要
-        throw new Exception("HasZeroPacket():  numPacket_100p < 20 packet");
+        //５パケット分を検査するので１０パケット分は必要
+        string method = System.Reflection.MethodBase.GetCurrentMethod().Name;
+        throw new Exception(method + " :  packet_100p < 10 packet");
       }
 
-      var sample_packet = new byte[Packet.Size * 10];        //検査用パケット領域
-      byte[] trim_data = null;                               //戻り値  値パケット
-      bool hasZero = false;                                  //戻り値  ゼロパケットが含まれていたか？
 
-      for (int i = numPacket_100p - 10; 0 < i; i -= numPacket_005p)
+      byte[] trim_data = null;                   //戻り値  値パケット
+      bool trimZero = false;                     //戻り値  ゼロパケットを削ったか？
+      // i = パケット個数
+      for (int i = packet_100p - 5; 0 < i; i -= packet_010p)
       {
-        //最後尾の１０パケット →　sample_packet
-        Buffer.BlockCopy(read_data, Packet.Size * i, sample_packet, 0, Packet.Size * 10);
-
-        if (HasValue(sample_packet))
+        //後ろの５パケット分を検査
+        bool hasValue = HasValue(read_data, Packet.Size * i, Packet.Size * 5);
+        if (hasValue)
         {
-          //検査した１０パケットを切捨てて、それより前を返す。
-          trim_data = new byte[Packet.Size * i];
-          Buffer.BlockCopy(read_data, 0, trim_data, 0, Packet.Size * i);
+          //検査した５パケットを切捨てて、それより前を返す。
+          int trim_size = Packet.Size * i;
+          trim_data = new byte[trim_size];
+          Buffer.BlockCopy(read_data, 0, trim_data, 0, trim_size);
           break;
         }
         else
-          hasZero = true;
-        //ゼロパケットなら５％戻り、再検査　
+          trimZero = true;
+        //ゼロパケットなら１０％戻り、再検査　
       }
 
       data = trim_data;
-      return hasZero;
+      return trimZero;
     }
     /*
-     *  numPacket_100p = 100
-     *  numPacket_005p =   5
+     *  packet_100p = 100
+     *  packet_010p =  10
      *
      *             i =      0   ...  19   ...  39   ...  59   ...  79   ...  99
      *                ｜■■■■｜■■■■｜■■■■｜■■■□｜□□□□｜□□□□｜□□□
@@ -304,15 +314,18 @@ namespace pfAdapter
      *                                                                □□□    ：１パケット未満のデータ
      *  処理
      *  ・最初に最後尾 i = 99がゼロパケットか検査
-     *  ・ゼロパケットなら５％だけ戻り i = 94を検査
+     *  ・ゼロパケットなら１０％だけ戻り i = 89を検査
      *  ・i = 59 パケットで値をみつける。
      *  ・i = 0 .. 58 を値パケットとして返し、i = 59は切捨てる。
-     *  ・末尾に１パケット未満のデータあれば常に切り捨てる。ここでは i = 99パケットの後ろ。
      *  
-     *  追記
-     *  ・検査サイズを１パケットから１０パケット分に変更
+     *  ・検査サイズを１パケットから５パケット分に変更
      * 
      */
+
+
+
+
+
 
 
 
