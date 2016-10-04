@@ -34,7 +34,6 @@ namespace pfAdapter
     private readonly object sync = new object();
     Queue<FileBlock> Que;
     public int BuffMax { get; private set; }
-    private int BuffCurSize { get { lock (sync) { return Que.Select(data => data.Size).Sum(); } } }
     public bool IsEmpty { get { lock (sync) { return Que.Count() == 0; } } }
 
 
@@ -84,26 +83,44 @@ namespace pfAdapter
     {
       lock (sync)
       {
+        var GetCurSize = new Func<int>(
+          () => { return Que.Select(block => block.Size).Sum(); });
+
         //Dequeue
         while (0 < Que.Count()
-          && BuffMax < BuffCurSize + data.Count())
+          && BuffMax < GetCurSize() + data.Count())
         {
           var block = Que.Dequeue();
-          Log.PipeBuff.WriteLine("{0}  --buff:  filePos= {1,12:N0}      len= {2,8:N0}",
+          Log.PipeBuff.WriteLine("{0}  --buff:  filePos= {1,12:N0}        len= {2,8:N0}",
             Log.Spc30,
             block.Pos, block.Size);
         }
 
         //Enqueue
-        if (BuffCurSize + data.Count() <= BuffMax)
+        if (GetCurSize() + data.Count() <= BuffMax)
         {
           Que.Enqueue(new FileBlock(data, fpos));
-          Log.PipeBuff.WriteLine("{0}  ++buff:  filePos= {1,12:N0}      len= {2,8:N0}",
+          Log.PipeBuff.WriteLine("{0}  ++buff:  filePos= {1,12:N0}        len= {2,8:N0}",
             Log.Spc30,
             fpos, data.Length);
         }
       }
 
+    }
+
+
+    /// <summary>
+    /// バッファよりも前方を要求しているか？
+    /// </summary>
+    public bool IsFrontOfBuff(long req_fpos)
+    {
+      lock (sync)
+      {
+        if (Que.Count == 0)
+          return false;
+        else
+          return req_fpos < Que.First().Pos;
+      }
     }
 
 
@@ -142,7 +159,7 @@ namespace pfAdapter
           req_fpos);
 
         //Que後方のデータを読むことが多いので逆順
-        foreach (var block in Que.Reverse())
+        foreach (var block in Que)
         {
           byte[] data = GetTrimData(block, req_fpos);
           if (data != null)

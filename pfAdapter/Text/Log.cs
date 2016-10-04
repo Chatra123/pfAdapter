@@ -127,7 +127,7 @@ namespace pfAdapter
       {
         writer.WriteLine();
         writer.WriteLine();
-        writer.WriteLine(new String('=', 80));
+        writer.WriteLine(new string('=', 80));
       }
 
       return writer;
@@ -142,16 +142,16 @@ namespace pfAdapter
       {
         string logdir = Path.Combine(App.Dir, "Log");
         string logpath = Path.Combine(logdir, filename + "." + i + ".log");
-        var logfile = new FileInfo(logpath);
+        var finfo = new FileInfo(logpath);
 
-        if (logfile.Exists)
+        if (finfo.Exists)
         {
           //古いファイル？
-          bool over_creation_ = 2.0 <= (DateTime.Now - logfile.CreationTime).TotalDays;
-          bool over_lastwrite = 2.0 <= (DateTime.Now - logfile.LastWriteTime).TotalDays;
+          bool over_creation_ = 2.0 <= (DateTime.Now - finfo.CreationTime).TotalDays;
+          bool over_lastwrite = 2.0 <= (DateTime.Now - finfo.LastWriteTime).TotalDays;
           if (over_creation_ && over_lastwrite)
           {
-            try { logfile.Delete(); }
+            try { finfo.Delete(); }
             catch { /*ファイル使用中*/ }
           }
         }

@@ -164,10 +164,9 @@ namespace pfAdapter
           Log.System.WriteLine("  - 出力先プロセスが起動していません。");
           Log.System.WriteLine();
           if (ProgramInfo.HasInfo == false)
-          {
-            Log.System.WriteLine("[ program.txt ]");
             Log.System.WriteLine("    Not Found  *.ts.program.txt");
-          }
+          if (setting.Suspend_MainA)
+            Log.System.WriteLine("    Suspend_MainA = true");          
           Log.System.WriteLine();
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
@@ -307,7 +306,6 @@ namespace pfAdapter
 
 
     #region MainSession
-
     /// <summary>
     /// MainSession[main loop]
     /// </summary>
@@ -418,7 +416,6 @@ namespace pfAdapter
       }
 
     }//class MainSession
-
     #endregion
 
 

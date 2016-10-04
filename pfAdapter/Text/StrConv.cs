@@ -68,7 +68,7 @@ namespace OctNov.Text
 
 
 
-  class NameConv  //Name Converter
+  static class NameConv  //Name Converter
   {
     /// <summary>
     /// 大文字全角ひらがなに変換   To Upper, Wide, Hiragana 

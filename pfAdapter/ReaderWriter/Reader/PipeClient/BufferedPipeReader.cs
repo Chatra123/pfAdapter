@@ -80,6 +80,7 @@ namespace pfAdapter
       {
         //タスクがキャンセルされるとここが実行される
       }
+
       piepBuff.Clear();
       IsOpened = false;
     }
@@ -108,11 +109,11 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// バッファよりも後方を要求しているか？
+    /// バッファよりも前方を要求しているか？
     /// </summary>
-    public bool IsBackOfBuff(long req_fpos)
+    public bool IsFrontOfBuff(long req_fpos)
     {
-      return piepBuff.IsBackOfBuff(req_fpos);
+      return piepBuff.IsFrontOfBuff(req_fpos);
     }
 
 
@@ -128,10 +129,9 @@ namespace pfAdapter
         if (piepBuff.IsEmpty)
           return true;
         else
-          return IsBackOfBuff(req_fpos);
+          return piepBuff.IsBackOfBuff(req_fpos);
       }
     }
-
 
 
     /// <summary>
@@ -176,15 +176,19 @@ namespace pfAdapter
       {
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-        const int Req_Size = 1024 * 128;
+
+        const int Req_Size = 1024 * 64;
         byte[] data = pipeClient.Read(Req_Size);
         if (data.Length == 0)
         {
-          Log.PipeBuff.WriteLine("△△△Pipe Disconnected,  filePos = {0,11:N0}", filePos);
+          //Log.System.WriteLine("△  Pipe Disconnected,  filePos = {0,11:N0}", filePos);
+          Log.PipeBuff.WriteLine("△  Pipe Disconnected,  filePos = {0,11:N0}", filePos);
           break;
         }
 
-
+        /* メインスレッドよりも先にロックを連続で取得すると、転送前にバッファが流れる。
+         * 発生確立は低いが、１時間で10MB程度。
+         */
         piepBuff.Append(data, filePos);
         filePos += data.Count();
         ///* test */

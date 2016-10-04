@@ -58,6 +58,7 @@ namespace pfAdapter
       fileReader.EnableLog(logwriter);
     }
 
+  
 
     /// <summary>
     /// パイプ接続、ファイル確認
@@ -199,17 +200,17 @@ namespace pfAdapter
       {
         if (PipeIsConnected)
         {
-          if (pipeReader.IsBackOfBuff(filePos))
-          {
-            //バッファの消化が早いので待機
-            log.WriteLine("  sleep  50 :    stock the buff");
-            Thread.Sleep(50);
-            return null;
-          }
-          else
+          if (pipeReader.IsFrontOfBuff(filePos))
           {
             //ファイル読み込みへ
             return new byte[] { };
+          }
+          else
+          {
+            //バッファの消化が早いので待機
+            log.WriteLine("  sleep 100 :    stock the buff");
+            Thread.Sleep(100);
+            return null;
           }
         }
         else

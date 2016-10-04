@@ -18,7 +18,7 @@ namespace pfAdapter
 
 
     //インスタンスごとに制御するのでプロセスＩＯは SpeedLimit以上になることもある。
-    //ただし、実際にSpeedLimit以上の速度が出る状況にはならない。
+    //ただし、現実的に SpeedLimit以上の速度が出る状況にはならない。
     public int SpeedLimit { get; private set; }            //読込速度上限　byte/sec
     private double tick_ReadSize;                          //速度計算用　　200ms間のファイル読込量
     private DateTime tick_BeginTime = DateTime.Now;        //　　　　　  　200ms計測開始
