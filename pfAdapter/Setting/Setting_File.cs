@@ -16,7 +16,7 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 12.0;
+    const double CurrentRev = 14.0;
 
     public double Rev = 0.0;
     public string CommandLine = "        ";       //追加コマンドライン　（デバッグ時に一時的に設定変更するのに使用した）
@@ -174,6 +174,13 @@ namespace pfAdapter.Setting
           Enable = 0,
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
           BaseArgs = "   -all   -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+        },
+        //TweakFrame
+        new Client()
+        {
+          Enable = 0,
+          BasePath = @"   ..\LGLauncher\TweakFrame.exe   ",
+          BaseArgs = "   \"$FilePathWithoutExt$.frame.txt\"   ",
         },
       };
 
