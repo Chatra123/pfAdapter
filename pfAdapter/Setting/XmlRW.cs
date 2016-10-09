@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/09/18
+ * 最終更新日　16/10/09
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -69,7 +69,7 @@ namespace OctNov.IO
         catch (Exception)
         {
           //ＸＭＬ読込失敗
-          //フォーマット、シリアル属性を確認
+          //タグ、ｘｍｌフォーマット、シリアル属性を確認
           throw;
         }
         System.Threading.Thread.Sleep(30);
@@ -89,6 +89,12 @@ namespace OctNov.IO
     /// <param name="save_obj">保存するオブジェクト</param>
     public static bool Save<T>(string filename, T save_obj) where T : class
     {
+      //ディレクトリ階層を作成
+      //FileStreamだけではディレクトリまで作成してくれない。
+      string dirpath = Path.GetDirectoryName(filename);
+      if (Directory.Exists(dirpath) == false)
+        Directory.CreateDirectory(dirpath);
+
       for (int i = 1; i <= 3; i++)
       {
         try
@@ -114,7 +120,7 @@ namespace OctNov.IO
         {
           //オブジェクトのシリアル化に失敗
           //　・classに [Serializable()] 属性をつける
-          //　・引数無しコンストラクターを追加
+          //　・classに引数無しコンストラクターを追加
           //　・シリアル化できない項目には [XmlIgnore] 属性をつける
           throw;
         }
