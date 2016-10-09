@@ -111,15 +111,18 @@ namespace pfAdapter
     {
       //コマンドラインで指定された Xml
       string xmlpath = setting_cmdline.XmlPath;
-
-      //指定ファイルがない？
-      if (string.IsNullOrWhiteSpace(xmlpath) == false
+      if (string.IsNullOrEmpty(xmlpath) == false
         && System.IO.File.Exists(xmlpath) == false)
       {
         Log.System.WriteLine("Specified xml does not exist.");
         Log.System.WriteLine("XmlPath  :" + xmlpath);
         return false;
       }
+
+      if (System.IO.File.Exists("pfAdapter.xml"))
+        xmlpath = "pfAdapter.xml";
+      else
+        xmlpath = @".\setting\pfAdapter.xml";
 
       //load file
       setting_file = Setting_File.LoadFile(xmlpath);

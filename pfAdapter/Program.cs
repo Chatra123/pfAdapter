@@ -166,7 +166,7 @@ namespace pfAdapter
           if (ProgramInfo.HasInfo == false)
             Log.System.WriteLine("    Not Found  *.ts.program.txt");
           if (setting.Suspend_MainA)
-            Log.System.WriteLine("    Suspend_MainA = true");          
+            Log.System.WriteLine("    Suspend_MainA = true");
           Log.System.WriteLine();
           Log.System.WriteLine("exit");
           Log.System.WriteLine();
