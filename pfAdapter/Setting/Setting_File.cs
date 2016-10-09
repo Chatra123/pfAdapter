@@ -16,10 +16,10 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 14.0;
+    const double CurrentRev = 14.1;
 
     public double Rev = 0.0;
-    public string CommandLine = "        ";       //追加コマンドライン　（デバッグ時に一時的に設定変更するのに使用した）
+    public string CommandLine = "        ";       //追加コマンドライン　（開発中に一時的に設定変更するのに使用）
     public double BuffSize_MiB = 3.0;             //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;          //ファイル読込速度制限
     public double MidPrcInterval_min = 10;        //中間プロセスの実行間隔
@@ -206,9 +206,9 @@ namespace pfAdapter.Setting
       {
          new Client()
          {
-           memo = "  rename  ",
+           memo = "  bat  ",
            Enable = 1,
-           BasePath = @"   PostProcess_Rename.bat   ",
+           BasePath = @"   bat\PostProcess_pfA.bat   ",
            BaseArgs =  "  \"$FilePath$\"  ",
          },
          new Client()
@@ -216,7 +216,7 @@ namespace pfAdapter.Setting
            memo = "   Post process sample  ",
            Enable = 0,
            BasePath = @"   .\foo\bar.exe   ",
-           BaseArgs =  "    ",
+           BaseArgs =  "  \"$FilePath$\"  ",
          },
       };
 
