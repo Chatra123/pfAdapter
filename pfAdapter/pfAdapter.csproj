@@ -55,12 +55,11 @@
     <Compile Include="Setting\Setting_File.cs" />
     <Compile Include="Setting\Setting_CmdLine.cs" />
     <Compile Include="Setting\XmlRW.cs" />
-    <Compile Include="Text\FileRW.cs" />
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\MidProcessTimer.cs" />
     <Compile Include="Text\StrConv.cs" />
     <Compile Include="Text\Log.cs" />
-    <Compile Include="Text\ProgramInfo.cs" />
+    <Compile Include="Setting\ProgramInfo.cs" />
     <Compile Include="ReaderWriter\InputReader.cs" />
     <Compile Include="ReaderWriter\Reader\PipeClient\BufferedPipeReader.cs" />
     <Compile Include="ReaderWriter\OutputWriter.cs" />
