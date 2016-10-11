@@ -84,7 +84,6 @@ namespace pfAdapter
       {
         if (Writer != null)
           Writer.Close();
-
         if (Enable)
           DeleteOldLog(LogFileName);
       }
@@ -95,7 +94,7 @@ namespace pfAdapter
     /// <summary>
     /// 書込み用ライター、ログファイル作成
     /// </summary>
-    /// <remarks>ファイル名は  *.1.log ～ *.8.log  </remarks>
+    /// <remarks>ファイル名は  *.1.log  ～  *.8.log  </remarks>
     private static StreamWriter CreateWriter(string filename)
     {
       // Create directory
@@ -129,7 +128,6 @@ namespace pfAdapter
         writer.WriteLine();
         writer.WriteLine(new string('=', 80));
       }
-
       return writer;
     }
 
@@ -193,14 +191,13 @@ namespace pfAdapter
             Writer = CreateWriter(LogFileName);
             if (Writer == null) OutFile = false;  //作成失敗、ファイル出力off
           }
-
           //ファイル書込み
           if (Writer != null)
           {
             Writer.Write(text);
 
             if (AutoFlush ||
-              4 * 1000 < (DateTime.Now - timeLastFlush).TotalMilliseconds)
+              6 < (DateTime.Now - timeLastFlush).TotalSeconds)
             {
               timeLastFlush = DateTime.Now;
               Writer.Flush();
@@ -246,10 +243,9 @@ namespace pfAdapter
         for (int i = 0; i < splText.Count; i++)
         {
           string line = splText[i];
-
           if (i == 0)
           {
-            //ログの先頭　or  直前の末尾が改行コードか？            
+            //ログの先頭　or  直前の文字が改行コードか？            
             if (IsLogTop || LastCharIsLineFeed)
               line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
           }
@@ -333,7 +329,6 @@ namespace pfAdapter
         //20文字以上なら表示しない
         line += " ......";
       }
-
       line = Append_Timecode(line + Environment.NewLine);
       Write_core(line);
     }

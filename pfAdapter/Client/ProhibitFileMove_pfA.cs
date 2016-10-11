@@ -23,6 +23,7 @@ namespace pfAdapter
     /// </summary>
     public static void Initialize(string filePath, string lockFileExts)
     {
+      LockItems = new List<FileStream>();
       // C:\video.ext
       // C:\video.ts.ext
       //の２パターンでファイルを探す
@@ -47,16 +48,12 @@ namespace pfAdapter
     /// </remarks>
     public static void Lock()
     {
-      LockItems = LockItems ?? new List<FileStream>();
-
-      //チェック
       foreach (var basepath in BasePathPattern)
       {
         foreach (var ext in ExtList)
         {
           string path = basepath + ext;
           if (File.Exists(path) == false) continue;
-
           try
           {
             //srtのみ特別扱い
@@ -84,7 +81,6 @@ namespace pfAdapter
     {
       foreach (var fstream in LockItems)
         fstream.Close();
-
       LockItems = new List<FileStream>();
     }
 

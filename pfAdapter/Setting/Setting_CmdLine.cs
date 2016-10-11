@@ -15,9 +15,9 @@ namespace pfAdapter.Setting
   /// </summary>
   class Setting_CmdLine
   {
-    public String Pipe { get; private set; }        //未割り当てだとnull
-    public String File { get; private set; }
-    public String XmlPath { get; private set; }
+    public string Pipe { get; private set; }        //未割り当てだとnull
+    public string File { get; private set; }
+    public string XmlPath { get; private set; }
 
     public double Limit { get; private set; }       //未割り当てだと0.0
     public double MidInterval { get; private set; }
@@ -29,7 +29,7 @@ namespace pfAdapter.Setting
     public bool? PostPrc_Enc { get; private set; }
     public bool? PostPrc_App { get; private set; }
 
-    public String EncProfile { get; private set; }
+    public string EncProfile { get; private set; }
     public bool Suspend_pfMainA { get; private set; }
     public bool Suspend_pfEnc_B { get; private set; }
     public bool Abort_pfAdapter { get; private set; }
@@ -103,7 +103,6 @@ namespace pfAdapter.Setting
              (int v) => { this.PostPrc_Main = this.PostPrc_Enc = this.PostPrc_App = 0 < v; })
 
         //Encoder
-        .Add("profile=", (v) => this.EncProfile = v)
         .Add("encprofile=", (v) => this.EncProfile = v)
 
         //suspend app
@@ -153,7 +152,7 @@ namespace pfAdapter.Setting
     }
 
     /// <summary>
-    ///コマンドライン上書き　（入力、ＸＭＬは上書きしない。）
+    ///コマンドライン設定上書き　（入力、ＸＭＬは上書きしない。）
     /// </summary>
     public void Parse_OverWrite(string[] args)
     {

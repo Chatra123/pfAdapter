@@ -58,18 +58,18 @@ namespace pfAdapter
     /// <summary>
     /// MidProcessList実行
     /// </summary>
-    private void OnTimedEvent(object o, System.Timers.ElapsedEventArgs e)
+    private void OnTimedEvent(object s, System.Timers.ElapsedEventArgs e)
     {
       if (activeTask != null && activeTask.IsCompleted == false) return;
       if ((DateTime.Now - lastRunTime).TotalMinutes < Interval_Min) return;
 
-      //MidProcessList実行中ならロックは取得できない。
+      //activeTask実行中ならロックは取得できない。
       if (Monitor.TryEnter(syncTask, 0))
       {
         lastRunTime = DateTime.Now;
         activeTask = new Task(() =>
         {
-          //Taskスレッドでロック取得、Timerスレッドとは別
+          //activeTaskスレッドでロック取得、Timerスレッドとは別
           lock (syncTask)
           {
             tickCounter++;

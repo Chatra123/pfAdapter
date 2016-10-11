@@ -20,11 +20,10 @@ namespace pfAdapter
     public double Delay_sec = 0;
     public double RandDelay_sec = 0;
     public List<Client> List = new List<Client>();
-
     public bool IsEnable { get { return 0 < Enable; } }
 
     /// <summary>
-    /// コンストラクター
+    /// constructor
     /// </summary>
     public ClientList()
     {
@@ -66,7 +65,6 @@ namespace pfAdapter
     public void Run()
     {
       if (IsEnable == false) return;
-
       foreach (var client in List)
         client.Start();
     }
@@ -195,8 +193,6 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$FileNameExt\$", fileNameExt, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FilePathWithoutExt\$", filePathWithoutExt, RegexOptions.IgnoreCase);
       }
-
-
       //パス  （r11まで）
       {
         Macro_SrcPath = Macro_SrcPath ?? "";
@@ -232,7 +228,6 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
       }
-
       //App  （r11まで）
       {
         string key = App.StartTimeText + App.PID;
@@ -378,7 +373,6 @@ namespace pfAdapter
 
       //標準出力
       Process.StartInfo.RedirectStandardOutput = false;
-
 
       //標準エラー
       //  CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す。

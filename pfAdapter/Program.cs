@@ -17,6 +17,8 @@ namespace pfAdapter
   {
     private static void Main(string[] AppArgs)
     {
+      //AppArgs = new string[] { @"E:\TS_Samp\t2s.ts" };
+
 
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
@@ -26,6 +28,10 @@ namespace pfAdapter
       Log.System.OutConsole = true;
       Log.System.OutFile = true;
 
+      //カレント
+      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+      string AppDir = Path.GetDirectoryName(AppPath);
+      Directory.SetCurrentDirectory(AppDir);
 
       //App引数解析 
       var setting = new AppSetting();
@@ -38,7 +44,6 @@ namespace pfAdapter
       Log.System.WriteLine("[ Connect Reader ]");
       InputReader readerA, readerB;
       {
-        //InputReader
         readerA = new InputReader();
         readerB = new InputReader();
         var isConnectedA = readerA.Connect(setting.Pipe, setting.File);
@@ -47,7 +52,7 @@ namespace pfAdapter
         //readerA.Enable_LogInput(Log.InputA);
         //readerB.Enable_LogInput(Log.InputB);
 
-        // no reader?
+        // no reader ?
         if (isConnectedA == false)
         {
           //設定ファイルが無ければ新規作成してから終了
@@ -89,7 +94,6 @@ namespace pfAdapter
         //  PreProcess
         if (setting.EnableRun_PrePrc_App)
         {
-
           Log.System.WriteLine("[ PreProcess__App ]");
           setting.PreProcess__App.Wait_and_Run();
           Log.System.WriteLine();
@@ -98,8 +102,7 @@ namespace pfAdapter
         if (setting.EnableRun_MidPrc_MainA)
         {
           //初期設定のみ、タイマーは停止
-          midPrcTimer = new MidProcessTimer(
-                                            setting.MidProcess__MainA,
+          midPrcTimer = new MidProcessTimer(setting.MidProcess__MainA,
                                             setting.MidPrcInterval_min);
         }
         //  PostPrcess
@@ -131,7 +134,6 @@ namespace pfAdapter
           writerA.RegisterWriter(setting.Client_MainA);
           writerA.Timeout = TimeSpan.FromSeconds(20);
         }
-
         if (setting.EnableRun_Enc_B)
         {
           Log.System.WriteLine("  Enc__B:");
@@ -152,13 +154,12 @@ namespace pfAdapter
          * 
          * 原因は不明
          * Task.WaitAll();の仕様？
-         * 
          */
         /*  デバッグ用　ファイル出力を登録  */
         //writerA.RegisterOutFileWriter(setting.File + ".pfA_Outfile_A.ts");
         //writerB.RegisterOutFileWriter(setting.File + ".pfA_Outfile_B.ts");
 
-        // no writer?
+        // no writer ?
         if (writerA.HasWriter == false && writerB.HasWriter == false)
         {
           Log.System.WriteLine("  - 出力先プロセスが起動していません。");
@@ -177,7 +178,7 @@ namespace pfAdapter
       }
 
       //
-      //Main Session  [main loop]
+      //Main Session[main loop]
       //
       {
         Log.System.WriteLine("[ Main Session ]");
@@ -198,7 +199,6 @@ namespace pfAdapter
             ProhibitFileMove_pfA.Lock();                   //移動禁止　　再
             Log.System.WriteLine();
           }
-
           if (enc_B.IsCompleted == false)
             Log.System.WriteLine("    wait for Enc_B to exit.  wait...");
         });
@@ -248,11 +248,6 @@ namespace pfAdapter
     /// </summary>
     static bool Initialize(AppSetting setting, string[] appArgs)
     {
-      //カレント
-      string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-      string AppDir = System.IO.Path.GetDirectoryName(AppPath);
-      Directory.SetCurrentDirectory(AppDir);
-
       //多重起動の負荷分散
       //  他のpfAdapterのパイプ接続を優先するためにSleep()
       //  Client_WriteStdinの起動タイミングも少しずらす。
@@ -261,24 +256,26 @@ namespace pfAdapter
       Log.System.WriteLine();
       Thread.Sleep(sleep);
 
-
+      //program.txt
       Log.System.WriteLine("  [ program.txt ]");
-      ProgramInfo.TryToGetInfo(setting.File);
+      ProgramInfo.GetInfo(setting.File);
       setting.Check_IsBlackCH(ProgramInfo.Channel);
       Log.System.WriteLine("      Channel       = " + ProgramInfo.Channel);
       Log.System.WriteLine("      IsNonCMCutCH  = " + setting.IsNonCMCutCH);
       Log.System.WriteLine("      IsNonEnc__CH  = " + setting.IsNonEnc__CH);
       Log.System.WriteLine();
 
+      //Macro
       Client.Macro_SrcPath = setting.File;
       Client.Macro_Channel = ProgramInfo.Channel;
       Client.Macro_Program = ProgramInfo.Program;
       Client.Macro_EncProfile = setting.EncProfile;
 
+      //xml
       bool loadXml = setting.LoadFile();
       if (loadXml == false)
         return false;                //アプリ終了
-
+      //log
       Log.System.WriteLine("[ App CommandLine ]");
       foreach (var arg in appArgs)
         Log.System.WriteLine(arg);
@@ -287,8 +284,8 @@ namespace pfAdapter
       Log.System.WriteLine("    " + setting.File_CommandLine);
       Log.System.WriteLine();
 
-
-      //外部プロセスからコマンドライン取得
+      //Get_ExternalCommand
+      //  外部プロセスからコマンドライン取得
       //  取得前に *.program.txtの読込みをしておくこと
       setting.Get_ExternalCommand();
       //終了要求があった？
@@ -297,8 +294,9 @@ namespace pfAdapter
       Log.System.WriteLine("[ CommandLine ]");
       Log.System.WriteLine(setting.Cmdline_ToString());
 
-
+      //ProhibitFileMove_pfA
       ProhibitFileMove_pfA.Initialize(setting.File, setting.LockFile);
+
       return true;
     }
     #endregion
@@ -348,7 +346,6 @@ namespace pfAdapter
             //書
             writer.WriteData(readData);
             if (writer.HasWriter == false) break;
-
 
             if (updateLog)
               UpdateLogStatus(reader.log_TotalRead.TotalPipeRead,

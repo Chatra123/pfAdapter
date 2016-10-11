@@ -81,17 +81,13 @@ namespace pfAdapter
       setting_blackCH = new Setting_BlackCH();
     }
 
-
+    
     /// <summary>
     /// コマンドライン解析
     /// </summary>
     public void ParseCmdLine(string[] args)
     {
       setting_cmdline.Parse(args);
-    }
-    public void ParseCmdline_OverWrite(string[] args)
-    {
-      setting_cmdline.Parse_OverWrite(args);         //コマンドライン上書き　（入力、ＸＭＬは上書きしない。）
     }
 
 
@@ -132,7 +128,6 @@ namespace pfAdapter
                                    .Split()
                                    .Where(arg => string.IsNullOrWhiteSpace(arg) == false)
                                    .ToArray();
-
       setting_cmdline.Parse_OverWrite(xmlCmdLine);
       return true;
     }
@@ -161,7 +156,7 @@ namespace pfAdapter
       {
         Log.System.WriteLine("[ Client_GetExternalCommand ]");
 
-        //プロセスを実行できていなかったら reutrn nullされる
+        //プロセス実行に失敗したら clinet = null
         var clinet = Client_GetExternalCommand;
         string line = clinet.Start_GetStdout();
 
@@ -169,17 +164,15 @@ namespace pfAdapter
         {
           Log.System.WriteLine("      return =");
           Log.System.Write(line);
-
-          //空白で分ける。　　”があれば除去
+          //コマンド分割、　”があれば除去
           extra_cmdline = line.Split()
                               .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
                               .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
                               .ToArray();
         }
       }
-
       if (extra_cmdline != null)
-        ParseCmdline_OverWrite(extra_cmdline);
+        setting_cmdline.Parse_OverWrite(extra_cmdline);
 
       //終了要求がある？
       if (Abort)
@@ -199,7 +192,7 @@ namespace pfAdapter
     public string Pipe { get { return setting_cmdline.Pipe; } }
     public string File { get { return setting_cmdline.File; } }
     private string XmlPath { get { return setting_cmdline.XmlPath; } }
-    public String EncProfile { get { return setting_cmdline.EncProfile; } }
+    public string EncProfile { get { return setting_cmdline.EncProfile; } }
     public bool Abort { get { return setting_cmdline.Abort_pfAdapter; } }
 
     //設定ファイルから
