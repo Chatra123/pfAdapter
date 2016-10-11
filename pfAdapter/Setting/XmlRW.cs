@@ -90,10 +90,10 @@ namespace OctNov.IO
     public static bool Save<T>(string filename, T save_obj) where T : class
     {
       //ディレクトリ階層を作成
-      //FileStreamだけではディレクトリまで作成してくれない。
-      string dirpath = Path.GetDirectoryName(filename);
-      if (Directory.Exists(dirpath) == false)
-        Directory.CreateDirectory(dirpath);
+      //FileStreamだけではディレクトリまで作成しない。
+      string dir = Path.GetDirectoryName(filename);
+      if (dir != "" && Directory.Exists(dir) == false)
+        Directory.CreateDirectory(dir);
 
       for (int i = 1; i <= 3; i++)
       {

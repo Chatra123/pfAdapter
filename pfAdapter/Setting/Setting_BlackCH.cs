@@ -46,10 +46,11 @@ namespace pfAdapter.Setting
 
       if (File.Exists(filename) == false)
       {
-        string dirpath = Path.GetDirectoryName(filename);
-        if (Directory.Exists(dirpath) == false)
-          Directory.CreateDirectory(dirpath);
-        File.WriteAllText(filename, Default_Text, Encoding.UTF8);
+        string dir = Path.GetDirectoryName(filename);
+        if (string.IsNullOrEmpty(dir) == false
+          && Directory.Exists(dir) == false)
+          Directory.CreateDirectory(dir);
+        File.WriteAllText(filename, Default_Text);
       }
 
       //読
