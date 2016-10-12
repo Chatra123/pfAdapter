@@ -54,7 +54,7 @@ Enc処理の実行中止
     
     
     -Abort_pfAdapter
-pfAdapterを中断  
+pfAdapterの終了  
 
 
     -ExtCmd        1
@@ -227,18 +227,17 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 ---------------------------------------
 ##### BasePath、BaseArgsで使えるマクロ  
 
-|  マクロ                |  マクロ  r11まで    |  説明                     |  例               |
-|:-----------------------|:--------------------|:--------------------------|:------------------|
-|  $FilePath$            |  $fPath$            |  入力ファイルパス         |  C:\rec\news.ts   |
-|  $FolderPath$          |  $fDir$             |  フォルダパス             |  C:\rec           |
-|  $FileName$            |  $fNameWithoutExt$  |  拡張子無しファイル名     |  news             |
-|  $Ext$                 |                     |  拡張子                   |  .ts              |
-|  $FileNameExt$         |  $fName$            |  拡張子付きファイル名     |  news.ts          |
-|  $FilePathWithoutExt$  |  $fPathWithoutExt$  |  拡張子無しファイルパス   |  C:\rec\news      |
-|  $PID$                 |                     |  pfAdapterのＰＩＤ        |                   |
-|  $StartTime$           |                     |  pfAdapter開始時間        |                   |
-|                        |  $UniqueKey$        |  ユニークキー             |                   |
-|  $EncProfile$          |                     |  引数 -EncProfile の値    |  　               |
+|  マクロ                |  説明                     |  例               |
+|:-----------------------|:--------------------------|:------------------|
+|  $FilePath$            |  入力ファイルパス         |  C:\rec\news.ts   |
+|  $FolderPath$          |  フォルダパス             |  C:\rec           |
+|  $FileName$            |  拡張子無しファイル名     |  news             |
+|  $Ext$                 |  拡張子                   |  .ts              |
+|  $FileNameExt$         |  拡張子付きファイル名     |  news.ts          |
+|  $FilePathWithoutExt$  |  拡張子無しファイルパス   |  C:\rec\news      |
+|  $PID$                 |  pfAdapterのＰＩＤ        |                   |
+|  $StartTime$           |  pfAdapter開始時間        |                   |
+|  $EncProfile$          |  引数 -EncProfile の値    |  　               |
 
 
 
