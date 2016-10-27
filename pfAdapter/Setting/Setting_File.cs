@@ -90,14 +90,14 @@ namespace pfAdapter.Setting
 
 
       //PreProcess__App
-      setting.PreProcess__App.List = new List<Client>() 
-      { 
+      setting.PreProcess__App.List = new List<Client>()
+      {
          new Client()
          {
-           memo = "  Preprocess sample  ",
            Enable = 0,
+           memo = "  Preprocess sample  ",
            BasePath = @"   .\foo\bar.exe   ",
-           BaseArgs = "   -foo \"$FilePath$\"   -bar   ",
+           BaseArgs =  "  \"$FilePath$\"   ",
          },
       };
 
@@ -153,7 +153,7 @@ namespace pfAdapter.Setting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "   -part  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
         },
       };
 
@@ -173,7 +173,7 @@ namespace pfAdapter.Setting
         {
           Enable = 0,
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -all   -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
         },
         //TweakFrame
         new Client()
@@ -194,7 +194,7 @@ namespace pfAdapter.Setting
         {
           Enable = 1,
           BasePath = @"   ..\Valve2Pipe\SplitVideo.exe   ",
-          BaseArgs =  "  \"$FilePath$\"  ",
+          BaseArgs =  "  \"$FilePath$\"   ",
         },
       };
 
@@ -206,17 +206,17 @@ namespace pfAdapter.Setting
       {
          new Client()
          {
-           memo = "  bat  ",
            Enable = 1,
-           BasePath = @"   bat\PostProcess_pfA.bat   ",
-           BaseArgs =  "  \"$FilePath$\"  ",
+           memo = "  bat  ",
+           BasePath = @"   .\bat\PostProcess_pfA.bat   ",
+           BaseArgs =  "   \"$FilePath$\"   ",
          },
          new Client()
          {
-           memo = "   Postprocess sample  ",
            Enable = 0,
+           memo = "   Postprocess sample  ",
            BasePath = @"   .\foo\bar.exe   ",
-           BaseArgs =  "  \"$FilePath$\"  ",
+           BaseArgs =  "   \"$FilePath$\"   ",
          },
       };
 
@@ -242,8 +242,8 @@ namespace pfAdapter.Setting
 
 
       //PreProcess__App
-      setting.PreProcess__App.List = new List<Client>() 
-      { 
+      setting.PreProcess__App.List = new List<Client>()
+      {
          new Client()
          {
            memo = "  preprocess sample  ",
