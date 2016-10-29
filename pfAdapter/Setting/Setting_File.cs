@@ -105,20 +105,20 @@ namespace pfAdapter.Setting
       //Client_MainA
       setting.Client_MainA = new List<Client_WriteStdin>()
       {
-        //Caption2Ass_PCR_pf
+        //Caption2Ass_PCR
         new Client_WriteStdin()
         {
           Enable = 1,
-          BasePath = @"   ..\Caption2Ass_PCR_pf\Caption2Ass_PCR_pf.exe   ",
+          BasePath = @"   ..\Caption2Ass_PCR\Caption2Ass_PCR.exe   ",
           BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag  ",
           Delay_sec = 1,
         },
-        //DGIndex_pf
+        //DGIndex
         new Client_WriteStdin()
         {
           Enable = 0,
-          BasePath = @"   ..\DGIndex_pf\DGIndex_pf.exe   ",
-          BaseArgs = "   -pipe \"$FilePath$\" -o \"$FilePath$.pp\"  -ia 4  -fo 0  -yr 2  -om 0  -hide  -exit  -nodialog   ",
+          BasePath = @"   ..\DGIndex\DGIndex.exe   ",
+          BaseArgs = "   -pipe \"$FilePath$\" -o \"$FilePath$.pp\"  -om 0  -hide  -exit  -nodialog   ",
           Delay_sec = 1,
         },
         //CreateLwi
