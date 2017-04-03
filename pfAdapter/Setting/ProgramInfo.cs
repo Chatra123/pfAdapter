@@ -5,23 +5,22 @@ using System.IO;
 using System.Threading;
 
 
-namespace pfAdapter
+namespace pfAdapter.Setting
 {
   /// <summary>
   /// 番組情報を取得  *.ts.program.txt   shift-jis
   /// </summary>
-  internal static class ProgramInfo
+  class ProgramInfo
   {
-    public static bool HasInfo { get; private set; } = false;
-    public static string Channel { get; private set; }
-    public static string Program { get; private set; }
+    public bool HasInfo { get; private set; } = false;
+    public string Channel { get; private set; } = "";
+    public string Program { get; private set; } = "";
 
     /// <summary>
     /// *.ts.program.txtから情報取得
     /// </summary>
-    public static void GetInfo(string tspath)
+    public void GetInfo(string tspath)
     {
-      if (HasInfo) return;
       string infopath = tspath + ".program.txt";
 
       //読
@@ -43,17 +42,17 @@ namespace pfAdapter
       if (text == null || text.Length < 4)
       {
         Log.System.WriteLine("    Fail to read  *.ts.program.txt");
+        Log.System.WriteLine();
         return;
       }
 
-      //取得
+      //取得成功
       Log.System.WriteLine("    Get the  *.ts.program.txt");
+      Log.System.WriteLine();
       Channel = text[1];
       Program = text[2];
       HasInfo = true;
     }
-
-
 
 
   }

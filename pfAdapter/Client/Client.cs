@@ -28,11 +28,11 @@ namespace pfAdapter
     public ClientList()
     {
       //do nothing
+      //Serializer用の引数無しconstructor
     }
-    public ClientList(ClientList clist)
+    public ClientList(ClientList client)
     {
-      //シャローコピー
-      List = new List<Client>(clist.List);
+      List = new List<Client>(client.List);
     }
 
 
@@ -71,7 +71,7 @@ namespace pfAdapter
   }
 
   /// <summary>
-  /// 出力用クライアント
+  /// クライアント
   /// </summary>
   [Serializable]
   public class Client
@@ -79,37 +79,29 @@ namespace pfAdapter
     //マクロ用の値  簡単なのでstaticで保持
     public static string Macro_SrcPath;
     public static string Macro_Channel, Macro_Program;
-    public static string Macro_EncProfile;
+    public static string Macro_Macro1;
 
     //ＸＭＬに保存する値
     public int Enable = 1;
     public string memo = "  ";
-    public string Name = "  ";
     public string BasePath = "  ";
     public string BaseArgs = "  ";
     public double Delay_sec = 0;
-    public int NoWindow = 1;                              //Write_stdinでは機能しない。Redirectしたら常にno window
+    public int NoWindow = 1;             //Write_stdinでは機能しない。Redirectしたら常にno window
     public int WaitForExit = 1;
     public double WaitTimeout_sec = -1;
-
     public bool IsEnable { get { return 0 < Enable; } }
     public string FileName { get { return Path.GetFileName(BasePath).Trim(); } }
-    public override string ToString()
-    {
-      return (string.IsNullOrWhiteSpace(Name) == false) ? Name : FileName;
-    }
-
 
     [XmlIgnore]
     public Process Process { get; protected set; }
 
-    [XmlIgnore]
-    public BinaryWriter StdinWriter { get; protected set; }
-
     /// <summary>
     /// プロセス作成
     /// </summary>
-    /// <returns>作成したプロセス</returns>
+    /// <return>
+    /// fail  -->  null
+    /// </return>
     protected Process CreateProcess()
     {
       if (IsEnable == false) return null;
@@ -126,7 +118,6 @@ namespace pfAdapter
         if (string.IsNullOrEmpty(sessionPath))
           return null;                               //パスが無効
       }
-
       //Args
       string sessionArgs;  //マクロ置換後の引数
       {
@@ -137,22 +128,18 @@ namespace pfAdapter
 
       bool isVBS = SetVbsScript(ref sessionPath, ref sessionArgs);   //VBSならcscript.exeをセット
       bool isExist = File.Exists(sessionPath) || isVBS;
-
       prc.StartInfo.FileName = sessionPath;
       prc.StartInfo.Arguments = sessionArgs;
 
-      //Log
-      {
-        Log.System.WriteLine("      BasePath  :" + BasePath);
-        Log.System.WriteLine("      BaseArgs  :" + BaseArgs);
-        Log.System.WriteLine("          Path  :" + sessionPath);
-        Log.System.WriteLine("          Args  :" + sessionArgs);
-        if (isExist == false)
-          Log.System.WriteLine("        /▽  File not found  ▽/");
-        Log.System.WriteLine("                :");
-        Log.System.WriteLine();
-      }
-
+      Log.System.WriteLine("  " + FileName);
+      Log.System.WriteLine("      BasePath  :" + BasePath);
+      Log.System.WriteLine("      BaseArgs  :" + BaseArgs);
+      Log.System.WriteLine("          Path  :" + sessionPath);
+      Log.System.WriteLine("          Args  :" + sessionArgs);
+      if (isExist == false)
+        Log.System.WriteLine("        /▽  File not found  ▽/");
+      Log.System.WriteLine("                :");
+      Log.System.WriteLine();
       return prc;
     }
 
@@ -166,18 +153,15 @@ namespace pfAdapter
       if (string.IsNullOrEmpty(before)) return before;
 
       string after = before;
-
       /*
-       * r12からEDCBと同じマクロ名に変更
-       * 
-       * ファイルパス　（フルパス）       $fPath$           --> $FilePath$               C:\rec\news.ts
-       * フォルダパス  （最後に\は無し）  $fDir$            --> $FolderPath$             C:\rec
-       * ファイル名    （拡張子無し）     $fNameWithoutExt$ --> $FileName$               news
-       * 拡張子                           none                  $Ext$                    .ts
-       * ファイル名    （拡張子付き）　   $fName$           --> $FileNameExt$            news.ts
-       * ファイルパス  （拡張子無し）　   $fPathWithoutExt$ --> $FilePathWithoutExt$     C:\rec\news
+       * ファイルパス　（フルパス）       $FilePath$               C:\rec\news.ts
+       * フォルダパス  （最後に\は無し）  $FolderPath$             C:\rec
+       * ファイル名    （拡張子無し）     $FileName$               news
+       * 拡張子                           $Ext$                    .ts
+       * ファイル名    （拡張子付き）　   $FileNameExt$            news.ts
+       * ファイルパス  （拡張子無し）　   $FilePathWithoutExt$     C:\rec\news
        */
-      //パス　（r12から）
+      //パス
       {
         Macro_SrcPath = Macro_SrcPath ?? "";
         string filePath = Macro_SrcPath;
@@ -193,21 +177,6 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$FileNameExt\$", fileNameExt, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$FilePathWithoutExt\$", filePathWithoutExt, RegexOptions.IgnoreCase);
       }
-      //パス  （r11まで）
-      {
-        Macro_SrcPath = Macro_SrcPath ?? "";
-        string fPath = Macro_SrcPath;
-        string fDir = Path.GetDirectoryName(fPath);
-        string fNameWithoutExt = Path.GetFileNameWithoutExtension(fPath);
-        string fName = Path.GetFileName(fPath);
-        string fPathWithoutExt = Path.Combine(fDir, fNameWithoutExt);
-        after = Regex.Replace(after, @"\$fPath\$", fPath, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$fDir\$", fDir, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$fNameWithoutExt\$", fNameWithoutExt, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$fName\$", fName, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$fPathWithoutExt\$", fPathWithoutExt, RegexOptions.IgnoreCase);
-      }
-
       //Program.txt
       {
         Macro_Channel = Macro_Channel ?? "";
@@ -216,24 +185,16 @@ namespace pfAdapter
         after = Regex.Replace(after, @"\$Channel\$", Macro_Channel, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$Program\$", Macro_Program, RegexOptions.IgnoreCase);
       }
-
-      //EncProfile
+      //Macro1
       {
-        Macro_EncProfile = Macro_EncProfile ?? "";
-        after = Regex.Replace(after, @"\$EncProfile\$", Macro_EncProfile, RegexOptions.IgnoreCase);
+        Macro_Macro1 = Macro_Macro1 ?? "";
+        after = Regex.Replace(after, @"\$Macro1\$", Macro_Macro1, RegexOptions.IgnoreCase);
       }
-
-      //App　（r12から）
+      //App
       {
         after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);
         after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
       }
-      //App  （r11まで）
-      {
-        string key = App.StartTimeText + App.PID;
-        after = Regex.Replace(after, @"\$UniqueKey\$", key, RegexOptions.IgnoreCase);
-      }
-
       return after;
     }
 
@@ -260,16 +221,14 @@ namespace pfAdapter
         return File.Exists(vbsPath);
       }
       else
-      {
         return false;
-      }
     }
 
 
     /// <summary>
     /// プロセス実行  通常実行
     /// </summary>
-    /// <returns>プロセスが実行できたか</returns>
+    /// <returns>実行できたか</returns>
     public bool Start()
     {
       Process = CreateProcess();
@@ -280,10 +239,9 @@ namespace pfAdapter
       Process.StartInfo.UseShellExecute = !(0 < NoWindow);
 
       //プロセス実行
-      bool launch;
       try
       {
-        launch = Process.Start();
+        bool launch = Process.Start();
         if (0 < WaitForExit)
         {
           if (0 <= WaitTimeout_sec)
@@ -292,16 +250,16 @@ namespace pfAdapter
             //WaitForExit(int)は -1 でない負数だと例外発生
             Process.WaitForExit(-1);
         }
+        return launch;
       }
       catch (Exception exc)
       {
-        launch = false;
-        Log.System.WriteLine("  /☆ Exception ☆/");
+        Log.System.WriteLine("  /▽ Exception ▽/");
         Log.System.WriteLine("        " + FileName);
         Log.System.WriteLine("        " + exc.Message);
         Log.System.WriteLine();
+        return false;
       }
-      return launch;
     }
 
 
@@ -309,7 +267,6 @@ namespace pfAdapter
     /// <summary>
     /// プロセス実行  標準出力を取得
     /// </summary>
-    /// <returns>プロセスが実行できたか</returns>
     public string Start_GetStdout()
     {
       Process = CreateProcess();
@@ -321,37 +278,36 @@ namespace pfAdapter
       //入出力のリダイレクト
       Process.StartInfo.RedirectStandardOutput = true;
 
-      //実行
-      string result;
+      //実行  標準出力を取得
       try
       {
-        //標準出力を取得
         Process.Start();
-        result = Process.StandardOutput.ReadToEnd();
+        string result = Process.StandardOutput.ReadToEnd();
         Process.WaitForExit();
         Process.Close();
+        return result;
       }
       catch (Exception exc)
       {
-        result = null;
-        Log.System.WriteLine("  /☆ Exception ☆/");
+        Log.System.WriteLine("  /▽ Exception ▽/");
         Log.System.WriteLine("        " + FileName);
         Log.System.WriteLine("        " + exc.Message);
         Log.System.WriteLine();
+        return null;
       }
-
-      return result;
     }
   }
 
 
 
   /// <summary>
-  /// 標準入力への出力用クライアント
+  /// 標準入力をリダイレクトするクライアント
   /// </summary>
   [Serializable]
   public class Client_WriteStdin : Client
   {
+    [XmlIgnore]
+    public BinaryWriter StdinWriter { get; protected set; }
     /// <summary>
     /// プロセス実行  標準入力に書き込む
     /// </summary>
@@ -366,15 +322,9 @@ namespace pfAdapter
 
       //シェルコマンドを無効に、入出力をリダイレクトするなら必ずfalseに設定
       Process.StartInfo.UseShellExecute = false;
-
       //入出力のリダイレクト
-      //標準入力
       Process.StartInfo.RedirectStandardInput = true;
-
-      //標準出力
       Process.StartInfo.RedirectStandardOutput = false;
-
-      //標準エラー
       //  CreateLwiのバッファが詰まるのでfalse or 非同期で取り出す。
       //　falseだとコンソールに表示されるので非同期で取り出して捨てる。
       Process.StartInfo.RedirectStandardError = true;
@@ -388,22 +338,21 @@ namespace pfAdapter
       };
 
       //プロセス実行
-      bool launch;
       try
       {
-        launch = Process.Start();
-        StdinWriter = new BinaryWriter(Process.StandardInput.BaseStream);      //同期　　書き込み用ライター
-        Process.BeginErrorReadLine();                                          //非同期　標準エラーを取得
+        bool launch = Process.Start();
+        StdinWriter = new BinaryWriter(Process.StandardInput.BaseStream);  //同期　　書き込み用ライター
+        Process.BeginErrorReadLine();                                      //非同期　標準エラーを取得
+        return launch;
       }
       catch (Exception exc)
       {
-        launch = false;
-        Log.System.WriteLine("  /☆ Exception ☆/");
+        Log.System.WriteLine("  /▽ Exception ▽/");
         Log.System.WriteLine("        " + FileName);
         Log.System.WriteLine("        " + exc.Message);
         Log.System.WriteLine();
+        return false;
       }
-      return launch;
     }
   }
 
@@ -414,16 +363,15 @@ namespace pfAdapter
 
   /// <summary>
   /// クライアント　Stdoutに出力        Valve2Pipe
+  ///   StdinWriterに書き込まれたら自身のStandardOutputに出力
   /// </summary>
   public class Client_OutStdout : Client_WriteStdin
   {
     public Client_OutStdout()
     {
       Enable = 1;
-      Name = "OutStdout";
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
-
       StdinWriter = new BinaryWriter(Console.OpenStandardOutput());
     }
   }
@@ -431,36 +379,26 @@ namespace pfAdapter
 
   /// <summary>
   /// クライアント　ファイルに出力　　デバッグ用
+  /// 　　StdinWriterに書き込まれたらそのままファイルに書く
   /// </summary>
   public class Client_OutFile : Client_WriteStdin
   {
     public Client_OutFile(string filepath)
     {
       Enable = 1;
-      Name = "OutFile";
       //ダミーのProcessを割り当てる。プロセスの生存チェック回避用
       Process = Process.GetCurrentProcess();
-
-      StdinWriter = CreateOutFileWriter(filepath);
-    }
-
-    /// <summary>
-    /// ファイル出力ライター作成
-    /// </summary>
-    private BinaryWriter CreateOutFileWriter(string filepath)
-    {
+      filepath += ".pfA_Outfile-" + App.PID + ".ts";
       try
       {
-        var stream = new FileStream(filepath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
-        var writer = new BinaryWriter(stream);
-        return writer;
+        var stream = new FileStream(filepath, FileMode.Create, FileAccess.Write, FileShare.Read);
+        StdinWriter = new BinaryWriter(stream);
       }
       catch
       {
         throw new IOException("Client_OutFileの作成に失敗。ファイル出力先パスを確認。");
       }
     }
-
   }
 
   #endregion Client_OutFile

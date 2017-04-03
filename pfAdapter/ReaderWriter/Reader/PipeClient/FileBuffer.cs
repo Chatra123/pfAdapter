@@ -13,8 +13,8 @@ namespace pfAdapter
   class FileBlock
   {
     public byte[] Data { get; private set; }
-    public long Pos { get; private set; }
     public int Size { get { return Data.Count(); } }
+    public long Pos { get; private set; }
     public long Pos_Last { get { return Pos + Size - 1; } }
     public bool Contains(long req_fpos) { return Pos <= req_fpos && req_fpos <= Pos_Last; }
 
@@ -34,7 +34,7 @@ namespace pfAdapter
     private readonly object sync = new object();
     Queue<FileBlock> Que;
     public int BuffMax { get; private set; }
-    public bool IsEmpty { get { lock (sync) { return Que.Count() == 0; } } }
+    public bool IsEmpty { get { lock (sync) { return Que.Count == 0; } } }
 
 
     /// <summary>
@@ -57,6 +57,18 @@ namespace pfAdapter
     {
       lock (sync)
       {
+        //var GetCurSize = new Func<int>(() => { return Que.Select(block => block.Size).Sum(); });
+        //string path = "clear_log.txt";
+        //if (Que.Any())
+        //{
+        //  StringBuilder text = new StringBuilder();
+        //  text.AppendLine("buff Clear");
+        //  text.AppendLine("  count     = " + Que.Count());
+        //  text.AppendLine("  front pos = " + Que.First().Pos);
+        //  text.AppendLine("  last  pos = " + Que.Last().Pos_Last);
+        //  text.AppendLine("  size      = " + GetCurSize());
+        //  System.IO.File.AppendAllText(path, text.ToString());
+        //}
         Que.Clear();
       }
     }
@@ -92,17 +104,16 @@ namespace pfAdapter
         {
           var block = Que.Dequeue();
           Log.PipeBuff.WriteLine("{0}  --buff:  filePos= {1,12:N0}        len= {2,8:N0}",
-            Log.Spc30,
-            block.Pos, block.Size);
+                                  Log.Spc30,
+                                  block.Pos, block.Size);
         }
-
         //Enqueue
         if (GetCurSize() + data.Count() <= BuffMax)
         {
           Que.Enqueue(new FileBlock(data, fpos));
           Log.PipeBuff.WriteLine("{0}  ++buff:  filePos= {1,12:N0}        len= {2,8:N0}",
-            Log.Spc30,
-            fpos, data.Length);
+                                  Log.Spc30,
+                                  fpos, data.Length);
         }
       }
 
@@ -155,13 +166,11 @@ namespace pfAdapter
         if (Que.Last().Pos_Last < req_fpos) return null;
 
         Log.PipeBuff.WriteLine("{0}{1}        pipebuff GetData()  req_fpos= {2,12:N0}",
-          Log.Spc50, Log.Spc30,
-          req_fpos);
-
-        //Que後方のデータを読むことが多いので逆順
+                                Log.Spc50, Log.Spc30,
+                                req_fpos);
         foreach (var block in Que)
         {
-          byte[] data = GetTrimData(block, req_fpos);
+          byte[] data = TrimData(block, req_fpos);
           if (data != null)
             return data;
         }
@@ -176,7 +185,7 @@ namespace pfAdapter
     ///     contains  -->  byte[]
     /// not contains  -->  null
     /// </returns>
-    private byte[] GetTrimData(FileBlock block, long req_fpos)
+    private byte[] TrimData(FileBlock block, long req_fpos)
     {
       if (block.Contains(req_fpos) == false)
         return null;
@@ -190,9 +199,8 @@ namespace pfAdapter
       else
       {
         Log.PipeBuff.WriteLine("{0}{0}       trim_size= {1,12:N0}",
-          Log.Spc50,
-          trim_size);
-
+                                Log.Spc50,
+                                trim_size);
         byte[] trim_data = new byte[trim_size];
         Buffer.BlockCopy(block.Data, offset, trim_data, 0, trim_size);
         return trim_data;

@@ -9,29 +9,26 @@ using System.Threading.Tasks;
 namespace pfAdapter
 {
   /// <summary>
-  /// バッファ付きパイプクライアント
+  /// バッファ付きパイプ読み込み
   /// </summary>
-  internal class BufferedPipeReader
+  internal class PipeReader
   {
     PipeClient pipeClient;
-    FileBuffer piepBuff;
-
-    private long filePos = 0;                                        //pipeClientから読み込んだデータのファイル位置
-    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }
+    FileBuffer buff;
+    private long filePos = 0;                       //pipeClientから読み込んだデータのファイル位置
+    public bool IsConnected { get { return pipeClient != null && pipeClient.IsConnected; } }//pipeClientが接続しているか？
     public string PipeName { get { return pipeClient.Name; } }
-
-    public bool IsOpened { get; private set; }
+    public bool IsOpened { get; private set; }     //pipeClientはconnect or disconnectで, バッファにデータが残っている状態
     private Task taskPipeReader;
-    private CancellationTokenSource taskCanceller;                   //パイプ読込キャンセル用トークン
-
+    private CancellationTokenSource taskCanceller; //パイプ読込キャンセル用トークン
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public BufferedPipeReader(string pipeName)
+    public PipeReader(string pipeName)
     {
       IsOpened = false;
-      piepBuff = new FileBuffer();
+      buff = new FileBuffer();
 
       if (Console.IsInputRedirected)
       {
@@ -45,7 +42,6 @@ namespace pfAdapter
       }
       else
         return;
-
       taskCanceller = new CancellationTokenSource();
       taskPipeReader = Task.Factory.StartNew(ReadPipe_Main, taskCanceller.Token);
       IsOpened = true;
@@ -80,11 +76,11 @@ namespace pfAdapter
       {
         //タスクがキャンセルされるとここが実行される
       }
-
-      piepBuff.Clear();
+      pipeClient.Close();
+      buff.Clear();
       IsOpened = false;
     }
-    ~BufferedPipeReader()
+    ~PipeReader()
     {
       Close();
     }
@@ -95,7 +91,7 @@ namespace pfAdapter
     /// </summary>
     public int PipeBuffSize
     {
-      get { return piepBuff.BuffMax; }
+      get { return buff.BuffMax; }
     }
 
 
@@ -104,7 +100,7 @@ namespace pfAdapter
     /// </summary>
     public double SetBuffSize(double size_MiB)
     {
-      return piepBuff.SetBuffSize(size_MiB);
+      return buff.SetBuffSize(size_MiB);
     }
 
 
@@ -113,12 +109,12 @@ namespace pfAdapter
     /// </summary>
     public bool IsFrontOfBuff(long req_fpos)
     {
-      return piepBuff.IsFrontOfBuff(req_fpos);
+      return buff.IsFrontOfBuff(req_fpos);
     }
 
 
     /// <summary>
-    /// データ終端に到達したと推定
+    /// ストリーム終端に到達
     /// </summary>
     public bool EndOfStream(long req_fpos)
     {
@@ -126,10 +122,10 @@ namespace pfAdapter
         return false;
       else
       {
-        if (piepBuff.IsEmpty)
+        if (buff.IsEmpty)
           return true;
         else
-          return piepBuff.IsBackOfBuff(req_fpos);
+          return buff.IsBackOfBuff(req_fpos);
       }
     }
 
@@ -139,18 +135,18 @@ namespace pfAdapter
     /// </summary>
     public byte[] ReadBytes(long req_fpos)
     {
-      return piepBuff.Get(req_fpos);
+      return buff.Get(req_fpos);
 
       ///* test */
       ///*    データ読込を失敗させる */
       //var rnd = new Random(DateTime.Now.Millisecond);
       //if (rnd.Next(100) < 10)
       //{
-      //  Log.PipeBuff.WriteLine(" T shake buff read");
+      //  Log.PipeBuff.WriteLine(" TEST:  shake buff read");
       //  return null;
       //}
       //else
-      //  return piepBuff.GetData(req_fpos);
+      //  return buff.GetData(req_fpos);
       ///* test */
     }
 
@@ -176,7 +172,6 @@ namespace pfAdapter
       {
         taskCanceller.Token.ThrowIfCancellationRequested();
 
-
         const int Req_Size = 1024 * 64;
         byte[] data = pipeClient.Read(Req_Size);
         if (data.Length == 0)
@@ -186,29 +181,26 @@ namespace pfAdapter
           break;
         }
 
-        /* メインスレッドよりも先にロックを連続で取得すると、転送前にバッファが流れる。
-         * 発生確立は低いが、１時間で10MB程度。
+        /*
+         * メインスレッドよりも先にロックを連続で取得すると、転送前にバッファが流れる。
          */
-        piepBuff.Append(data, filePos);
+        buff.Append(data, filePos);
         filePos += data.Count();
         ///* test */
-        ///*    取得データを破棄、filePosのみ進める */
+        ///*    取得データを強制破棄、filePosのみ進める */
         //var rnd = new Random(DateTime.Now.Millisecond);
         //if (rnd.Next(100) < 10)
         //{
-        //  Log.PipeBuff.WriteLine("{0}   TTshake append buff", Log.Spc30);
+        //  Log.PipeBuff.WriteLine("{0}   TEST:  shake append buff", Log.Spc30);
         //  filePos += data.Count();
         //}
         //else
         //{
-        //  piepBuff.Append(data, filePos);
+        //  buff.Append(data, filePos);
         //  filePos += data.Count();
         //}
         ///* test */
-
-
       }//end while
-
       pipeClient.Close();
     }
 

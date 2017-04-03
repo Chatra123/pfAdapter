@@ -31,7 +31,7 @@ namespace pfAdapter
   /// </summary>
   internal class NamedPipeClient : PipeClient
   {
-    protected NamedPipeClientStream client;
+    private NamedPipeClientStream client;
 
     /// <summary>
     /// Name
@@ -66,11 +66,10 @@ namespace pfAdapter
       try { client.Connect(0); }
       catch (TimeoutException) { }
 
-      int retry = 3000 / 50;
-      for (int i = 0; i < retry; i++)
+      const int timeout = 5 * 1000;
+      for (int i = 0; i < timeout / 50; i++)
       {
         if (client.IsConnected) break;
-
         try { client.Connect(0); }
         catch (TimeoutException) { }
         Thread.Sleep(50);

@@ -65,268 +65,226 @@ namespace pfAdapter
 
 
   /// <summary>
-  /// アプリ設定
-  ///   コマンドライン、設定ファイル、BlackCHテキストを内包
+  /// 設定
   /// </summary>
   class AppSetting
   {
     private Setting_CmdLine setting_cmdline;
     private Setting_File setting_file;
-    private Setting_BlackCH setting_blackCH;
+    public Setting_IgnoreCH IgnoreCh { get; private set; }
+    public ProgramInfo ProgramInfo { get; private set; }
 
-    public AppSetting()
+    //Cmdline
+    public string[] AppArgs { get; private set; }
+    public string[] File_CommandLine { get; set; }
+    public string Cmdline_Result { get; private set; }
+
+
+    /*
+     *  Setting_CmdLine, Setting_Fileの両方によって書き換えられる可能性がある値
+     *   - ReadLimit_MiBsec
+     *   - MidInterval_min
+     *   - ClientList.Enable
+     *
+     */
+    //input param
+    public string Pipe { get; private set; }
+    public string File { get; private set; }
+    public string XmlPath { get; private set; }
+    //other param
+    public double ReadLimit_MiBsec { get; private set; }
+    public double BuffSize_MiB { get; private set; }
+    public double MidInterval_min { get; private set; }
+    public double PipeTimeout_sec { get; private set; }
+    public string LockMove { get; private set; }
+    public string Macro1 { get; private set; }
+    public bool Abort { get; private set; }
+    //ClientList
+    public Client Process_GetExternalCommand { get; private set; }
+    public List<Client_WriteStdin> Client_Pipe { get; private set; }
+    public ClientList PreProcess { get; private set; }
+    public ClientList MidProcess { get; private set; }
+    public ClientList PostProcess { get; private set; }
+
+
+    /// <summary>
+    /// constructor
+    /// </summary>
+    public AppSetting(string[] appArgs)
     {
+      AppArgs = appArgs;
       setting_cmdline = new Setting_CmdLine();
       setting_file = new Setting_File();
-      setting_blackCH = new Setting_BlackCH();
+      IgnoreCh = new Setting_IgnoreCH();
+      ProgramInfo = new ProgramInfo();
+      XmlPath = "pfAdapter.xml";
     }
 
-    
+    /*
+     * -------------------------------------
+     *** 値の取得、上書きの順序
+     *    
+     *  GetInput()
+     *    AppArgs
+     *       file, pipe, xmlを取得
+     *       
+     *  GetParam1()
+     *    xml  
+     *       各param取得
+     *                    
+     *    File_CommandLine 
+     *       各param取得
+     * 
+     *    AppArgs
+     *       各param取得
+     *       AppArgsは、xmlのparam値より優先される
+     * 
+     *    ProgramInfo
+     *       ch取得
+     *  
+     *    IgnoreCH
+     *       Ignore判定
+     *       
+     *  GetParam2()
+     *    Process_GetExternalCommand
+     *       各param, Abort取得
+     *       
+     * -------------------------------------
+     */
     /// <summary>
-    /// コマンドライン解析
+    /// AppArgsから file, pipe, xmlを取得
+    /// reader接続より前に実行する
     /// </summary>
-    public void ParseCmdLine(string[] args)
+    public void GetInput()
     {
-      setting_cmdline.Parse(args);
+      setting_cmdline.ParseInput(AppArgs);
+      Reflect_fromCmdLine(setting_cmdline);
     }
 
-
     /// <summary>
-    /// コマンドライン　パース結果
+    /// xml、各テキスト読み込み
     /// </summary>
-    public string Cmdline_ToString()
+    public bool GetParam1()
     {
-      return setting_cmdline.ToString();
-    }
+      //xml file
+      Log.System.WriteLine("    Read  " + XmlPath);
+      setting_file = Setting_File.LoadFile(XmlPath);
+      if (setting_file == null)
+        return false;//not found xml
+      Reflect_fromFile(setting_file);
 
+      //CmdLine
+      setting_cmdline.ParseParam(File_CommandLine);
+      setting_cmdline.ParseParam(AppArgs);
+      Reflect_fromCmdLine(setting_cmdline);
 
-    /// <summary>
-    /// 設定ファイル読込み
-    /// </summary>
-    public bool LoadFile()
-    {
-      //コマンドラインで指定された Xml
-      string xmlpath = setting_cmdline.XmlPath;
-      if (string.IsNullOrEmpty(xmlpath) == false
-        && System.IO.File.Exists(xmlpath) == false)
-      {
-        Log.System.WriteLine("Specified xml does not exist.");
-        Log.System.WriteLine("XmlPath  :" + xmlpath);
-        return false;
-      }
-
-      if (System.IO.File.Exists("pfAdapter.xml"))
-        xmlpath = "pfAdapter.xml";
-      else
-        xmlpath = @".\setting\pfAdapter.xml";
-
-      //load file
-      setting_file = Setting_File.LoadFile(xmlpath);
-
-      //　xml追加引数
-      var xmlCmdLine = setting_file.CommandLine
-                                   .Split()
-                                   .Where(arg => string.IsNullOrWhiteSpace(arg) == false)
-                                   .ToArray();
-      setting_cmdline.Parse_OverWrite(xmlCmdLine);
+      ProgramInfo.GetInfo(File);
+      IgnoreCh.Check(ProgramInfo.Channel, XmlPath);
       return true;
     }
 
-
     /// <summary>
-    /// テキストファイルからBlackCHを取得、判定。
+    /// Process_GetExternalCommand実行
     /// </summary>
-    public void Check_IsBlackCH(string ch)
+    /// <remark>
+    ///  - Clientを実行するので　Client.Macro_Channel を設定してから実行する。
+    ///  - LogoSelectorを実行するので事前にProgramInfoを処理しておく。
+    /// </remark>
+    public void GetParam2()
     {
-      setting_blackCH.CheckBlackCH(ch);
+      if (Process_GetExternalCommand.IsEnable)
+      {
+        var extra_cmd = Get_ExternalCommand();
+        setting_cmdline.ParseParam(extra_cmd);
+        Reflect_fromCmdLine(setting_cmdline);
+      }
     }
 
 
-    #region Get_ExternalCommand
+    /// <summary>
+    /// Setting_CmdLine --> AppSettingに反映
+    /// </summary>
+    private void Reflect_fromCmdLine(Setting_CmdLine cmdline)
+    {
+      this.Pipe = cmdline.Pipe;
+      this.File = cmdline.File;
+      this.XmlPath = cmdline.XmlPath ?? XmlPath;
+      this.Macro1 = cmdline.Macro1;
+      this.Abort = cmdline.Abort;
+      //CmdLineに指定があれば反映する
+      this.ReadLimit_MiBsec = 0 <= cmdline.ReadLimit_MiBsec ? cmdline.ReadLimit_MiBsec : ReadLimit_MiBsec;
+      this.MidInterval_min = 0 <= cmdline.MidInterval_min ? cmdline.MidInterval_min : MidInterval_min;
+      if (cmdline.ExtCmd.HasValue)
+        this.Process_GetExternalCommand.Enable = (bool)cmdline.ExtCmd ? 1 : 0;
+      if (cmdline.PrePrc.HasValue)
+        this.PreProcess.Enable = (bool)cmdline.PrePrc ? 1 : 0;
+      if (cmdline.MidPrc.HasValue)
+        this.MidProcess.Enable = (bool)cmdline.MidPrc ? 1 : 0;
+      if (cmdline.PostPrc.HasValue)
+        this.PostProcess.Enable = (bool)cmdline.PostPrc ? 1 : 0;
+      this.Cmdline_Result = setting_cmdline.ToString();
+    }
+
+
+    /// <summary>
+    /// Setting_File --> AppSettingに反映
+    /// </summary>
+    private void Reflect_fromFile(Setting_File file)
+    {
+      //string --> string[]
+      this.File_CommandLine = file.CommandLine
+                                  .Split()
+                                  .Where(arg => string.IsNullOrWhiteSpace(arg) == false)
+                                  .ToArray();
+      this.BuffSize_MiB = file.BuffSize_MiB;
+      this.ReadLimit_MiBsec = file.ReadLimit_MiBsec;
+      this.MidInterval_min = file.MidInterval_min;
+      this.PipeTimeout_sec = file.PipeTimeout_sec;
+      this.LockMove = file.LockMove;
+      this.Client_Pipe = file.Client_Pipe;
+      this.Process_GetExternalCommand = file.Process_GetExternalCommand;
+      this.PreProcess = file.PreProcess;
+      this.MidProcess = file.MidProcess;
+      this.PostProcess = file.PostProcess;
+    }
+
 
     /// <summary>
     /// 外部プロセスからコマンドライン取得
-    /// 事前にProgramInfoでチャンネル名を取得しておくこと。
     /// </summary>
-    public void Get_ExternalCommand()
+    private string[] Get_ExternalCommand()
     {
-      if (EnableRun_ExtCmd == false) return;
-
-      string[] extra_cmdline = null;
-      {
-        Log.System.WriteLine("[ Client_GetExternalCommand ]");
-
-        //プロセス実行に失敗したら clinet = null
-        var clinet = Client_GetExternalCommand;
-        string line = clinet.Start_GetStdout();
-
-        if (line != null)
-        {
-          Log.System.WriteLine("      return =");
-          Log.System.Write(line);
-          //コマンド分割、　”があれば除去
-          extra_cmdline = line.Split()
-                              .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
-                              .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
-                              .ToArray();
-        }
-      }
-      if (extra_cmdline != null)
-        setting_cmdline.Parse_OverWrite(extra_cmdline);
-
-      //終了要求がある？
-      if (Abort)
-      {
-        Log.System.WriteLine("  accept request  -Abort");
-        if (System.IO.File.Exists(File + ".program.txt") == false)
-          Log.System.WriteLine("    Check the  *.ts.program.txt  existance if inadvertent exit.");
-      }
+      Log.System.WriteLine("[ Process_GetExternalCommand ]");
+      //run process & get stdout
+      string[] cmdline = new string[] { };
+      //プロセス実行に失敗したら client = null
+      var client = Process_GetExternalCommand;
+      string line = client?.Start_GetStdout() ?? "";
+      //コマンド分割、　”があれば除去
+      //string --> string[]
+      cmdline = line.Split()
+                    .Where(arg => string.IsNullOrWhiteSpace(arg) == false)           //空白行削除
+                    .Select(arg => Regex.Replace(arg, @"^("")(.*)("")$", "$2"))      // 前後の”除去
+                    .ToArray();
+      Log.System.WriteLine("      return =");
+      Log.System.Write(line);
+      return cmdline;
     }
-    #endregion
-
-
-    //
-    // AppSetteing value
-    //
-    //コマンドラインから
-    public string Pipe { get { return setting_cmdline.Pipe; } }
-    public string File { get { return setting_cmdline.File; } }
-    private string XmlPath { get { return setting_cmdline.XmlPath; } }
-    public string EncProfile { get { return setting_cmdline.EncProfile; } }
-    public bool Abort { get { return setting_cmdline.Abort_pfAdapter; } }
-
-    //設定ファイルから
-    public double BuffSize_MiB { get { return setting_file.BuffSize_MiB; } }
-    public string File_CommandLine { get { return setting_file.CommandLine; } }
-    public string LockFile { get { return setting_file.LockMove; } }
-
-    public ClientList PreProcess__App { get { return setting_file.PreProcess__App; } }
-    public ClientList MidProcess__MainA { get { return setting_file.MidProcess__MainA; } }
-    public ClientList PostProcess_MainA { get { return setting_file.PostProcess_MainA; } }
-    public ClientList PostProcess_Enc_B { get { return setting_file.PostProcess_Enc_B; } }
-    public ClientList PostProcess_App { get { return setting_file.PostProcess_App; } }
-
-    public Client Client_GetExternalCommand { get { return setting_file.Client_GetExternalCommand; } }
-
-    public List<Client_WriteStdin> Client_MainA { get { return setting_file.Client_MainA; } }
-    public List<Client_WriteStdin> Client_Enc_B { get { return setting_file.Client_Enc_B; } }
-
-
-    //BlackCHから
-    public bool IsNonCMCutCH { get { return setting_blackCH.IsNonCMCutCH; } }
-    public bool IsNonEnc__CH { get { return setting_blackCH.IsNonEnc__CH; } }
-    public bool Suspend_MainA { get { return setting_cmdline.Suspend_pfMainA || setting_blackCH.IsNonCMCutCH; } }
-    public bool Suspend_Enc_B { get { return setting_cmdline.Suspend_pfEnc_B || setting_blackCH.IsNonEnc__CH; } }
-    public bool EnableRun_MainA { get { return Suspend_MainA == false; } }
-    public bool EnableRun_Enc_B
-    {
-      get
-      {
-        return Suspend_Enc_B == false
-          && string.IsNullOrEmpty(setting_cmdline.EncProfile) == false;
-      }
-    }
-
-
-    //コマンドラインと、設定ファイルから
-    public double ReadLimit_MiBsec
-    {
-      get
-      {
-        //コマンドラインを優先
-        var limit = (-1 < setting_cmdline.Limit)
-                          ? setting_cmdline.Limit
-                          : setting_file.ReadLimit_MiBsec;
-        return limit;
-      }
-    }
-
-    public double MidPrcInterval_min
-    {
-      get
-      {
-        //コマンドラインを優先
-        var interval = (0 < setting_cmdline.MidInterval)
-                                 ? setting_cmdline.MidInterval
-                                 : setting_file.MidPrcInterval_min;
-        return interval;
-      }
-    }
-
-
-    /// <summary>
-    /// PrcListの有効、無効
-    /// </summary>
-    private static bool EnableRun_PrcList(bool? cmdline_PrcList, int setting_file_PrcList_Enable)
-    {
-      //コマンドラインを優先           -PrePrc 0  or  -PrePrc 1
-      if (cmdline_PrcList.HasValue)
-      {
-        if ((bool)cmdline_PrcList)
-          return true;               //-PrePrc 1
-        else
-          return false;
-      }
-      else if (0 < setting_file_PrcList_Enable)
-      {
-        return true;                 //設定ファイルでtrue
-      }
-
-      return false;
-    }
-
-    /// <summary>
-    /// ExtCmd           Enable
-    /// </summary>
-    public bool EnableRun_ExtCmd
-    { get { return EnableRun_PrcList(setting_cmdline.ExtCmd, setting_file.Client_GetExternalCommand.Enable); } }
-
-    /// <summary>
-    /// PrePrc_App       Enable
-    /// </summary>
-    public bool EnableRun_PrePrc_App
-    { get { return EnableRun_PrcList(setting_cmdline.PrePrc_App, setting_file.PreProcess__App.Enable); } }
-
-
-    /// <summary>
-    /// MidPrc_MainA     Enable
-    /// </summary>
-    public bool EnableRun_MidPrc_MainA
-    { get { return EnableRun_PrcList(setting_cmdline.MidPrc_Main, setting_file.MidProcess__MainA.Enable); } }
-
-
-    /// <summary>
-    /// PostPrc_MainA    Enable
-    /// </summary>
-    public bool EnableRun_PostPrc_MainA
-    { get { return EnableRun_PrcList(setting_cmdline.PostPrc_Main, setting_file.PostProcess_MainA.Enable); } }
-
-    /// <summary>
-    /// PostPrc_Enc      Enable
-    /// </summary>
-    public bool EnableRun_PostPrc_Enc
-    { get { return EnableRun_PrcList(setting_cmdline.PostPrc_Enc, setting_file.PostProcess_Enc_B.Enable); } }
-
-    /// <summary>
-    /// PostPrc_App      Enable
-    /// </summary>
-    public bool EnableRun_PostPrc_App
-    { get { return EnableRun_PrcList(setting_cmdline.PostPrc_App, setting_file.PostProcess_App.Enable); } }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

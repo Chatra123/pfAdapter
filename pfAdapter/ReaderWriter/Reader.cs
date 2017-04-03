@@ -8,30 +8,14 @@ namespace pfAdapter
   /// <summary>
   /// データをパイプ＆ファイル経由で取り出す
   /// </summary>
-  internal class InputReader
+  internal class Reader
   {
     private long filePos;                                  //次に読み込むバイト位置
-
     //pipe
-    private static BufferedPipeReader pipeReader;
+    private static PipeReader pipeReader;
     private static bool PipeIsConnected { get { return pipeReader.IsConnected; } }
-
     //file
     private RecFileReader fileReader;
-
-    //Log
-    public LogWriter log { get; private set; }
-    public Log_TotalRead log_TotalRead { get; private set; }
-
-
-    /// <summary>
-    /// InputReader
-    /// </summary>
-    public InputReader()
-    {
-      log = new LogWriter("");    //null reference回避用
-      log_TotalRead = new Log_TotalRead();
-    }
 
 
     /// <summary>
@@ -45,51 +29,26 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// Logを有効にする
-    /// </summary>
-    public void Enable_LogInput(LogWriter logwriter)
-    {
-      log = logwriter;
-      log.Enable = true;
-      log.OutConsole = false;
-      log.OutFile = true;
-      log.AutoFlush = true;
-
-      fileReader.EnableLog(logwriter);
-    }
-
-  
-
-    /// <summary>
     /// パイプ接続、ファイル確認
     /// </summary>
-    public bool Connect(string pipename, string filepath, bool logging = true)
+    public bool Connect(string pipename, string filepath)
     {
       //pipe
-      if (pipeReader == null)
-      {
-        pipeReader = new BufferedPipeReader(pipename);
-        pipeReader.Connect();
-      }
-
+      pipeReader = new PipeReader(pipename);
+      pipeReader.Connect();
       //file
       fileReader = new RecFileReader();
       bool fileIsConnected = fileReader.Connect(filepath);
 
-      //log
-      if (logging)
-      {
-        if (PipeIsConnected)
-          Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
-        else
-          Log.System.WriteLine("  Pipe does not connected");
-
-        if (fileIsConnected)
-          Log.System.WriteLine("  Create FileReader");
-        else
-          Log.System.WriteLine("  File does not exist");
-        Log.System.WriteLine();
-      }
+      if (PipeIsConnected)
+        Log.System.WriteLine("  Connect {0}", pipeReader.PipeName);
+      else
+        Log.System.WriteLine("  Pipe does not connected");
+      if (fileIsConnected)
+        Log.System.WriteLine("  Create FileReader");
+      else
+        Log.System.WriteLine("  File does not exist");
+      Log.System.WriteLine();
 
       return fileIsConnected;
     }
@@ -98,25 +57,16 @@ namespace pfAdapter
     /// <summary>
     /// 設定を変更
     /// </summary>
-    public void SetParam(double buff_MiB, double limit_MiBsec, bool logging = true)
+    public void SetParam(double buff_MiB, double limit_MiBsec)
     {
-      //バッファサイズ
       double buffsize = pipeReader.SetBuffSize(buff_MiB);
-
-      //速度上限
       double limit = fileReader.SetLimit(limit_MiBsec);
 
-      //log
-      if (logging)
-      {
-        if (PipeIsConnected)
-          Log.System.WriteLine("      Pipe   BuffSize =  {0,4:F1} MiB", buffsize);
-        Log.System.WriteLine("      File      Limit =  {0,4:F1} MiB/sec", limit);
-        Log.System.WriteLine();
-      }
-
+      if (PipeIsConnected)
+        Log.System.WriteLine("      Pipe   BuffSize =  {0,4:F1} MiB", buffsize);
+      Log.System.WriteLine("      File      Limit =  {0,4:F1} MiB/sec", limit);
+      Log.System.WriteLine();
     }
-
 
 
     /// <summary>
@@ -129,7 +79,7 @@ namespace pfAdapter
     /// </remarks>
     public byte[] Read()
     {
-      //パイプ読込
+      //from pipe
       byte[] pipe_data = Read_Pipe();
       if (pipe_data != null && 0 < pipe_data.Length)
       {
@@ -148,8 +98,7 @@ namespace pfAdapter
       else
         throw new Exception();
 
-
-      //ファイル読込
+      //from file
       byte[] file_data = Read_File();
       if (file_data != null && 0 < file_data.Length)
       {
@@ -171,7 +120,6 @@ namespace pfAdapter
     }
 
 
-
     /// <summary>
     /// パイプ読込
     /// </summary>
@@ -188,10 +136,9 @@ namespace pfAdapter
       var data = pipeReader.ReadBytes(filePos);
       if (data != null && 0 < data.Length)
       {
-        log_TotalRead.TotalPipeRead += data.Length;
-        log.WriteLine("( )from pipe:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
+        Log.TotalRead.TotalPipeRead += data.Length;
+        Log.Input.WriteLine("( )from pipe:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
                       filePos, filePos + data.Length, data.Length);
-
         //データ送信へ
         filePos += data.Length;
         return data;
@@ -208,7 +155,7 @@ namespace pfAdapter
           else
           {
             //バッファの消化が早いので待機
-            log.WriteLine("  sleep 100 :    stock the buff");
+            Log.Input.WriteLine("  sleep 100 :    stock the buff");
             Thread.Sleep(100);
             return null;
           }
@@ -217,14 +164,12 @@ namespace pfAdapter
         {
           //パイプ読み込み終了
           //　末尾のデータが未読込ならファイルから読み込む
-          //　他のインスタンスもファイル読み込みへ移行
-          log.WriteLine("            :    Pipe Buff Closed      filePos = {0,12:N0}", filePos);
+          Log.Input.WriteLine("            :    Pipe Buff Closed      filePos = {0,12:N0}", filePos);
           pipeReader.Close();
           return new byte[] { };
         }
       }
     }
-
 
 
     /// <summary>
@@ -238,10 +183,8 @@ namespace pfAdapter
     private byte[] Read_File()
     {
       var data = fileReader.Read(filePos);
-
-      //ファイル書込の先端を読み込んだ
       if (data == null)
-        return null;
+        return null;  //ファイル書込の先端を読み込んだ
 
       //ファイル終端？
       if (data.Length == 0)
@@ -249,28 +192,25 @@ namespace pfAdapter
         if (PipeIsConnected)
         {
           //サーバープロセスの終了を待つ。
-          log.WriteLine("  Reach EOF with pipe connection. waiting for disconnect.");
+          Log.Input.WriteLine("  Reach EOF with pipe connection. waiting for disconnect.");
           Thread.Sleep(10 * 1000);
           return null;
         }
         else
         {
           //ファイル終端を確定
-          log.WriteLine("  Reach EOF");
+          Log.Input.WriteLine("  Reach EOF");
           return new byte[] { };   //読込ループ終了
         }
       }
 
       //log
-      {
-        if (PipeIsConnected)
-          log_TotalRead.FileReadWithPipe += data.Length;
-        else
-          log_TotalRead.FileReadWithoutPipe += data.Length;
-        log.WriteLine(" $ from file:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
-                      filePos, filePos + data.Length, data.Length);
-      }
-
+      if (PipeIsConnected)
+        Log.TotalRead.FileReadWithPipe += data.Length;
+      else
+        Log.TotalRead.FileReadWithoutPipe += data.Length;
+      Log.Input.WriteLine(" $ from file:  filePos= {0,12:N0}      next= {1,12:N0}        len= {2,8:N0}",
+                          filePos, filePos + data.Length, data.Length);
       //データ送信へ
       filePos += data.Length;
       return data;

@@ -18,31 +18,27 @@ namespace pfAdapter
       Spc40 = new string(' ', 40),
       Spc30 = new string(' ', 30);
 
-    public static LogWriter System, PipeBuff;
-    public static LogWriter InputA, InputB;
+    public static LogWriter System, PipeBuff, Input;
+    public static Log_TotalRead TotalRead;
 
     static Log()
     {
       System = new LogWriter("pfAdapter");
-      InputA = new LogWriter("Input_MainA");
-      InputB = new LogWriter("Input_Enc_B");
-      PipeBuff = InputA;
+      Input = new LogWriter("Input");
+      PipeBuff = Input;
+      TotalRead = new Log_TotalRead();
     }
-
     public static void Flush()
     {
       System.Flush();
       PipeBuff.Flush();
-      InputA.Flush();
-      InputB.Flush();
+      Input.Flush();
     }
-
     public static void Close()
     {
       System.Close();
       PipeBuff.Close();
-      InputA.Close();
-      InputB.Close();
+      Input.Close();
     }
   }
 
@@ -98,11 +94,11 @@ namespace pfAdapter
     private static StreamWriter CreateWriter(string filename)
     {
       // Create directory
-      string logDir = Path.Combine(App.Dir, "Log");
+      string dir = Path.Combine(App.Dir, "Log");
       try
       {
-        if (Directory.Exists(logDir) == false)
-          Directory.CreateDirectory(logDir);
+        if (Directory.Exists(dir) == false)
+          Directory.CreateDirectory(dir);
       }
       catch { return null; }
 
@@ -112,15 +108,14 @@ namespace pfAdapter
       {
         try
         {
-          var path = Path.Combine(logDir, filename + "." + i + ".log");
+          var path = Path.Combine(dir, filename + "." + i + ".log");
           var logfile = new FileInfo(path);
           bool append = logfile.Exists && logfile.Length <= 64 * 1024;  //64 KB 以下なら追記
           writer = new StreamWriter(path, append, Encoding.UTF8);       //UTF-8 bom
           break;
         }
-        catch { /*ファイル使用中*/ }
+        catch { /* ファイル使用中 */ }
       }
-
       //作成成功、ヘッダー書込み
       if (writer != null)
       {
@@ -138,9 +133,9 @@ namespace pfAdapter
     {
       for (int i = 1; i <= 8; i++)
       {
-        string logdir = Path.Combine(App.Dir, "Log");
-        string logpath = Path.Combine(logdir, filename + "." + i + ".log");
-        var finfo = new FileInfo(logpath);
+        string dir = Path.Combine(App.Dir, "Log");
+        string path = Path.Combine(dir, filename + "." + i + ".log");
+        var finfo = new FileInfo(path);
 
         if (finfo.Exists)
         {
@@ -165,14 +160,12 @@ namespace pfAdapter
     /// </summary>
     private void Write_core(string text)
     {
-      if (Enable == false) return;
       lock (sync)
       {
         // ”行頭にタイムコードを付加するか？”の判定用
         if (1 <= text.Length)
         {
           IsLogTop = false;
-
           //末尾の文字が改行コードか？　　　  \r\n   \n
           string lastString = text.Substring(text.Length - 1, 1);
           char lastChar = lastString.ToCharArray()[0];
@@ -203,7 +196,6 @@ namespace pfAdapter
               Writer.Flush();
             }
           }
-
         }
       }//lock
     }
@@ -231,7 +223,6 @@ namespace pfAdapter
       //行ごとに分離
       var splText = basetext.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
       bool isMultiLine = (2 <= splText.Count);
-
       //Splitで末尾に追加される空文字を除去
       //　Environment.NewLineの前後が分離されるため
       if (isMultiLine
@@ -254,12 +245,10 @@ namespace pfAdapter
             //２行目以降
             line = DateTime.Now.ToString("HH:mm:ss.fff") + ":  " + line;
           }
-
           line = isMultiLine ? line + Environment.NewLine : line;
           timedText.Append(line);
         }
       }
-
       return timedText.ToString();
     }
 
@@ -271,6 +260,7 @@ namespace pfAdapter
     {
       if (Enable == false) return;
 
+      text = text ?? "";
       text = Append_Timecode(text);
       Write_core(text);
     }
@@ -282,6 +272,7 @@ namespace pfAdapter
     {
       if (Enable == false) return;
 
+      line = line ?? "";
       line = Append_Timecode(line + Environment.NewLine);
       Write_core(line);
     }
@@ -326,7 +317,7 @@ namespace pfAdapter
       }
       else
       {
-        //20文字以上なら表示しない
+        //多いので表示しない
         line += " ......";
       }
       line = Append_Timecode(line + Environment.NewLine);
@@ -348,11 +339,10 @@ namespace pfAdapter
     public long TotalFileRead { get { return FileReadWithPipe + FileReadWithoutPipe; } }    //ファイル総読込量
     public long FileReadWithPipe = 0,                                                       //パイプ接続中のファイル総読込量
                 FileReadWithoutPipe = 0;                                                    //パイプ切断中のファイル総読込量
-
     /// <summary>
     /// 読込量をテキストで出力
     /// </summary>
-    public string GetText()
+    public string GetResult()
     {
       var text = new StringBuilder();
       text.AppendLine(
@@ -367,7 +357,6 @@ namespace pfAdapter
         string.Format("        FileRead_withoutPipe  =  {0,14:N0}", FileReadWithoutPipe));
       return text.ToString();
     }
-
   }
 
 

@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/04/04
+ * 最終更新日　17/03/26
  * 
  * □概要
  * 
@@ -30,41 +30,33 @@ namespace OctNov.Excp
     /// </summary>
     public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
     {
-      try
+      var exc = (Exception)args.ExceptionObject;
+
+      //例外の情報
+      var info = new StringBuilder();
       {
-        var exc = (Exception)args.ExceptionObject;
-
-        //例外の情報
-        var info = new StringBuilder();
-        {
-          info.AppendLine("--------------------------------------------------");
-          info.AppendLine(DateTime.Now.ToString("G"));
-          info.AppendFormat("Exception  = {0}", exc.ToString());
-          info.AppendLine();
-        }
-
-        //出力ファイルパス
-        string logPath;
-        {
-          string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-          string AppDir = Path.GetDirectoryName(AppPath);
-          string AppName = Path.GetFileNameWithoutExtension(AppPath);
-
-          int PID = Process.GetCurrentProcess().Id;
-          string timecode = DateTime.Now.ToString(@"MM-dd_HH\hmm\mss\s_fff");
-          string logName = AppName + "__" + timecode + "_" + PID + ".errlog";
-
-          logPath = Path.Combine(AppDir, logName);
-        }
-
-        //ファイル追記                                        UTF-8 bom
-        File.AppendAllText(logPath, info.ToString(), Encoding.UTF8);
+        info.AppendLine("--------------------------------------------------");
+        info.AppendLine(DateTime.Now.ToString("G"));
+        info.AppendFormat("Exception  = {0}", exc.ToString());
+        info.AppendLine();
       }
-      finally
+      //出力ファイルパス
+      string logPath;
       {
-        var exc = (Exception)args.ExceptionObject;
-        throw exc;                    //Windowsのエラーダイアログを表示
+        string AppPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string AppDir = Path.GetDirectoryName(AppPath);
+        string AppName = Path.GetFileNameWithoutExtension(AppPath);
+
+        int PID = Process.GetCurrentProcess().Id;
+        string timecode = DateTime.Now.ToString(@"MM-dd_HH\hmm\mss\s_fff");
+        string logName = AppName + "__" + timecode + "_" + PID + ".errlog";
+
+        logPath = Path.Combine(AppDir, logName);
       }
+
+      //ファイル追記                                        UTF-8 bom
+      File.AppendAllText(logPath, info.ToString(), Encoding.UTF8);
+
     }
   }
 }

@@ -28,13 +28,10 @@ namespace pfAdapter
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="midPrcList">実行するプロセスリスト</param>
-    /// <param name="interval_min">実行間隔</param>
     public MidProcessTimer(ClientList midPrcList, double interval_min)
     {
       MidProcessList = new ClientList(midPrcList);
       Interval_Min = (0 < interval_min) ? interval_min : 10;
-
       //timer
       timer = new System.Timers.Timer();
       timer.Enabled = false;
@@ -88,28 +85,25 @@ namespace pfAdapter
     /// <summary>
     /// タイマー停止、タスクが終了するまで待機
     /// </summary>
-    public void Stop_and_Wait()
+    public void Stop()
     {
       Log.System.WriteLine("    MidProcessTimer.Stop()  wait...");
-      timer.Enabled = false;
+      Log.System.WriteLine();
 
       //activeTask、OnTimedEvent関数の中を実行中なら終了まで待機。
       //ロックが３回取得できたら終了していると判断する。
+      timer.Enabled = false;
       int count = 0;
       while (count < 3)
       {
         if (activeTask != null && activeTask.IsCompleted == false)
           activeTask.Wait();
-
         Thread.Sleep(100);
         lock (syncTask)
         {
           count++;
         }
       }
-
-      Log.System.WriteLine("    MidProcessTimer Stop");
-      Log.System.WriteLine();
     }
 
 

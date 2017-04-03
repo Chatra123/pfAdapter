@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　16/10/09
+ * 最終更新日　17/03/25
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -72,9 +72,8 @@ namespace OctNov.IO
           //タグ、ｘｍｌフォーマット、シリアル属性を確認
           throw;
         }
-        System.Threading.Thread.Sleep(30);
+        System.Threading.Thread.Sleep(20);
       }
-
       return null;
     }
 
@@ -114,7 +113,7 @@ namespace OctNov.IO
         catch (IOException)
         {
           //別プロセスがファイルを使用中
-          System.Threading.Thread.Sleep(30);
+          System.Threading.Thread.Sleep(20);
         }
         catch (Exception)
         {

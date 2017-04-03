@@ -14,14 +14,9 @@ namespace pfAdapter
     private BinaryReader binReader;
     public bool IsConnected { get { return fileStream != null; } }
 
-    private LogWriter log;
-
-
-    //インスタンスごとに制御するのでプロセスＩＯは SpeedLimit以上になることもある。
-    //ただし、現実的に SpeedLimit以上の速度が出る状況にはならない。
-    public int SpeedLimit { get; private set; }            //読込速度上限　byte/sec
-    private double tick_ReadSize;                          //速度計算用　　200ms間のファイル読込量
-    private DateTime tick_BeginTime = DateTime.Now;        //　　　　　  　200ms計測開始
+    public int SpeedLimit { get; private set; }          //読込速度上限　byte/sec
+    private double tick_ReadSize;                        //速度計算用　　200ms間のファイル読込量
+    private DateTime tick_BeginTime = DateTime.Now;      //　　　　　  　200ms計測開始
 
 
     //”ＴＳへの書込みが停止していないか”の判定用
@@ -32,10 +27,7 @@ namespace pfAdapter
     /// <summary>
     /// InputReader
     /// </summary>
-    public RecFileReader()
-    {
-      log = new LogWriter(""); //null reference回避用
-    }
+    public RecFileReader() { }
 
 
     /// <summary>
@@ -49,15 +41,6 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// Logを有効にする
-    /// </summary>
-    public void EnableLog(LogWriter logwriter)
-    {
-      log = logwriter;
-    }
-
-
-    /// <summary>
     /// ファイル確認
     /// </summary>
     public bool Connect(string filepath)
@@ -66,17 +49,17 @@ namespace pfAdapter
 
       for (int i = 0; i < 4 * 6; i++)
       {
-        if (File.Exists(filepath))
-        {
-          fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-          binReader = new BinaryReader(fileStream);
-          break;
-        }
-        Thread.Sleep(250);           //まだファイルが作成されていない？
+        if (File.Exists(filepath) == false)
+          Thread.Sleep(250);           //まだファイルが作成されていない？
       }
-      return fileStream != null;
+      try
+      {
+        fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        binReader = new BinaryReader(fileStream);
+        return true;
+      }
+      catch { return false; }
     }
-
 
 
     /// <summary>
@@ -123,7 +106,7 @@ namespace pfAdapter
         int sleep = 200 - elapse;
         if (0 < sleep)
         {
-          log.WriteLine("  sleep {0,3:N0} :    read speed limit.", sleep);
+          Log.Input.WriteLine("  sleep {0,3:N0} :    read speed limit.", sleep);
           Thread.Sleep(sleep);
         }
       }
@@ -182,7 +165,7 @@ namespace pfAdapter
           if (trimZero)
           {
             //ファイル書込みの先端に到達、Sleep()
-            log.WriteLine("  sleep 300 :  trim zero packet");
+            Log.Input.WriteLine("  sleep 300 :  trim zero packet");
             Thread.Sleep(300);
           }
 
@@ -207,10 +190,10 @@ namespace pfAdapter
         }
         else
         {
-          //ファイル末尾の１９.９パケット以降が読み込まれるとここにくる
+          //ファイル末尾の９.９パケット以降が読み込まれるとここにくる
           if (last_retry == false)
           {
-            //１９.９パケットが確実に書き込まれるように待機
+            //９.９パケットが確実に書き込まれるように待機
             Thread.Sleep(1 * 1000);
             continue;
           }
@@ -224,16 +207,14 @@ namespace pfAdapter
     }//func
 
 
-
     //パケットサイズ参照用
-    class Packet { public const int Size = 188;}           //任意の値、188以外でもいい
+    class Packet { public const int Size = 188; }           //任意の値、188以外でもいい
 
     /// <summary>
     /// 値パケットのみにする。ゼロパケットは切り捨て
     /// </summary>
     /// <returns>
     /// ゼロパケットを削ったか？
-    /// 
     ///   return false
     ///     data = byte[]  -->  全て値パケットだった、最後尾の５パケットを切り捨て
     /// 
@@ -242,7 +223,6 @@ namespace pfAdapter
     ///    
     ///   return true
     ///     data = null    -->  全て０ or 先頭５％以内にゼロパケットがあった
-    ///     
     /// </returns>
     /// <remarks> 
     ///   data.lengthは Packet.Size * 10 以上であること。
@@ -279,7 +259,7 @@ namespace pfAdapter
 
       byte[] trim_data = null;                   //戻り値  値パケット
       bool trimZero = false;                     //戻り値  ゼロパケットを削ったか？
-      // i = パケット個数
+                                                 // i = パケット個数
       for (int i = packet_100p - 5; 0 < i; i -= packet_010p)
       {
         //後ろの５パケット分を検査

@@ -78,17 +78,6 @@ namespace OctNov.Text
       return StrConv.ToUWH(name);
     }
 
-
-    /// <summary>
-    /// 大文字全角ひらがなに変換
-    /// </summary>
-    public static List<string> GetUWH(List<string> nameList)
-    {
-      return nameList.Select(name => GetUWH(name)).ToList();
-    }
-
-
-
     /// <summary>
     /// 前４文字にトリム
     /// </summary>
@@ -99,16 +88,6 @@ namespace OctNov.Text
       return shortName;
     }
 
-
-    /// <summary>
-    /// 前４文字にトリム
-    /// </summary>
-    public static List<string> GetShort(List<string> nameList)
-    {
-      return nameList.Select(name => GetShort(name)).ToList();
-    }
-
-
     /// <summary>
     /// 数字、記号除去
     /// </summary>
@@ -118,6 +97,23 @@ namespace OctNov.Text
       nonNum = StrConv.RemoveNumber(nonNum);
       nonNum = StrConv.RemoveSymbol(nonNum);
       return nonNum;
+    }
+
+
+    /// <summary>
+    /// 大文字全角ひらがなに変換
+    /// </summary>
+    public static List<string> GetUWH(List<string> nameList)
+    {
+      return nameList.Select(name => GetUWH(name)).ToList();
+    }
+
+    /// <summary>
+    /// 前４文字にトリム
+    /// </summary>
+    public static List<string> GetShort(List<string> nameList)
+    {
+      return nameList.Select(name => GetShort(name)).ToList();
     }
 
     /// <summary>
