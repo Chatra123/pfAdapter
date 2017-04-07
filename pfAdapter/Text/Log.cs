@@ -18,7 +18,7 @@ namespace pfAdapter
       Spc40 = new string(' ', 40),
       Spc30 = new string(' ', 30);
 
-    public static LogWriter System, PipeBuff, Input;
+    public static LogWriter System, Input, PipeBuff;
     public static Log_TotalRead TotalRead;
 
     static Log()
@@ -31,14 +31,14 @@ namespace pfAdapter
     public static void Flush()
     {
       System.Flush();
-      PipeBuff.Flush();
       Input.Flush();
+      PipeBuff.Flush();
     }
     public static void Close()
     {
       System.Close();
-      PipeBuff.Close();
       Input.Close();
+      PipeBuff.Close();
     }
   }
 

@@ -203,43 +203,41 @@ namespace pfAdapter.Setting
     /// </summary>
     private static Setting_File Sample_E()
     {
-      var setting = new Setting_File();
-      //GetExternalCommand
-      setting.Process_GetExternalCommand = new Client()
-      {
-        BasePath = @"   ..\LGLauncher\LSystem\LogoSelector.exe   ",
-        BaseArgs = "   \"$Ch$\"   \"$Program$\"   \"$FilePath$\"   ",
-      };
+      //var setting = new Setting_File();
+      var setting = Sample_A();
+
       //Process_Pipe
       setting.PipeTimeout_sec = -1;
-      setting.Client_Pipe = new List<Client_WriteStdin>()
-      {
-        new Client_WriteStdin()
-        {
-          BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
-          BaseArgs =  "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
-          Delay_sec = 1,
-        },
-        //Pipe2File
-        new Client_WriteStdin()
-        {
-          Enable = 0,
-          BasePath = @"   ..\Pipe2File.exe   ",
-          BaseArgs = "   \"$FilePath$\"  ",
-          Delay_sec = 1,
-        },
-      };
+      setting.Client_Pipe.Add(
+          new Client_WriteStdin()
+          {
+            BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
+            BaseArgs =  "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
+            Delay_sec = 1,
+          });
       //PostProcess
-      setting.PostProcess.Delay_sec = 10;
-      setting.PostProcess.RandDelay_sec = 20;
       setting.PostProcess.List = new List<Client>()
       {
+        //LGLauncher
+        new Client()
+        {
+          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+        },
         new Client()
         {
           Enable = 1,
           BasePath = @"   ..\Valve2Pipe\SplitVideo.exe   ",
           BaseArgs =  "  \"$FilePath$\"   ",
           NoWindow=0,
+        },
+        //bat
+        new Client()
+        {
+          Enable = 1,
+          memo = "  bat  ",
+          BasePath = @"   .\bat\PostProcess_pfA.bat   ",
+          BaseArgs =  "   \"$FilePath$\"   ",
         },
       };
       return setting;

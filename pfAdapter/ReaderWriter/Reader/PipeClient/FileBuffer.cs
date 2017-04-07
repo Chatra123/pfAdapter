@@ -57,18 +57,6 @@ namespace pfAdapter
     {
       lock (sync)
       {
-        //var GetCurSize = new Func<int>(() => { return Que.Select(block => block.Size).Sum(); });
-        //string path = "clear_log.txt";
-        //if (Que.Any())
-        //{
-        //  StringBuilder text = new StringBuilder();
-        //  text.AppendLine("buff Clear");
-        //  text.AppendLine("  count     = " + Que.Count());
-        //  text.AppendLine("  front pos = " + Que.First().Pos);
-        //  text.AppendLine("  last  pos = " + Que.Last().Pos_Last);
-        //  text.AppendLine("  size      = " + GetCurSize());
-        //  System.IO.File.AppendAllText(path, text.ToString());
-        //}
         Que.Clear();
       }
     }

@@ -125,34 +125,34 @@ namespace pfAdapter
      *** 値の取得、上書きの順序
      *    
      *  GetInput()
-     *    AppArgs
-     *       file, pipe, xmlを取得
+     *    AppArgsから
+     *       file, pipe, xmlpathを取得
      *       
      *  GetParam1()
-     *    xml  
+     *    xmlから
      *       各param取得
      *                    
-     *    File_CommandLine 
+     *    File_CommandLineから
      *       各param取得
      * 
-     *    AppArgs
+     *    AppArgsから
      *       各param取得
      *       AppArgsは、xmlのparam値より優先される
      * 
-     *    ProgramInfo
+     *    ProgramInfoから
      *       ch取得
      *  
-     *    IgnoreCH
+     *    IgnoreCHから
      *       Ignore判定
      *       
      *  GetParam2()
-     *    Process_GetExternalCommand
+     *    Process_GetExternalCommandから
      *       各param, Abort取得
      *       
      * -------------------------------------
      */
     /// <summary>
-    /// AppArgsから file, pipe, xmlを取得
+    /// AppArgsから file, pipe, xmlpathを取得
     /// reader接続より前に実行する
     /// </summary>
     public void GetInput()
@@ -162,7 +162,7 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// xml、各テキスト読み込み
+    /// xml、CmdLine、txt読み込み
     /// </summary>
     public bool GetParam1()
     {

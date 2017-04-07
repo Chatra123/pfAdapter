@@ -108,7 +108,6 @@ namespace pfAdapter
       if (BasePath == null) return null;
 
       var prc = new Process();
-
       //Path
       string sessionPath;  //マクロ置換後のパス
       {

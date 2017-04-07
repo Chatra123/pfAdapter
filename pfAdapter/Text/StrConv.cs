@@ -29,6 +29,14 @@ namespace OctNov.Text
       text = Strings.StrConv(text, VbStrConv.Narrow, 0x0411);      //ア→ｱ
       return text;
     }
+    /// <summary>
+    /// 小文字半角カタカナに変換
+    /// </summary>
+    public static IEnumerable<string> ToLNK(IEnumerable<string> list)
+    {
+      return list.Select(text => ToLNK(text));
+    }
+
 
     /// <summary>
     /// 大文字全角ひらがなに変換   To Upper, Wide, Hiragana 
@@ -44,88 +52,35 @@ namespace OctNov.Text
       text = Strings.StrConv(text, VbStrConv.Hiragana, 0x0411);    //ア→あ
       return text;
     }
-
-    /// <summary>
-    /// 記号除去
-    /// </summary>
-    public static string RemoveSymbol(string text)
-    {
-      text = Regex.Replace(text, @"[\W]", "");   //文字、数字、アンダースコア以外除去
-      text = Regex.Replace(text, @"[_]", "");    //アンダースコア除去
-      return text;
-    }
-
-    /// <summary>
-    /// 数字除去
-    /// </summary>
-    public static string RemoveNumber(string text)
-    {
-      return Regex.Replace(text, @"\d", "");
-    }
-  }
-
-
-
-
-
-  static class NameConv  //Name Converter
-  {
-    /// <summary>
-    /// 大文字全角ひらがなに変換   To Upper, Wide, Hiragana 
-    /// </summary>
-    public static string GetUWH(string name)
-    {
-      return StrConv.ToUWH(name);
-    }
-
-    /// <summary>
-    /// 前４文字にトリム
-    /// </summary>
-    public static string GetShort(string name)
-    {
-      string shortName = (4 < name.Length)
-                       ? name.Substring(0, 4) : name;
-      return shortName;
-    }
-
-    /// <summary>
-    /// 数字、記号除去
-    /// </summary>
-    public static string GetNonNum(string name)
-    {
-      string nonNum = name;
-      nonNum = StrConv.RemoveNumber(nonNum);
-      nonNum = StrConv.RemoveSymbol(nonNum);
-      return nonNum;
-    }
-
-
     /// <summary>
     /// 大文字全角ひらがなに変換
     /// </summary>
-    public static List<string> GetUWH(List<string> nameList)
+    public static IEnumerable<string> ToUWH(IEnumerable<string> list)
     {
-      return nameList.Select(name => GetUWH(name)).ToList();
+      return list.Select(text => ToUWH(text));
     }
+
 
     /// <summary>
-    /// 前４文字にトリム
+    ///数字、記号除去
     /// </summary>
-    public static List<string> GetShort(List<string> nameList)
+    public static string ToNonNum(string text)
     {
-      return nameList.Select(name => GetShort(name)).ToList();
+      // \W  文字、数字、アンダースコア
+      // \d  数字
+      // _   アンダースコア
+      text = Regex.Replace(text, @"[\W\d_]", "");
+      return text;
     }
-
     /// <summary>
     /// 数字、記号除去
     /// </summary>
-    public static List<string> GetNonNum(List<string> nameList)
+    public static IEnumerable<string> ToNonNum(IEnumerable<string> list)
     {
-      return nameList.Select(name => GetNonNum(name)).ToList();
+      return list.Select(text => ToNonNum(text));
     }
+
+
   }
-
-
-
-
 }
+

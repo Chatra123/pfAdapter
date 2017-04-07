@@ -12,8 +12,8 @@ namespace pfAdapter
   {
     private long filePos;                                  //次に読み込むバイト位置
     //pipe
-    private static PipeReader pipeReader;
-    private static bool PipeIsConnected { get { return pipeReader.IsConnected; } }
+    private PipeReader pipeReader;
+    private bool PipeIsConnected { get { return pipeReader.IsConnected; } }
     //file
     private RecFileReader fileReader;
 

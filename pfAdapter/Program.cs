@@ -5,8 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Reflection;
+
 
 
 #region title
@@ -18,15 +17,15 @@ namespace pfAdapter
   {
     private static void Main(string[] AppArgs)
     {
-
       //AppArgs = new string[] { @"E:\TS_Samp\t2s.ts" };
-      //AppArgs = new string[] { @"E:\TS_Samp\t2s.ts", "-xml", "pfAdapter-enc.xml" };
+      //AppArgs = new string[] { @"E:\TS_Samp\t2s.ts", "-xml", "pfAdapter-2.xml" };
 
 
 
 
       //例外を捕捉する
       AppDomain.CurrentDomain.UnhandledException += OctNov.Excp.ExceptionInfo.OnUnhandledException;
+
 
       Log.System.Enable = true;
       Log.System.OutConsole = true;
@@ -44,7 +43,7 @@ namespace pfAdapter
       Reader reader;
       {
         reader = new Reader();
-        var isConnected = reader.Connect(setting.Pipe, setting.File);
+        bool isConnected = reader.Connect(setting.Pipe, setting.File);
         /*  デバッグ用  入力ストリームのログ     log file size  8 MB/10 min  */
         //Log.Input.Enable = true;
         //Log.Input.OutFile = true;
