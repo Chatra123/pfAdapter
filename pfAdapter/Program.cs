@@ -149,7 +149,6 @@ namespace pfAdapter
     }//func
 
 
-
     /// <summary>
     /// 設定読込
     /// </summary>
@@ -162,6 +161,7 @@ namespace pfAdapter
       Thread.Sleep(sleep);
 
 
+      Log.System.WriteLine("    Read xml");
       bool readXml = setting.GetParam1();
       if (readXml == false)
       {

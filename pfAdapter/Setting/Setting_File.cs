@@ -17,14 +17,14 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 15.0;
+    const double CurrentRev = 16.1;
 
     public double Rev = 0.0;
     public string CommandLine = "        ";       //追加コマンドライン　（開発中の一時的な設定変更で使用）
     public double BuffSize_MiB = 3.0;             //パイプバッファサイズ
     public double ReadLimit_MiBsec = 10;          //ファイル読込速度制限
     public double MidInterval_min = 10;           //中間プロセスの実行間隔
-    public double PipeTimeout_sec = 10;           //Process_Pipeの転送のタイムアウト
+    public double PipeTimeout_sec = 10;           //Process_Pipeの転送タイムアウト
     //ファイルロック用の拡張子
     public string LockMove = " .ts  .pp.d2v  .pp.lwi .pp.lwifooter  .srt .ass .noncap  .avi .mp4 ";
 
@@ -53,13 +53,14 @@ namespace pfAdapter.Setting
     /// </return>
     public static Setting_File LoadFile(string xmlpath = null)
     {
-      if (File.Exists(xmlpath) == false
-        && File.Exists(Default_XmlName) == false)
-      {
-        XmlRW.Save(Default_XmlName, Sample_A());  //  Sample_RunTest  Sample_A  Sample_E
-      }
+      xmlpath = xmlpath ?? Default_XmlPath;
+      //新規作成
+      if (Path.GetFileName(xmlpath) == Default_XmlName
+        && File.Exists(xmlpath) == false)
+        XmlRW.Save(xmlpath, Sample_A()); //Sample_RunTest  Sample_A  Sample_E
 
       var file = XmlRW.Load<Setting_File>(xmlpath);
+
       //追加された項目、削除された項目を書き換え。
       if (file != null && file.Rev != CurrentRev)
       {
@@ -158,7 +159,8 @@ namespace pfAdapter.Setting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -part  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "   -part  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+
         },
       };
       //PostProcess
@@ -170,13 +172,14 @@ namespace pfAdapter.Setting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+
         },
         new Client()
         {
           Enable = 0,
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
         },
         //bat
         new Client()
@@ -203,7 +206,6 @@ namespace pfAdapter.Setting
     /// </summary>
     private static Setting_File Sample_E()
     {
-      //var setting = new Setting_File();
       var setting = Sample_A();
 
       //Process_Pipe
@@ -212,7 +214,7 @@ namespace pfAdapter.Setting
           new Client_WriteStdin()
           {
             BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
-            BaseArgs =  "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
+            BaseArgs = "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
             Delay_sec = 1,
           });
       //PostProcess
@@ -222,7 +224,8 @@ namespace pfAdapter.Setting
         new Client()
         {
           BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -SequenceName $StartTime$$PID$   ",
+          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+
         },
         new Client()
         {
@@ -242,14 +245,6 @@ namespace pfAdapter.Setting
       };
       return setting;
     }
-
-
-
-
-
-
-
-
 
 
 

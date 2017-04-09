@@ -117,7 +117,6 @@ namespace pfAdapter
       setting_file = new Setting_File();
       IgnoreCh = new Setting_IgnoreCH();
       ProgramInfo = new ProgramInfo();
-      XmlPath = "pfAdapter.xml";
     }
 
     /*
@@ -167,7 +166,7 @@ namespace pfAdapter
     public bool GetParam1()
     {
       //xml file
-      Log.System.WriteLine("    Read  " + XmlPath);
+      XmlPath = XmlPath ?? "pfAdapter.xml";
       setting_file = Setting_File.LoadFile(XmlPath);
       if (setting_file == null)
         return false;//not found xml

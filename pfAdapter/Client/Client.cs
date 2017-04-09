@@ -191,8 +191,8 @@ namespace pfAdapter
       }
       //App
       {
-        after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);
-        after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);
+        after = Regex.Replace(after, @"\$StartTime\$", App.StartTimeText, RegexOptions.IgnoreCase);  //r15まで
+        after = Regex.Replace(after, @"\$PID\$", "" + App.PID, RegexOptions.IgnoreCase);             //r15まで
       }
       return after;
     }
