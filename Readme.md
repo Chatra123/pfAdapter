@@ -21,67 +21,43 @@ pfAdapter.exe  "C:\video.ts"
 ------------------------------------------------------------------
 ### 引数１
 
-    -file  "C:\video.ts"
+    -File  "C:\video.ts"
 入力ファイルパス
 
 
-    -npipe  pipename
+    -NPipe  pipename
 入力名前付きパイプ
 
 
-    -limit 10.0
+    -Limit 10.0
 ファイル読込み速度を 10.0MiB/secに制限  
 
 
-    -midint 10.0
+    -MidInt 10.0
 MidProcessの実行間隔、minutes  
 
 
-------------------------------------------------------------------
-### 引数２
-
-    -Suspend_pfAMain
-Main処理の実行中止  
-    
-    
-    -Suspend_pfAEnc
-Enc処理の実行中止  
-    
-    
-    -Abort_pfAdapter
-pfAdapterの終了  
-
-
-    -ExtCmd        1
-    -PrePrc_App    1
-    -MidPrc_Main   1
-    -PostPrc_Main  1
-    -PostPrc_Enc   1
-    -PostPrc_App   1
-    -PrePrc        1
-    -MidPrc        1
-    -PostPrc       1
+    -ExtCmd   1
+    -PrePrc   1
+    -MidPrc   1
+    -PostPrc  1
 プロセスリストの有効、無効。設定ファイルのEnableは無視される。
 
 
-    -EncProfile  RunTest_mp4  
-マクロの $EncProfile$ を RunTest_mp4 に置換します
-    
+    -Abort
+処理の実行中止  
+
 
     -Xml  setting2.xml
-設定ファイルを指定  
+別の設定ファイルを指定  
 
 
 
 ------------------------------------------------------------------
-### 設定
+### 設定１
 
     Arguments  
-追加引数  
-入力、-Xml以外の引数が追加できます。  
-　設定ファイル　→　実行ファイル引数　→　  
-　　　　設定ファイルの追加引数　→　外部プロセスからの引数  
-の順で設定が上書きされます。（デバッグ用に使用）  
+追加引数  （デバッグ時に使用）  
 
 
     BuffSize_MiB  3.0
@@ -107,90 +83,29 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
 
 
 ------------------------------------------------------------------
-### 設定　プロセスリスト
+### 設定２　プロセスリスト
 
-    Client_MainA
+    Client_Pipe
 データ送信先のプロセス。標準入力をリダイレクトします。
-
-    Client_Enc_B  
-データ送信先のプロセス。標準入力をリダイレクトします。  
-引数 -EncProfile があるときのみ実行  
 
 
     Client_GetExternalCommand  
-戻り値をコマンドライン引数としてを受け取り、処理を変更します。  
--Suspend_pfAMain があればメイン処理を中止し、  
--Abort_pfAdapter があればプロセスを終了します。  
--File、-Pipe、-Xml、-EncProfile に関しては処理できません。  
+戻り値をコマンドライン引数として受け取り、処理を変更します。  
+-Abort があればプロセスを終了します。  
 
 
-    PreProcess__App  
-データ送信の前に実行するプロセスリスト  
+    PreProcess
+データ送信の前に実行するプロセス
 
 
-    MidProcess__MainA  
-データ送信中に実行するプロセスリスト  
+    MidProcess
+データ送信中に実行するプロセス
 直前の MidProcessが実行されていたら終了するまで待機します。  
 並列実行はされません。  
-データ送信が終了した後に新たに MidProcessが実行されることはありません。  
 
 
-    PostProcess_MainA  
-データ送信が終了し、実行中の MidProcess__MainAが終了した後に実行  
-
-
-    PostProcess_Enc_B  
-Client_Enc_Bを実行しており、データ送信が終了した後に実行  
-
-
-    PostProcess_App  
-１番最後に実行
-
-
-
-#### プロセスリスト処理の流れ   （等幅フォント用表記）
-
-┌─────────────────┐  
-｜　　Client_GetExternalCommand 　　｜  
-└─────────────────┘  
-　　　　　　　　　｜  
-　　　　　　　　　↓  
-┌─────────────────┐  
-｜　　　　PreProcess＿App 　　　　　｜  
-└─────────────────┘  
-　　　　　　　　　｜  
-　　　　　　　　　├─────────────────────┐  
-　　　　　　　　　｜　　　　　　　　　　　　　　　　　　　　　｜  
-　　　　　　　　　↓　　　　　　　　　　　　　　　　　　　　　↓  
-┌─────────────────┐　　　┌─────────────────┐  
-｜                                  ｜　　　｜　　　　　　　　　　　　　　　　　｜  
-｜　　　Client_MainA　　　　　　　　｜　　　｜　　　Client_Enc_B　　　　　　　　｜  
-｜　　　　　　　& 　　　　　　　　　｜　　　｜　　　　　　　　　　　　　　　　　｜  
-｜　　　　　MidProcess＿MainA 　　　｜　　　｜　　　　　　　　　　　　　　　　　｜  
-｜                                  ｜　　　｜　　　　　　　　　　　　　　　　　｜  
-└─────────────────┘　　　└─────────────────┘  
-　　　　　　　　　｜　　　　　　　　　　　　　　　　　　　　　｜  
-┌─────────────────┐　　　　　　　　　　　　｜  
-｜　( wait for MidProcess exit )　  ｜    　　　　　　　　　　｜  
-└─────────────────┘　　　　　　　　　　　　｜  
-　　　　　　　　　｜　　　　　　　　　　　　　　　　　　　　　｜  
-　　　　　　　　　↓　　　　　　　　　　　　　　　　　　　　　｜  
-┌─────────────────┐　　　　　　　　　　　　｜  
-｜　　　　PostProcess_MainA 　　　　｜　　　　　　　　　　　　｜  
-└─────────────────┘　　　　　　　　　　　　｜  
-　　　　　　　　　｜　　　　　　　　　　　　　　　　　　　　　｜  
-　　　　　　　　　｜　　　　　　　　　　　　　　　　　　　　　｜  
-　　　　　　　　　├─────────────────────┘  
-　　　　　　　　　｜  
-　　　　　　　　　↓  
-┌─────────────────┐  
-｜　　　　PostProcess_Enc_B 　　　　｜  ( if Client_Enc_B has run )  
-└─────────────────┘  
-　　　　　　　　　｜  
-　　　　　　　　　↓  
-┌─────────────────┐  
-｜　　　　　PostProcess__App　　　　｜  
-└─────────────────┘  
+    PostProcess
+データ送信が終了し、実行中の MidProcessが終了した後に実行  
 
 
 
@@ -230,9 +145,6 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 |  $Ext$                 |  拡張子                   |  .ts              |
 |  $FileNameExt$         |  拡張子付きファイル名     |  news.ts          |
 |  $FilePathWithoutExt$  |  拡張子無しファイルパス   |  C:\rec\news      |
-|  $PID$                 |  pfAdapterのＰＩＤ        |                   |
-|  $StartTime$           |  pfAdapter開始時間        |                   |
-|  $EncProfile$          |  引数 -EncProfile の値    |  　               |
 
 
 
@@ -244,13 +156,6 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
 |  $Program$         |  番組名                    |
 
 
-
-------------------------------------------------------------------
-##### NonCMCutCH.txt、NonEncCH.txtについて
-
-  チャンネル名がテキストで指定されていると各処理を中止します。
-
-  
 ------------------------------------------------------------------
 ##### Write_Default.dllのTee出力
 
@@ -260,11 +165,21 @@ Client_Enc_Bを実行しており、データ送信が終了した後に実行
   Write_Default.dllの設定でTeeコマンドをチェックし、  
   
   Teeコマンド  
-  .\Write\Write_PF\pfAdapter\pfAdapter.exe  -file "$FilePath$"  
+  .\Write\Write_PF\pfAdapter\pfAdapter.exe  "$FilePath$"  
   
   に設定する。 録画を開始するとpfAdapterが起動します。  
   
   
+------------------------------------------------------------------
+##### 他
+ * チャンネル名の指定
+   チャンネル名を取得するためには *.ts.program.txtがあるか、TSファイル名内に
+   含まれている必要があります。
+  
+ * pfAdapter_IgnoreCH.txtについて
+   チャンネル名がテキストで指定されているとプロセス処理を中止します。
+
+   
 ------------------------------------------------------------------
 ### 使用ライブラリ
 
