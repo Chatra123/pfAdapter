@@ -30,7 +30,6 @@ namespace pfAdapter
       Log.System.Enable = true;
       Log.System.OutConsole = true;
       Log.System.OutFile = true;
-      //Log.System.AutoFlush = true;
       Directory.SetCurrentDirectory(App.Dir);
       var setting = new AppSetting(AppArgs);
       setting.GetInput();
@@ -165,8 +164,8 @@ namespace pfAdapter
       bool readXml = setting.GetParam1();
       if (readXml == false)
       {
-        Log.System.WriteLine("  XmlPath ");
-        Log.System.WriteLine("      not found or fail load ");
+        Log.System.WriteLine("  Xml file ");
+        Log.System.WriteLine("      not found or fail read ");
         Log.System.WriteLine("      " + setting.XmlPath);
         return false;
       }
@@ -255,8 +254,8 @@ namespace pfAdapter
         string status = string.Format("    (pipe, file) = {0,6},{1,6} MiB",
                                       (int)(totalPipeRead / 1024 / 1024),   //総読込み量  パイプ
                                       (int)(totalFileRead / 1024 / 1024));  //            ファイル
-                                                                            //console title
-                                                                            //  1sec
+        //console title
+        //  1sec
         Console.Title = "  " + DateTime.Now.ToString("HH:mm:ss") + ":    " + status;
         //console
         //  1min

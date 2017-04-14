@@ -32,6 +32,7 @@ namespace pfAdapter
     {
       MidProcessList = new ClientList(midPrcList);
       Interval_Min = (0 < interval_min) ? interval_min : 10;
+      tickCounter = 0;
       //timer
       timer = new System.Timers.Timer();
       timer.Enabled = false;
@@ -45,10 +46,9 @@ namespace pfAdapter
     /// </summary>
     public void Start()
     {
-      timer.Enabled = true;
-      lastRunTime = DateTime.Now;
-      tickCounter = 0;
       Log.System.WriteLine("    MidProcessTimer.Start()    interval = {0,3:f1} min", Interval_Min);
+      lastRunTime = DateTime.Now;
+      timer.Enabled = true;
     }
 
 
@@ -66,7 +66,7 @@ namespace pfAdapter
         lastRunTime = DateTime.Now;
         activeTask = new Task(() =>
         {
-          //activeTaskスレッドでロック取得、Timerスレッドとは別
+          //Taskスレッドでロック取得、Timerスレッドとは別
           lock (syncTask)
           {
             tickCounter++;

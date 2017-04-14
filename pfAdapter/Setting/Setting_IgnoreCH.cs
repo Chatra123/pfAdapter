@@ -20,7 +20,7 @@ namespace pfAdapter.Setting
     public bool IsIgnoreCH { get; private set; } = false;
 
     /// <summary>
-    /// pfadapter_IgnoreCH.txt内に特定のチャンネル名があるか調べる
+    /// txt内に特定のチャンネル名があるか調べる
     /// </summary>
     public void Check(string ch, string xmlPath)
     {
@@ -69,10 +69,9 @@ namespace pfAdapter.Setting
       string ch_Normal = StrConv.ToUWH(_ch);
       string ch_NnonNum = StrConv.ToNonNum(_ch);
       List<string> blackList = StrConv.ToUWH(_blackList).ToList();
-
-      //部分一致で検索
-      bool contains_Normal = blackList.Any((word) => ch_Normal.Contains(word));
-      bool contains_NonNum = blackList.Any((word) => ch_NnonNum.Contains(word));
+      //前方一致で検索
+      bool contains_Normal = blackList.Any((black) => ch_Normal.IndexOf(black) == 0);
+      bool contains_NonNum = blackList.Any((black) => ch_NnonNum.IndexOf(black) == 0);
 
       if (contains_Normal)
         return true;
@@ -88,29 +87,29 @@ namespace pfAdapter.Setting
     public const string Default =
  @"
 //
-//###  pfAdapterが処理を行わないチャンネル名を指定
+// ###  pfAdapterが処理を行わないチャンネル名を指定
 //
-// *  program.txtからチャンネル名を取得し、指定キーワードがチャンネル名の一部にあれば
+//  * program.txtからチャンネル名を取得し、指定キーワードがチャンネル名の一部にあれば
 //    pfAdapterを終了させます。
 //    ”NHK”と書いてあれば、チャンネル”NHKEテレ1名古屋”のときにpfAdapterを終了させます。
 //
 //
-// *  通常のチャンネル名で見つからなければ、数字・記号を除いた文字列でも検索します。
-//    - チャンネル名が”東海テレビ001”なら”東海テレビ”でも検索します。
-//    - チャンネル名が”BSフジ・181”　なら”BSフジ”　　でも検索します。
+//  * 通常のチャンネル名で見つからない場合は数字・記号を除いたチャンネル名でも検索します。
+//    - チャンネル名”東海テレビ001”で見つからなければ、”東海テレビ”でも検索します。
+//    - チャンネル名”BSフジ・181”  で見つからなければ、”BSフジ”    でも検索します。
 //
-// *  検索は部分一致
+//  * 検索は前方一致
 //
-// *  大文字小文字、全角半角、ひらがなカタカナの違いは無視
+//  * 大文字小文字、全角半角、ひらがなカタカナの違いは無視します。
 //
 //
-// *  このテキストのファイル名は xmlファイル名_IgnoreCH.txt
+//  * このテキストのファイル名は xmlファイル名_IgnoreCH.txt
 //    - pfAdapter.xml  なら pfAdapter_IgnoreCH.txt
 //    - pfAdapter-2.xmlなら pfAdapter-2_IgnoreCH.txt
 //
-// *  各行の前後の空白は無視。  //以降はコメント
+//  * //以降はコメント
 //
-// *  このテキストの文字コード  UTF-8 bom
+//  * このテキストの文字コード  UTF-8 bom
 //
 
 
