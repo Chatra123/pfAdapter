@@ -67,7 +67,7 @@ namespace pfAdapter.Setting
       //  ・normal  大文字全角ひらがなに変換
       //  ・nonNum  数字、記号除去
       string ch_Normal = StrConv.ToUWH(_ch);
-      string ch_NnonNum = StrConv.ToNonNum(_ch);
+      string ch_NnonNum = StrConv.ToNonNum(ch_Normal);
       List<string> blackList = StrConv.ToUWH(_blackList).ToList();
       //前方一致で検索
       bool contains_Normal = blackList.Any((black) => ch_Normal.IndexOf(black) == 0);
