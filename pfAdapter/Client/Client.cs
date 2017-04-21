@@ -35,7 +35,6 @@ namespace pfAdapter
       List = new List<Client>(client.List);
     }
 
-
     /// <summary>
     /// 待機＆実行
     /// </summary>

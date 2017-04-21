@@ -17,7 +17,7 @@ namespace pfAdapter.Setting
   [Serializable]
   public class Setting_File
   {
-    const double CurrentRev = 16.1;
+    const double CurrentRev = 16.2;
 
     public double Rev = 0.0;
     public string CommandLine = "        ";       //追加コマンドライン　（開発中の一時的な設定変更で使用）
@@ -28,12 +28,11 @@ namespace pfAdapter.Setting
     //ファイルロック用の拡張子
     public string LockMove = " .ts  .pp.d2v  .pp.lwi .pp.lwifooter  .srt .ass .noncap  .avi .mp4 ";
 
-    //プロセスリスト
-    public Client Process_GetExternalCommand = new Client();
-    public List<Client_WriteStdin> Client_Pipe = new List<Client_WriteStdin>();
-    public ClientList PreProcess = new ClientList();
-    public ClientList MidProcess = new ClientList();
-    public ClientList PostProcess = new ClientList();
+    public Client Process_GetExternalCommand;
+    public List<Client_WriteStdin> Client_Pipe;
+    public ClientList PreProcess;
+    public ClientList MidProcess;
+    public ClientList PostProcess;
 
     //設定ファイル名
     private static readonly string
@@ -42,6 +41,7 @@ namespace pfAdapter.Setting
             AppName = Path.GetFileNameWithoutExtension(AppPath),
             Default_XmlName = AppName + ".xml",
             Default_XmlPath = Path.Combine(AppDir, Default_XmlName);
+
 
 
     /// <summary>
@@ -57,7 +57,7 @@ namespace pfAdapter.Setting
       //新規作成
       if (Path.GetFileName(xmlpath) == Default_XmlName
         && File.Exists(xmlpath) == false)
-        XmlRW.Save(xmlpath, Sample_A()); //Sample_RunTest  Sample_A  Sample_E
+        XmlRW.Save(xmlpath, Sample_B()); //Sample_RunTest  Sample_B  Sample_E
 
       var file = XmlRW.Load<Setting_File>(xmlpath);
 
@@ -65,6 +65,7 @@ namespace pfAdapter.Setting
       if (file != null && file.Rev != CurrentRev)
       {
         file.Rev = CurrentRev;
+        file = Sample_B(file);
         XmlRW.Save(xmlpath, file);
       }
       return file;
@@ -77,6 +78,7 @@ namespace pfAdapter.Setting
     private static Setting_File Sample_RunTest()
     {
       var setting = new Setting_File();
+      setting.Process_GetExternalCommand = new Client();
       setting.Client_Pipe = new List<Client_WriteStdin>()
       {
         new Client_WriteStdin()
@@ -86,117 +88,137 @@ namespace pfAdapter.Setting
           BaseArgs = "  \"$FilePath$.p2f.ts\"   ",
         },
       };
+      setting.PreProcess = new ClientList();
+      setting.MidProcess = new ClientList();
+      setting.PostProcess = new ClientList();
       return setting;
     }
 
 
     /// <summary>
-    /// サンプル設定Ａ
+    /// サンプル設定　Base
     /// </summary>
-    private static Setting_File Sample_A()
+    private static Setting_File Sample_B(Setting_File setting = null)
     {
-      var setting = new Setting_File();
+      setting = setting ?? new Setting_File();
+
       //GetExternalCommand
-      setting.Process_GetExternalCommand = new Client()
+      setting.Process_GetExternalCommand = setting.Process_GetExternalCommand ?? new Client()
       {
         BasePath = @"   ..\LGLauncher\LSystem\LogoSelector.exe   ",
         BaseArgs = "   \"$Ch$\"   \"$Program$\"   \"$FilePath$\"   ",
       };
+
       //Process_Pipe
       setting.PipeTimeout_sec = 10;
-      setting.Client_Pipe = new List<Client_WriteStdin>()
+      if (setting.Client_Pipe == null || setting.Client_Pipe.Count == 0)
       {
-        //Caption2Ass_PCR
-        new Client_WriteStdin()
+        setting.Client_Pipe = new List<Client_WriteStdin>()
         {
-          Enable = 1,
-          BasePath = @"   ..\Caption2Ass_PCR\Caption2Ass_PCR.exe   ",
-          BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag  ",
-          Delay_sec = 1,
-        },
-        //DGIndex
-        new Client_WriteStdin()
-        {
-          Enable = 0,
-          BasePath = @"   ..\DGIndex\DGIndex.exe   ",
-          BaseArgs = "   -pipe \"$FilePath$\" -o \"$FilePath$.pp\"  -om 0  -hide  -exit  -nodialog   ",
-          Delay_sec = 1,
-        },
-        //CreateLwi
-        new Client_WriteStdin()
-        {
-          Enable = 1,
-          BasePath = @"   ..\CreateLwi\CreateLwi.exe   ",
-          BaseArgs = "   -pipe \"$FilePath$\"  -lwi \"$FilePath$.pp\"  -footer   ",
-          Delay_sec = 1,
-        },
-        //Pipe2File
-        new Client_WriteStdin()
-        {
-          Enable = 0,
-          BasePath = @"   Pipe2File.exe   ",
-          BaseArgs = "   \"$FilePath$.p2f.ts\"  ",
-          Delay_sec = 1,
-        },
-      };
+          //Caption2Ass_PCR
+          new Client_WriteStdin()
+          {
+            Enable = 1,
+            BasePath = @"   ..\Caption2Ass_PCR\Caption2Ass_PCR.exe   ",
+            BaseArgs = "   -pipe  -o \"$FilePath$\"  -format srt  -NonCapTag  ",
+            Delay_sec = 1,
+          },
+          //DGIndex
+          new Client_WriteStdin()
+          {
+            Enable = 0,
+            BasePath = @"   ..\DGIndex\DGIndex.exe   ",
+            BaseArgs = "   -pipe \"$FilePath$\" -o \"$FilePath$.pp\"  -om 0  -hide  -exit  -nodialog   ",
+            Delay_sec = 1,
+          },
+          //CreateLwi
+          new Client_WriteStdin()
+          {
+            Enable = 1,
+            BasePath = @"   ..\CreateLwi\CreateLwi.exe   ",
+            BaseArgs = "   -pipe \"$FilePath$\"  -lwi \"$FilePath$.pp\"  -footer   ",
+            Delay_sec = 1,
+          },
+          //Pipe2File    for debug
+          new Client_WriteStdin()
+          {
+            Enable = 0,
+            BasePath = @"   Pipe2File.exe   ",
+            BaseArgs = "   \"$FilePath$.p2f.ts\"  ",
+            Delay_sec = 1,
+          },
+        };
+      }
+
       //PreProcess
-      setting.PreProcess.List = new List<Client>()
+      if (setting.PreProcess == null)
       {
-         new Client()
-         {
-           Enable = 0,
-           memo = "  Preprocess sample  ",
-           BasePath = @"   sample.exe   ",
-           BaseArgs =  "  \"$FilePath$\"   ",
-         },
-      };
+        setting.PreProcess = new ClientList();
+        setting.PreProcess.List = new List<Client>()
+        {
+            new Client()
+            {
+              Enable = 0,
+              memo = "  Preprocess sample  ",
+              BasePath = @"   sample.exe   ",
+              BaseArgs =  "  \"$FilePath$\"   ",
+            },
+        };
+      }
       //MidProcess
-      setting.MidProcess.Delay_sec = 10;
-      setting.MidProcess.RandDelay_sec = 20;
-      setting.MidProcess.List = new List<Client>()
+      if (setting.MidProcess == null)
       {
-        //LGLauncher
-        new Client()
+        setting.MidProcess = new ClientList();
+        setting.MidProcess.Delay_sec = 10;
+        setting.MidProcess.RandDelay_sec = 20;
+        setting.MidProcess.List = new List<Client>()
         {
-          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -part  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
-
-        },
-      };
+          //LGLauncher
+          new Client()
+          {
+            BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+            BaseArgs = "   -part  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+          },
+        };
+      }
       //PostProcess
-      setting.PostProcess.Delay_sec = 10;
-      setting.PostProcess.RandDelay_sec = 20;
-      setting.PostProcess.List = new List<Client>()
+      if (setting.PostProcess == null)
       {
-        //LGLauncher
-        new Client()
+        setting.PostProcess = new ClientList();
+        setting.PostProcess.Delay_sec = 10;
+        setting.PostProcess.RandDelay_sec = 20;
+        setting.PostProcess.List = new List<Client>()
         {
-          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+          //LGLauncher
+          new Client()
+          {
+            BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+            BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
 
-        },
-        new Client()
-        {
-          Enable = 0,
-          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
-        },
-        //bat
-        new Client()
-        {
-          Enable = 1,
-          memo = "  bat  ",
-          BasePath = @"   .\bat\PostProcess_pfA.bat   ",
-          BaseArgs =  "   \"$FilePath$\"   ",
-        },
-        new Client()
-        {
-          Enable = 0,
-          memo = "   Postprocess sample  ",
-          BasePath = @"   sample.exe   ",
-          BaseArgs =  "   \"$FilePath$\"   ",
-        },
-      };
+          },
+          new Client()
+          {
+            Enable = 0,
+            BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
+            BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+          },
+          //bat
+          new Client()
+          {
+            Enable = 1,
+            memo = "  bat  ",
+            BasePath = @"   .\bat\PostProcess_pfA.bat   ",
+            BaseArgs =  "   \"$FilePath$\"   ",
+          },
+          new Client()
+          {
+            Enable = 0,
+            memo = "   Postprocess sample  ",
+            BasePath = @"   sample.exe   ",
+            BaseArgs =  "   \"$FilePath$\"   ",
+          },
+        };
+      }
       return setting;
     }
 
@@ -206,27 +228,25 @@ namespace pfAdapter.Setting
     /// </summary>
     private static Setting_File Sample_E()
     {
-      var setting = Sample_A();
-
+      var setting = new Setting_File();
+      setting.Process_GetExternalCommand = new Client();
       //Process_Pipe
       setting.PipeTimeout_sec = -1;
-      setting.Client_Pipe.Add(
-          new Client_WriteStdin()
-          {
-            BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
-            BaseArgs = "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
-            Delay_sec = 1,
-          });
-      //PostProcess
+      setting.Client_Pipe = new List<Client_WriteStdin>()
+      {
+        new Client_WriteStdin()
+        {
+          BasePath = @"   ..\Valve2Pipe\Valve2Pipe.exe   ",
+          BaseArgs = "  -pipe \"$FilePath$\"  -profile  $Macro1$   ",
+          Delay_sec = 1,
+        }
+      };
+      //ClientList
+      setting.PreProcess = new ClientList();
+      setting.MidProcess = new ClientList();
+      setting.PostProcess = new ClientList();
       setting.PostProcess.List = new List<Client>()
       {
-        //LGLauncher
-        new Client()
-        {
-          BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-          BaseArgs = "   -last  -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
-
-        },
         new Client()
         {
           Enable = 1,
