@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　17/03/25
+ * 最終更新日　17/04/28
  * 
  * 概要
  *   ＸＭＬファイルの読み書き
@@ -38,11 +38,12 @@ namespace OctNov.IO
     {
       if (File.Exists(filename) == false) return null;
 
-      for (int i = 1; i <= 3; i++)
+      for (int i = 1; i <= 5; i++)
       {
+        bool last_try = i == 5;
         try
         {
-          //                                                                 共有設定  FileShare.Read
+          //                                                                           共有設定
           using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
           {
             //                                                    UTF-8 bom
@@ -63,8 +64,8 @@ namespace OctNov.IO
         catch (IOException)
         {
           //別プロセスがファイルを使用中
-          if (3 <= i)
-            throw;
+          if (last_try)
+            return null;
         }
         catch (Exception)
         {
@@ -72,7 +73,7 @@ namespace OctNov.IO
           //タグ、ｘｍｌフォーマット、シリアル属性を確認
           throw;
         }
-        System.Threading.Thread.Sleep(20);
+        System.Threading.Thread.Sleep(50 * i);
       }
       return null;
     }
@@ -94,11 +95,11 @@ namespace OctNov.IO
       if (dir != "" && Directory.Exists(dir) == false)
         Directory.CreateDirectory(dir);
 
-      for (int i = 1; i <= 3; i++)
+      for (int i = 1; i <= 5; i++)
       {
         try
         {
-          //                                                                    共有設定  FileShare.None
+          //                                                                              共有設定
           using (var stream = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None))
           {
             //                                                    UTF-8 bom
@@ -113,7 +114,7 @@ namespace OctNov.IO
         catch (IOException)
         {
           //別プロセスがファイルを使用中
-          System.Threading.Thread.Sleep(20);
+          System.Threading.Thread.Sleep(50 * i);
         }
         catch (Exception)
         {
