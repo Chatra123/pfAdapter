@@ -19,10 +19,6 @@ namespace pfAdapter
     /// <summary>
     /// 閉じる
     /// </summary>
-    ~Writer()
-    {
-      Close();
-    }
     public void Close()
     {
       if (HasClient)
@@ -33,6 +29,10 @@ namespace pfAdapter
           client.Process.WaitForExit(3 * 1000);
           System.Threading.Thread.Sleep(500);
         }
+    }
+    ~Writer()
+    {
+      Close();
     }
 
 
@@ -49,7 +49,7 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// ライター登録、実行
+    /// Client登録、実行
     /// </summary>
     public void RegisterClient(List<Client_WriteStdin> clientList)
     {
@@ -119,11 +119,9 @@ namespace pfAdapter
 
       //Timeout: -1ms以外の負数だと例外がでる。-1secはダメ
       Timeout = 0 <= Timeout.TotalSeconds ? Timeout : TimeSpan.FromMilliseconds(-1);
-      //全タスクが完了するまで待機
       Task.WaitAll(tasklist.ToArray(), Timeout);
 
 
-      //結果
       foreach (var task in tasklist)
       {
         if (task.IsCompleted)
@@ -134,6 +132,8 @@ namespace pfAdapter
             var client = (Client_WriteStdin)task.AsyncState;
             client.StdinWriter.Close();
             ClientList.Remove(client);
+            Log.System.WriteLine("  /▽ Fail to write :  {0} ▽/", client.FileName);
+            Log.System.WriteLine();
           }
         }
         else
