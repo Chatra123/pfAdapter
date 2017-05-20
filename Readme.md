@@ -49,7 +49,7 @@ MidProcessの実行間隔、minutes
 
 
     -Xml  setting2.xml
-別の設定ファイルを指定  
+設定ファイルを指定  
 
 
 
@@ -77,8 +77,8 @@ MidProcessの実行間隔  minutes
     LockFile
 指定した拡張子のファイルをロックします。  
 PostProcess実行前の待機期間にはd2vファイルを使用しているプロセスがありません。  
-この間はファイルの移動が可能になってしまうため、ファイルロックし移動を禁止します。  
-ロックするのはPostProcess実行前の待機時間のみです。  
+この間はファイルの移動が可能になってしまうため移動を禁止します。  
+ロックするのはPostProcess実行前の待機期間のみです。  
 データ送信中、PostProcess実行中はロックしません。  
 
 
@@ -90,8 +90,8 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
 
 
     Client_GetExternalCommand  
-戻り値をコマンドライン引数として受け取り、処理を変更します。  
--Abort があればプロセスを終了します。  
+外部プロセスを実行し戻り値をコマンドライン引数として受け取ります。  
+戻り値に -Abortがあればプロセスを終了します。  
 
 
     PreProcess
@@ -105,7 +105,7 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
 
 
     PostProcess
-データ送信が終了し、実行中の MidProcessが終了した後に実行  
+データ送信が終了し、実行中の MidProcessが終了した後に実行するプロセス  
 
 
 
@@ -162,19 +162,18 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
   Write_PF.dllの代わりにTee出力対応のWrite_Default.dllが利用できます。  
   基本的な動作はWrite_PF.dllと同じです。
   
-  Write_Default.dllの設定でTeeコマンドをチェックし、  
-  
+  Write_Default.dllの設定でTeeコマンドをチェックし、    
   Teeコマンド  
-  .\Write\Write_PF\pfAdapter\pfAdapter.exe  "$FilePath$"  
-  
+  .\Write\Write_PF\pfAdapter\pfAdapter.exe  "$FilePath$"    
   に設定する。 録画を開始するとpfAdapterが起動します。  
   
   
 ------------------------------------------------------------------
 ##### 他
  * チャンネル名  
-   チャンネル名を取得するには *.ts.program.txtがあるか、TSファイル名に
-   含まれている必要があります。
+   チャンネル名を取得するには *.ts.program.txtがあるか、TSファイル名にチャンネル名が  
+   含まれている必要があります。  
+   詳しくはLGLauncherのLogoSelector.txtを見てください。  
   
  * pfAdapter_IgnoreCH.txtについて  
    チャンネル名がテキストで指定されているとpfAdapterは処理を中止します。
