@@ -1,5 +1,5 @@
 ﻿/*
- * 最終更新日　17/03/26
+ * 最終更新日　16/06/18
  * 
  * □概要
  * 
@@ -23,7 +23,7 @@ using System.Text;
 
 namespace OctNov.Excp
 {
-  static class ExceptionInfo
+  public static class ExceptionInfo
   {
     /// <summary>
     /// 例外発生時に内容をファイルに保存する。
@@ -40,6 +40,7 @@ namespace OctNov.Excp
         info.AppendFormat("Exception  = {0}", exc.ToString());
         info.AppendLine();
       }
+
       //出力ファイルパス
       string logPath;
       {
@@ -56,7 +57,6 @@ namespace OctNov.Excp
 
       //ファイル追記                                        UTF-8 bom
       File.AppendAllText(logPath, info.ToString(), Encoding.UTF8);
-
     }
   }
 }
