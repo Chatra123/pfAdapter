@@ -135,16 +135,16 @@ namespace pfAdapter
       {
         string dir = Path.Combine(App.Dir, "Log");
         string path = Path.Combine(dir, filename + "." + i + ".log");
-        var finfo = new FileInfo(path);
+        var fi = new FileInfo(path);
 
-        if (finfo.Exists)
+        if (fi.Exists)
         {
           //古いファイル？
-          bool over_creation_ = 2.0 <= (DateTime.Now - finfo.CreationTime).TotalDays;
-          bool over_lastwrite = 2.0 <= (DateTime.Now - finfo.LastWriteTime).TotalDays;
+          bool over_creation_ = 2.0 <= (DateTime.Now - fi.CreationTime).TotalDays;
+          bool over_lastwrite = 2.0 <= (DateTime.Now - fi.LastWriteTime).TotalDays;
           if (over_creation_ && over_lastwrite)
           {
-            try { finfo.Delete(); }
+            try { fi.Delete(); }
             catch { /*ファイル使用中*/ }
           }
         }

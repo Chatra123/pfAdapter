@@ -39,7 +39,8 @@ namespace pfAdapter.Setting
         if (0 < args.Count())
         {
           //ファイル名として使える文字列？
-          var finfo = new System.IO.FileInfo(args[0]);
+          //　パスに無効な文字が含まれていると例外発生
+          var fi = new System.IO.FileInfo(args[0]);
           File = args[0];
         }
       }
@@ -79,8 +80,8 @@ namespace pfAdapter.Setting
       {
         if (System.IO.File.Exists(File))
         {
-          var finfo = new System.IO.FileInfo(File);
-          File = finfo.FullName;
+          var fi = new System.IO.FileInfo(File);
+          File = fi.FullName;
         }
       }
       catch
@@ -130,9 +131,9 @@ namespace pfAdapter.Setting
 
 
     /// <summary>
-    /// コマンドライン一覧を出力する。
+    /// 結果一覧を出力
     /// </summary>
-    public override string ToString()
+    public string Result()
     {
       var sb = new StringBuilder();
       sb.AppendLine("    Pipe        = " + Pipe);

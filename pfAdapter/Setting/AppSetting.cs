@@ -221,7 +221,7 @@ namespace pfAdapter
         this.MidProcess.Enable = (bool)cmdline.MidPrc ? 1 : 0;
       if (cmdline.PostPrc.HasValue)
         this.PostProcess.Enable = (bool)cmdline.PostPrc ? 1 : 0;
-      this.Cmdline_Result = setting_cmdline.ToString();
+      this.Cmdline_Result = setting_cmdline.Result();
     }
 
 

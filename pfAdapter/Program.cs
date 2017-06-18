@@ -82,14 +82,12 @@ namespace pfAdapter
       reader.SetParam(setting.BuffSize_MiB, setting.ReadLimit_MiBsec);
 
       //ProcessList
-      //  PrePrc
       if (setting.PreProcess.IsEnable)
       {
         Log.System.WriteLine("[ PreProcess ]");
         setting.PreProcess.Wait_and_Run();
         Log.System.WriteLine();
       }
-      //  MidPrc
       MidProcessTimer midPrcTimer = null;
       if (setting.MidProcess.IsEnable)
       {
