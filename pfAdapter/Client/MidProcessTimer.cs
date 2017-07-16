@@ -33,7 +33,7 @@ namespace pfAdapter
       MidProcessList = new ClientList(midPrcList);
       Interval_Min = (0 < interval_min) ? interval_min : 10;
       tickCounter = 0;
-      //timer
+
       timer = new System.Timers.Timer();
       timer.Enabled = false;
       timer.Interval = 10 * 1000;

@@ -76,6 +76,8 @@ namespace pfAdapter
         Log.Close();
         return;//exit
       }
+      ProhibitFileMove_pfA.Initialize(setting.File, setting.LockMove);
+
 
       //Reader設定
       Log.System.WriteLine("[ Reader Param ]");
@@ -137,6 +139,7 @@ namespace pfAdapter
         ProhibitFileMove_pfA.Unlock();  //移動禁止は待機中だけ
         setting.PostProcess.Run();
       }
+
       Log.System.WriteLine();
       Log.System.WriteLine("elapse  {0,3:f0} min", App.Elapse.TotalMinutes);
       Log.System.WriteLine("exit");
@@ -172,7 +175,6 @@ namespace pfAdapter
       Client.Macro_Program = setting.ProgramInfo.Program;
       Client.Macro_Macro1 = setting.Macro1;
       setting.GetParam2();
-      ProhibitFileMove_pfA.Initialize(setting.File, setting.LockMove);
 
       Log.System.WriteLine("  [ program.txt ]");
       Log.System.WriteLine("      Channel     = " + setting.ProgramInfo.Channel);
@@ -215,7 +217,6 @@ namespace pfAdapter
       midPrcTimer?.Start();
       while (true)
       {
-        GC.Collect();
         //読
         byte[] data = reader.Read();
         if (data == null) continue;        //パイプバッファ待ち、未書込エリアの読込み
@@ -225,6 +226,7 @@ namespace pfAdapter
         if (writer.HasClient == false) break;
 
         UpdateStatus(Log.TotalRead.TotalPipeRead, Log.TotalRead.TotalFileRead);
+        GC.Collect();
       }
       //close
       ProhibitFileMove_pfA.Lock();

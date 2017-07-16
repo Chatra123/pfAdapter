@@ -161,11 +161,11 @@ namespace pfAdapter
     }
 
     /// <summary>
-    /// xml、CmdLine、txt読み込み
+    /// xml、CmdLine、text file読み込み
     /// </summary>
     public bool GetParam1()
     {
-      //xml file
+      //xml
       XmlPath = XmlPath ?? "pfAdapter.xml";
       setting_file = Setting_File.LoadFile(XmlPath);
       if (setting_file == null)
@@ -177,6 +177,7 @@ namespace pfAdapter
       setting_cmdline.ParseParam(AppArgs);
       Reflect_fromCmdLine(setting_cmdline);
 
+      //text file
       ProgramInfo.GetInfo(File);
       IgnoreCh.Check(ProgramInfo.Channel, XmlPath);
       return true;
@@ -187,7 +188,7 @@ namespace pfAdapter
     /// </summary>
     /// <remark>
     ///  - Clientを実行するので　Client.Macro_Channel を設定してから実行する。
-    ///  - LogoSelectorを実行するので事前にProgramInfoを処理しておく。
+    ///  - LogoSelectorを実行するので事前にProgramInfo.txtを処理しておく。
     /// </remark>
     public void GetParam2()
     {
