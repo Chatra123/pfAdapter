@@ -30,7 +30,6 @@ namespace pfAdapter
       var fileName = Path.GetFileNameWithoutExtension(filePath);
       var filePathWithoutExt = Path.Combine(folder, fileName);
       BasePathPattern = new string[] { filePath, filePathWithoutExt };
-      //extension list
       ExtList = lockFileExts.Split()
                             .Select(ext => ext.ToLower().Trim())
                             .Where(ext => string.IsNullOrWhiteSpace(ext) == false)
@@ -41,9 +40,6 @@ namespace pfAdapter
     /// <summary>
     /// ファイルロック
     /// </summary>
-    /// <remarks>
-    /// 各ClientList開始前の待機時間のみロックする。
-    /// </remarks>
     public static void Lock()
     {
       foreach (var basepath in BasePathPattern)
@@ -51,7 +47,10 @@ namespace pfAdapter
         foreach (var ext in ExtList)
         {
           string path = basepath + ext;
-          if (File.Exists(path) == false)
+
+          bool contains = LockItems.Any((fs) => path == fs.Name);
+          bool notExist = File.Exists(path) == false;
+          if (contains || notExist)
             continue;
           try
           {
@@ -63,8 +62,8 @@ namespace pfAdapter
               var size = new FileInfo(path).Length;
               if (size <= 3) continue;
             }
-            var fstream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            LockItems.Add(fstream);
+            var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            LockItems.Add(fs);
           }
           catch { /* do nothing */ }
         }
@@ -77,11 +76,11 @@ namespace pfAdapter
     /// </summary>
     public static void Unlock()
     {
-      foreach (var fstream in LockItems)
+      foreach (var fs in LockItems)
       {
-        fstream.Close();
+        fs.Close();
       }
-      LockItems = new List<FileStream>();
+      LockItems.Clear();
     }
 
 
