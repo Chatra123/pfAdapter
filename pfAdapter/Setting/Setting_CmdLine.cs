@@ -33,21 +33,9 @@ namespace pfAdapter.Setting
     /// </summary>
     public void ParseInput(string[] args)
     {
-      //引数の１つ目がファイル？
-      try
-      {
-        if (0 < args.Count())
-        {
-          //ファイル名として使える文字列？
-          //　パスに無効な文字が含まれていると例外発生
-          var fi = new System.IO.FileInfo(args[0]);
-          File = args[0];
-        }
-      }
-      catch
-      {
-        //パスに無効な文字が含まれています。
-      }
+      //１つ目の引数をファイル名とする
+      if (0 < args.Count())
+        File = args[0];
 
       //    /*Mono.Options*/
       //case insensitive
@@ -75,18 +63,16 @@ namespace pfAdapter.Setting
 
       //ファイル名　→　フルパス
       //  - ファイル名形式でないと、この後のパス変換で例外がでる。
-      //　- ファイル名のみだと引数として渡した先で使えない。フルパスにする。
+      //　- ファイル名のみだと引数として渡した先で使えない。（カレントディレクトリの問題）
       try
       {
-        if (System.IO.File.Exists(File))
-        {
-          var fi = new System.IO.FileInfo(File);
-          File = fi.FullName;
-        }
+        //パスに無効な文字が含まれていると例外
+        var fi = new System.IO.FileInfo(File);
+        File = fi.FullName;
       }
       catch
       {
-        //パスに無効な文字が含まれています。
+        Log.System.WriteLine("Invalid File name:" + File);
       }
     }
 
@@ -106,9 +92,9 @@ namespace pfAdapter.Setting
         .Add("limit=", "Read speed limit", (double v) => this.ReadLimit_MiBsec = v)
         .Add("midint=", "MidProcess interval", (double v) => this.MidInterval_min = v)
         .Add("midinv=", "MidProcess interval", (double v) => this.MidInterval_min = v)
-        .Add("extcmd=", "switch Get_ExternalCommand ", (int v) => this.ExtCmd = 0 < v)
-        .Add("preprc=", "switch PreProcessList   ", (int v) => this.PrePrc = 0 < v)
-        .Add("midprc=", "switch MidProcessList  ", (int v) => this.MidPrc = 0 < v)
+        .Add("extcmd=", "switch Get_ExternalCommand", (int v) => this.ExtCmd = 0 < v)
+        .Add("preprc=", "switch PreProcessList", (int v) => this.PrePrc = 0 < v)
+        .Add("midprc=", "switch MidProcessList", (int v) => this.MidPrc = 0 < v)
         .Add("postprc=", "switch PostProcessList", (int v) => { this.PostPrc = 0 < v; })
         .Add("macro1=", (v) => this.Macro1 = v)
         .Add("suspend_pfamain", (v) => this.Abort = v != null)//r15までとの互換性

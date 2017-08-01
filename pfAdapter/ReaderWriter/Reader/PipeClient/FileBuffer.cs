@@ -84,7 +84,7 @@ namespace pfAdapter
       lock (sync)
       {
         var GetCurSize = new Func<int>(
-          () => { return Que.Select(block => block.Size).Sum(); });
+          () => Que.Select(block => block.Size).Sum());
 
         //Dequeue
         while (0 < Que.Count()

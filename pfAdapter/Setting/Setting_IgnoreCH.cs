@@ -42,11 +42,10 @@ namespace pfAdapter.Setting
                               (line) =>
                               {
                                 //コメント削除、トリム
-                                int found = line.IndexOf("//");
-                                line = (0 <= found) ? line.Substring(0, found) : line;
+                                int comm = line.IndexOf("//");
+                                line = (0 <= comm) ? line.Substring(0, comm) : line;
                                 return line.Trim();
                               })
-                             .Select((line) => line.ToLower())
                              .Where((line) => string.IsNullOrWhiteSpace(line) == false)    //空白行削除
                              .Distinct()                                                   //重複削除
                              .ToList();

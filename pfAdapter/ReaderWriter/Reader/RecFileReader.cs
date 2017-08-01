@@ -25,7 +25,7 @@ namespace pfAdapter
 
 
     /// <summary>
-    /// InputReader
+    /// RecFileReader
     /// </summary>
     public RecFileReader() { }
 
@@ -76,22 +76,19 @@ namespace pfAdapter
     /// <summary>
     /// 速度制限
     /// </summary>
-    private void ReadLimit_and_Sleep(int read_size)
+    private void ReadLimit(int read_size)
     {
       if (binReader == null) return;
 
-
       tick_ReadSize += read_size;
-
       double limit = SpeedLimit;
       if (App.Elapse_sec < 30)
       {
         //強制速度制限   6.0 MiB/sec
         //　起動直後はファイル読込みが必ず発生するため。
-        if (0 < SpeedLimit && 6.0 * 1024 * 1024 < SpeedLimit)
+        if (6.0 * 1024 * 1024 < SpeedLimit)
           limit = 6.0 * 1024 * 1024;
       }
-
       int elapse = (int)(DateTime.Now - tick_BeginTime).TotalMilliseconds;
       if (200 < elapse)          // 200msごとにカウンタリセット
       {
@@ -111,8 +108,6 @@ namespace pfAdapter
         }
       }
     }
-
-
 
 
     /// <summary>
@@ -138,7 +133,7 @@ namespace pfAdapter
           const int Req_Size = 1024 * 128;
           fileStream.Position = req_fpos;
           data = binReader.ReadBytes(Req_Size);
-          ReadLimit_and_Sleep(data.Length);
+          ReadLimit(data.Length);
         }
 
         //ファイル終端？
@@ -156,7 +151,6 @@ namespace pfAdapter
             continue;
           }
         }
-
 
         //未書込みエリアを読み込んだか？
         if (Packet.Size * 10 <= data.Length)                //パケット*１０以上が必須
@@ -202,7 +196,6 @@ namespace pfAdapter
         //データ送信へ
         return data;
       }//for
-
       throw new Exception();
     }//func
 
