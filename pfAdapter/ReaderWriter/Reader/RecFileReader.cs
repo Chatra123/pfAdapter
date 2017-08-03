@@ -86,7 +86,7 @@ namespace pfAdapter
       {
         //強制速度制限   6.0 MiB/sec
         //　起動直後はファイル読込みが必ず発生するため。
-        if (6.0 * 1024 * 1024 < SpeedLimit)
+        if (SpeedLimit <= 0 || 6.0 * 1024 * 1024 < SpeedLimit)
           limit = 6.0 * 1024 * 1024;
       }
       int elapse = (int)(DateTime.Now - tick_BeginTime).TotalMilliseconds;
