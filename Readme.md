@@ -8,7 +8,7 @@
 ### 使い方　　コマンドライン
 
 ファイル＆名前付きパイプ  
-pfAdapter.exe  -file "C:\video.ts"  -npipe pipename  
+pfAdapter.exe  "C:\video.ts"  -npipe pipename  
 
 ファイル＆標準入力  
 pfAdapter.exe  "C:\video.ts"  
@@ -22,11 +22,11 @@ pfAdapter.exe  "C:\video.ts"
 ### 引数１
 
     -File  "C:\video.ts"
-入力ファイルパス
+入力　ファイルパス
 
 
     -NPipe  pipename
-入力名前付きパイプ
+入力　名前付きパイプ
 
 
     -Limit 10.0
@@ -34,7 +34,7 @@ pfAdapter.exe  "C:\video.ts"
 
 
     -MidInt 10.0
-MidProcessの実行間隔、minutes  
+MidProcessの実行間隔、10.0minutes  
 
 
     -ExtCmd   1
@@ -57,7 +57,7 @@ MidProcessの実行間隔、minutes
 ### 設定１
 
     Arguments  
-追加引数  （デバッグ時に使用）  
+追加引数  （開発時に使用）  
 
 
     BuffSize_MiB  3.0
@@ -67,7 +67,7 @@ MidProcessの実行間隔、minutes
 
     ReadLimit_MiBsec  10.0
 ファイル読込み最大速度  MiB/sec  
-０以下で制限しない。  
+０以下で制限なし。  
 
 
     MidPrcInterval_min  10.0
@@ -78,8 +78,7 @@ MidProcessの実行間隔  minutes
 指定した拡張子のファイルをロックします。  
 PostProcess実行前の待機期間にはd2vファイルを使用しているプロセスがありません。  
 この間はファイルの移動が可能になってしまうため移動を禁止します。  
-ロックするのはPostProcess実行前の待機期間のみです。  
-データ送信中、PostProcess実行中はロックしません。  
+ロックするのはPostProcess実行前の待機期間のみでデータ送信中、PostProcess実行中はロックしません。  
 
 
 ------------------------------------------------------------------
@@ -91,21 +90,20 @@ PostProcess実行前の待機期間にはd2vファイルを使用しているプ
 
     Client_GetExternalCommand  
 外部プロセスを実行し戻り値をコマンドライン引数として受け取ります。  
-戻り値に -Abortがあればプロセスを終了します。  
+戻り値に -Abortがあればプロセスを終了する。  
 
 
     PreProcess
-データ送信の前に実行するプロセス
+データ送信の前に実行するプロセス。  
 
 
     MidProcess
-データ送信中に実行するプロセス
-直前の MidProcessが実行されていたら終了するまで待機します。  
-並列実行はされません。  
+データ送信中に実行するプロセス。  
+前回の MidProcessが実行されていたら終了するまで待機し並列実行はしません。  
 
 
     PostProcess
-データ送信が終了し、実行中の MidProcessが終了した後に実行するプロセス  
+データ送信が終了し、MidProcessが終了した後に実行するプロセス。  
 
 
 
