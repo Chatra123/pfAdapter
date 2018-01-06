@@ -200,7 +200,7 @@ namespace pfAdapter.Setting
           {
             Enable = 0,
             BasePath = @"   ..\LGLauncher\LGLauncher.exe   ",
-            BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"   ",
+            BaseArgs = "          -ts \"$FilePath$\"   -ch \"$ch$\"   -program \"$program$\"  -DisableSplit  ",
           },
           //bat
           new Client()
